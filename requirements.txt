@@ -1,0 +1,8 @@
+discord.py
+pymongo
+platform
+datetime
+psutil
+asyncio
+youtube_dl
+google-api-python-client
