@@ -151,7 +151,7 @@ class Utils:
 
         source = discord.PCMVolumeTransformer(
             discord.FFmpegPCMAudio(video.stream_url,
-                                   before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5",
+                                   before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 10",
                                    options='-vn'), volume=0.5)
 
         return source, video
