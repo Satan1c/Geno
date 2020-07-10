@@ -1,265 +1,116 @@
-import math
+# -*- coding: utf-8 -*-
 
-import discord
-import youtube_dl
-from discord.ext import commands
+import asyncio
 
-from internal.utils import YTDL_OPTS
+from discord.ext import commands as cmd
 
 
-class Music(commands.Cog):
+class Music(cmd.Cog):
     def __init__(self, bot):
-        self.video = bot.video
         self.bot = bot
-        self.config = bot.db.servers.music
+        self.config = bot.servers
+        self.queue = []
+        self.Video = bot.Video
         self.utils = bot.utils
 
-    @commands.command(aliases=["stop", "l", "leave"], usage="leave")
-    @commands.guild_only()
-    async def _leave(self, ctx: commands.Context):
-        if await self.utils.not_audio_or_voice(ctx):
-            return
-
-        client = ctx.guild.voice_client
-
-        if client and client.channel:
-            if client.is_playing() or client.is_paused():
-                self.config.update_one({"_id": f"{ctx.guild.id}"}, {"$set": {"queue": [], "now_playing": ""}})
-                return client.stop()
-
-            await client.disconnect()
-
-        else:
-            return await ctx.send("Not in a voice channel.")
-
-    @commands.command(aliases=["join", "j"], usage="join")
-    @commands.guild_only()
-    async def _join(self, ctx):
-        if await self.utils.not_audio_or_voice(ctx):
-            return await ctx.send("You need to be in a voice channel to do that.")
-
+    @cmd.command(name="Play", aliases=['play', 'p'], usage="play <url | query>")
+    @cmd.guild_only()
+    async def _play(self, ctx: cmd.Context, *, url: str = None):
         client = ctx.voice_client
-        channel = ctx.author.voice.channel
-
-        if not client or not client.channel:
-            await channel.connect()
-
-        else:
-            return await ctx.send("Already in a voice channel.")
-
-    @commands.command(aliases=["resume", "pause"], usage="pause")
-    @commands.guild_only()
-    async def _pause(self, ctx):
-        if await self.utils.not_audio_or_voice(ctx):
-            return
-
-        client = ctx.voice_client
-        self.utils.pause_audio(client)
-
-    @commands.command(aliases=["vol", "v"], usage="volume")
-    @commands.guild_only()
-    async def volume(self, ctx, volume: int):
-        if await self.utils.not_audio_or_voice(ctx):
-            return
-
-        if volume != 0 and volume > 1 and int(volume) == 0:
-            volume *= 100
-
-        config = self.config.find_one({"_id": f"{ctx.guild.id}"})
-
-        if volume < 0:
-            volume = 0
-            await ctx.send("Volume must be more or equal `0`")
-
-        max_vol = config["max_volume"]
-        if max_vol > -1:
-            if volume > max_vol:
-                volume = max_vol
-                await ctx.send(f"Volume can't be more than max(`{max_vol}`)")
-
-        client = ctx.voice_client
-
-        volume = float(volume) / 100.0
-        client.source.volume = volume
-        await ctx.send(f"Volume changed to {volume}")
-
-        self.config.update_one({"_id": f"{ctx.guild.id}"}, {"$set": {"volume": volume}})
-
-    @commands.command(usage="skip")
-    @commands.guild_only()
-    async def skip(self, ctx):
-        if await self.utils.not_audio_or_voice(ctx):
-            return
-
-        client = ctx.voice_client
-        config = self.config.find_one({"_id": f"{ctx.guild.id}"})
-
-        if config["vote_skip"]:
-
-            channel = client.channel
-            self.utils.vote_skip(channel, ctx.author)
-
-            users_in_channel = len([member for member in channel.members if not member.bot])  # don't count bots
-            required_votes = math.ceil(config["vote_skip_ratio"] * users_in_channel)
-
-            await ctx.send(f"{ctx.author.mention} voted to skip ({config['skip_votes']}/{required_votes} votes)")
-
-        else:
-            client.stop()
-
-    @commands.command(aliases=["np", "nowplaying"], usage="nowplaying")
-    @commands.guild_only()
-    async def now_playing(self, ctx):
-        if await self.utils.not_audio_or_voice(ctx):
-            return
-
-        config = self.config.find_one({"_id": f"{ctx.guild.id}"})
-        em = await self.utils.queue_embed(config, one=True)
-
-        await ctx.send(embed=em)
-
-    @commands.command(aliases=["q"], usage="queue")
-    @commands.guild_only()
-    async def queue(self, ctx):
-
-        config = self.config.find_one({"_id": f"{ctx.guild.id}"})
-        em = await self.utils.queue_embed(config)
-
-        msg = await ctx.send(embed=em)
-
-        await self.utils.update_last(ctx, config, msg)
-
-    @commands.command(aliases=["cq", "clearqueue"], usage="clearqueue")
-    @commands.guild_only()
-    async def clear_queue(self, ctx):
-
-        self.config.update_one({"_id": f"{ctx.guild.id}"}, {"$set": {"queue": []}})
-
-    @commands.command(aliases=["jq", "jumpqueue"], usage="jumpqueue")
-    @commands.guild_only()
-    async def jump_queue(self, ctx, index: int):
-        if await self.utils.not_audio_or_voice(ctx):
-            return
-
-        config = self.config.find_one({"_id": f"{ctx.guild.id}"})
-
-        if len(config['queue']) >= index >= 1:
-            pl = config['queue'][index:]
-
-            self.config.update_one({"_id": f"{ctx.guild.id}"}, {"$set": {"queue": pl}})
-            config = self.config.find_one({"_id": f"{ctx.guild.id}"})
-            em = await self.utils.queue_embed(config)
-
-            await ctx.send(embed=em)
-            client = ctx.voice_client
-            return client.stop()
-
-        else:
-            await ctx.send("You must use a valid index.")
-
-    @commands.command(aliases=["plplay", "plp", "playlistplay"], usage="playlistplay")
-    @commands.guild_only()
-    async def playlist_play(self, ctx, *, name):
-        if await self.utils.not_audio_or_voice(ctx):
-            return await ctx.send("You need to be in a voice channel to do that.")
-        try:
-
-            config = self.config.find_one({"_id": f"{ctx.guild.id}"})
-            await self.utils.make_queue(config, name)
-
-            video = self.video(config['queue'][0]['url'], {"tag": f"{ctx.author.name}#{ctx.author.discriminator}",
-                                                           "ava": f"{ctx.author.avatar_url_as(format='png', static_format='png', size=512)}"})
-            await self.utils.play(ctx=ctx, video=video)
-
-        except youtube_dl.DownloadError:
-            return await ctx.send("There was an error downloading your video, sorry.")
-
-    @commands.command(aliases=["p", 'play'], usage="play")
-    @commands.guild_only()
-    async def _play(self, ctx, *, url: str):
-        print(url)
-        if await self.utils.not_audio_or_voice(ctx):
-            return await ctx.send("You need to be in a voice channel to do that.")
-        req = {"tag": f"{ctx.author.name}#{ctx.author.discriminator}",
-               "ava": f"{ctx.author.avatar_url_as(format='png', static_format='png', size=512)}"}
 
         if not url:
-            config = self.config.find_one({"_id": f"{ctx.guild.id}"})
-            if not config['queue']:
-                return await ctx.send(embed=discord.Embed(title="Queue is empty"))
+            return await ctx.send("Please give video url or title")
+        if not ctx.author.voice or not ctx.author.voice.channel:
+            raise cmd.BadArgument("To use this command: you must be in voice channel, or check bot permissions to "
+                                  "view it")
+        if not client or not client.channel:
+            client = await ctx.author.voice.channel.connect()
 
-            client = ctx.voice_client or await ctx.author.voice.channel.connect()
-            cfg = config['queue'][0]
-            video = self.video(cfg['url'], cfg['req'])
+        source, video = self.utils.play(ctx=ctx, url=url)
 
-            return self.utils.play_song(client, video, ctx)
+        music = self.config.find_one({"_id": f"{ctx.guild.id}"})['music']
+        req = {"tag": str(ctx.author),
+               "ava": str(ctx.author.avatar_url_as(format="png", static_format='png', size=256))}
 
-        try:
-            print(0)
-            video = self.video(url, req)
-            print(0.1)
-            await self.utils.play(ctx=ctx, video=video)
+        if client.is_playing() and not music['now_playing']:
+            music['queue'].append({"req": req, "url": url})
+            self.config.update_one({"_id": f"{ctx.guild.id}"}, {"$set": {"music": dict(music)}})
+            return await ctx.send(f"Queue updated: {video.video_url}")
 
-        except youtube_dl.DownloadError:
-            return await ctx.send("There was an error downloading your video, sorry.")
+        music['now_playing'] = {"req": req, "url": video.video_url}
 
-    @commands.command(aliases=['createplaylist', 'crpl'], usage="createplaylist")
-    @commands.guild_only()
-    async def create_playlist(self, ctx, *, url, name):
-        try:
+        await ctx.send(f"Queue updated: {video.video_url}")
 
-            with youtube_dl.YoutubeDL(YTDL_OPTS) as ydl:
-                info = ydl.extract_info(url, download=False)
+        def after_playing(err):
+            if err:
+                raise err
+            music = self.config.find_one({"_id": f"{ctx.guild.id}"})['music']
 
-                if "_type" in info and info["_type"] == "playlist":
-                    r = []
-                    for i in info["entries"]:
-                        r.append(i['url'])
-                    else:
-                        self.config.update_one({"_id": ctx.guild.id}, {"$set": {f"{name}": r}})
+            if len(music['queue']) < 1:
+                music['now_playing'] = ""
+                self.config.update_one({"_id": f"{ctx.guild.id}"}, {"$set": {"music": dict(music)}})
 
-                else:
-                    await ctx.send("It is not playlist")
+                client.stop()
+                asyncio.run_coroutine_threadsafe(client.disconnect(), self.bot.loop)
 
-        except youtube_dl.DownloadError:
-            return await ctx.send("There was an error downloading your video, sorry.")
+            else:
+                q = music['queue'].pop(0)
+                music['now_playing'] = q['url']
 
-    @commands.Cog.listener()
-    async def on_reaction_add(self, reaction, user):
-        message = reaction.message
-        client = message.guild.voice_client
-        config = self.config.find_one({"_id": f"{message.author.guild.id}"})
+                self.config.update_one({"_id": f"{ctx.guild.id}"}, {"$set": {"music": dict(music)}})
+                source, video = self.utils.play(req=q['req'], url=q['url'])
 
-        if message.id != config['last']['message']:
-            return
+                asyncio.run_coroutine_threadsafe(ctx.send(embed=video.get_embed()), self.bot.loop)
 
-        if not user.bot and user.voice.channel.id == client.channel.id:
-            await message.remove_reaction(reaction, user)
+                client.play(source, after=after_playing)
 
-            if message.guild and client:
-                user_in_channel = user.voice and user.voice.channel and client and client.channel and user.voice.channel == client.channel
+        client.play(source, after=after_playing)
 
-                if reaction.emoji == "⏹":
-                    self.config.update_one({"_id": f"{message.author.guild.id}"}, {"$set": {"queue": []}})
-                    await message.delete()
-                    client.stop()
+        return await ctx.send(embed=video.get_embed())
 
-                elif reaction.emoji == "⏯":
-                    self.utils.pause_audio(client)
+    @cmd.command(name="Stop", aliases=['stop'], usage="stop")
+    @cmd.guild_only()
+    async def _stop(self, ctx: cmd.Context):
+        client = ctx.voice_client
+        music = self.config.find_one({"_id": f"{ctx.guild.id}"})['music']
 
-                elif reaction.emoji == "⏭" and user_in_channel:
-                    voice_channel = client.channel
+        if client and client.guild and client.channel and client.is_playing():
+            music['queue'] = []
+            self.config.update_one({"_id": f"{ctx.guild.id}"}, {"$set": {"music": dict(music)}})
 
-                    if config['skip_vote']:
-                        users_in_channel = len([member for member in voice_channel.members if not member.bot])
-                        required_votes = math.ceil(config["vote_skip_ratio"] * users_in_channel)
-                        self.utils.vote_skip(voice_channel, user)
+            return client.stop()
 
-                        await message.channel.send(
-                            f"{user.mention} voted to skip ({config['skip_votes']}/{required_votes} votes)")
+    @cmd.command(name="Leave", aliases=['leave', 'l'], usage="leave")
+    @cmd.guild_only()
+    async def _leave(self, ctx: cmd.Context):
+        client = ctx.voice_client
+        music = self.config.find_one({"_id": f"{ctx.guild.id}"})['music']
 
-                    else:
-                        client.stop()
+        if client and client.guild and client.channel:
+            music['queue'] = []
+            self.config.update_one({"_id": f"{ctx.guild.id}"}, {"$set": {"music": dict(music)}})
+            return client.stop()
+
+    @cmd.command(name="Skip", aliases=['skip', 's'], usage="skip")
+    @cmd.guild_only()
+    async def _skip(self, ctx: cmd.Context):
+        client = ctx.voice_client
+
+        if client and client.guild and client.channel and client.is_playing():
+            return client.stop()
+
+    @cmd.command(name="Pause", aliases=['pause'], usage="pause")
+    @cmd.guild_only()
+    async def _pause(self, ctx: cmd.Context):
+        client = ctx.voice_client
+
+        if client and client.guild and client.channel:
+
+            if client.is_playing():
+                return client.pause()
+
+            if client.is_paused():
+                return client.resume()
 
 
 def setup(bot):
