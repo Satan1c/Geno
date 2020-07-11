@@ -36,7 +36,7 @@ class System(cmd.Cog):
 
                            react {self.reactions[0]} to go next page
                            react {self.reactions[1]} to close \"help\" tab
-                           react {self.reactions[2]} to go previous page""""")
+                           react {self.reactions[2]} to go previous page""")
         embeds = []
 
         for cog in self.bot.cogs:
