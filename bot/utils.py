@@ -193,7 +193,8 @@ class Paginator:
 
         await self.controller.edit(embed=self.pages[start_page])
 
-        await self.controller.clear_reactions()
+        if not isinstance(self.ctx.channel, discord.DMChannel):
+            await self.controller.clear_reactions()
         for emoji in self.reactions:
             await self.controller.add_reaction(emoji)
 
@@ -206,10 +207,11 @@ class Paginator:
             except TimeoutError:
                 break
 
-            try:
-                await self.controller.remove_reaction(response[0], response[1])
-            except:
-                pass
+            if not isinstance(self.ctx.channel, discord.DMChannel):
+                try:
+                    await self.controller.remove_reaction(response[0], response[1])
+                except:
+                    pass
 
             if response[0].emoji == self.reactions[0]:
                 self.current = self.current - 1 if self.current > 0 else len(self.pages) - 1

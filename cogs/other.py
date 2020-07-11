@@ -15,6 +15,7 @@ class System(cmd.Cog):
         self.profile = bot.profiles
         self.utils = bot.utils
         self.Paginator = bot.Paginator
+        self.reactions = ('⬅', '⏹', '➡')
         self.arrowl = "<a:31:637653092749410304>"
         self.arrowr = "<a:30:637653060726030337>"
         self.bot_invite = "https://discord.com/oauth2/authorize?client_id={id}0&permissions={perms}&scope=bot"
@@ -31,7 +32,10 @@ class System(cmd.Cog):
         prefix = "-" if not ctx.guild else self.config.find_one({"_id": f"{ctx.guild.id}"})['prefix']
         em = discord.Embed(colour=discord.Colour.green(),
                            title=f'{self.arrowl} Commands list, prefix: {prefix} {self.arrowr}',
-                           description=f"prefix: `{prefix}`")
+                           description=f"""prefix: `{prefix}`
+                           react {self.reactions[0]} to go next page
+                           react {self.reactions[1]} to close \"help\" tab
+                           react {self.reactions[2]} to go previous page""")
         embeds = []
 
         for cog in self.bot.cogs:
