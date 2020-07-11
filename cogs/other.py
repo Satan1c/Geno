@@ -20,6 +20,7 @@ class System(cmd.Cog):
         self.bot_invite = "https://discord.com/oauth2/authorize?client_id={id}0&permissions={perms}&scope=bot"
         self.supp_link = "https://discord.gg/NSkg6N9"
         self.patreon_link = "https://patreon.com/satan1c"
+        self.reactions = ('⬅', '⏹', '➡')
 
     @cmd.command(name="Test", aliases=['test'], hidden=True)
     async def _test(self, ctx: cmd.Context):
@@ -30,8 +31,12 @@ class System(cmd.Cog):
     async def _help(self, ctx: cmd.Context):
         prefix = "-" if not ctx.guild else self.config.find_one({"_id": f"{ctx.guild.id}"})['prefix']
         em = discord.Embed(colour=discord.Colour.green(),
-                           title=f'{self.arrowl} Commands list, prefix: {prefix} {self.arrowr}',
-                           description=f"prefix: `{prefix}`")
+                           title=f'{self.arrowl} Commands list {self.arrowr}',
+                           description=f"""prefix: `{prefix}`
+
+                           react {self.reactions[0]} to go next page
+                           react {self.reactions[1]} to close \"help\" tab
+                           react {self.reactions[2]} to go previous page""""")
         embeds = []
 
         for cog in self.bot.cogs:
@@ -49,7 +54,6 @@ class System(cmd.Cog):
                                         title=f'{self.arrowl} Commands list {self.arrowr}',
                                         description=f"prefix: `{prefix}`")
                           .add_field(name=f"{cog}", value=cmds))
-
         p = self.Paginator(ctx, embeds=embeds, begin=em)
         await p.start()
 
