@@ -99,7 +99,7 @@ class Music(cmd.Cog):
         if client and client.guild and client.channel and client.is_playing():
             return client.stop()
 
-    @cmd.command(name="Pause", aliases=['pause'], usage="pause")
+    @cmd.command(name="Pause", aliases=['pause', 'resume'], usage="pause")
     @cmd.guild_only()
     async def _pause(self, ctx: cmd.Context):
         client = ctx.voice_client
