@@ -17,7 +17,7 @@ class System(cmd.Cog):
         self.Paginator = bot.Paginator
         self.arrowl = "<a:31:637653092749410304>"
         self.arrowr = "<a:30:637653060726030337>"
-        self.bot_invite = "https://discord.com/oauth2/authorize?client_id={id}0&permissions={perms}&scope=bot"
+        self.bot_invite = "https://discord.com/oauth2/authorize?client_id={id}&permissions={perms}&scope=bot"
         self.supp_link = "https://discord.gg/NSkg6N9"
         self.patreon_link = "https://patreon.com/satan1c"
         self.reactions = ('⬅', '⏹', '➡')
