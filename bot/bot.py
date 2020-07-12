@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
 
 import os
+from datetime import datetime
 
+import config
 import discord
 import pymongo
 from discord.ext import commands as cmd
 
-import config
-from .utils import Utils, Video, Paginator, DataBase
 from . import models
+from .utils import Utils, Video, Paginator, DataBase
 
 client = pymongo.MongoClient(config.MONGO)
 
@@ -20,7 +21,9 @@ class Geno(cmd.Bot):
 
     def init(self):
         self.token = config.TOKEN
+        #self.prefix = "t-"
         self.prefix = "-"
+        self.version = "(v0.1.2a)"
         self.servers = client.servers.configs
         self.profiles = client.users.profiles
         self.main = client
@@ -57,11 +60,15 @@ class Geno(cmd.Bot):
 
     async def get_prefix(self, message):
         prefix = self.prefix
+        #return prefix
 
         if message.guild:
             prefix = self.servers.find_one({"_id": f"{message.guild.id}"})['prefix']
 
         return prefix
+
+    async def on_connect(self):
+        self.start = datetime.now()
 
     def run(self):
         super().run(self.token)

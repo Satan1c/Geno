@@ -23,9 +23,12 @@ class System(cmd.Cog):
         self.reactions = ('⬅', '⏹', '➡')
 
     @cmd.command(name="Test", aliases=['test'], hidden=True)
-    async def _test(self, ctx: cmd.Context):
-        bytes = ctx.voice_client.endpoint
-        await ctx.send(bytes)
+    @cmd.is_owner()
+    async def _test(self, ctx: cmd.Context, value: float = None):
+        cfg = self.config.find_one({"_id": f"{ctx.guild.id}"})['music']
+        u1 = self.bot.get_user(ctx.author.id)
+        u2 = self.bot.get_user(int(cfg['now_playing']['req']))
+        await ctx.send(f"{str(u1)}\n{str(u2)}")
 
     @cmd.command(name="Help", hidden=True, aliases=['h', 'help', 'commands', 'cmds'])
     async def _help(self, ctx: cmd.Context):
@@ -91,9 +94,24 @@ class System(cmd.Cog):
                            f"<:text:730689530461552710> Texts: `{len(g.text_channels)}`")
 
         await ctx.send(embed=em)
+    
+    @cmd.command(name="Prefix", aliases=['prefix'], usage="prefix <prefix>")
+    @cmd.guild_only()
+    async def _prefix(self, ctx: cmd.Context, *, prefix: str = "-"):
+        cfg = self.config.find_one({"_id": f"{ctx.guild.id}"})
+        raw = cfg['prefix']
+        if raw == prefix:
+            raise cmd.BadArgument("New prefix can't be equals old")
+
+        self.config.update_one({"_id": f"{ctx.guild.id}"}, {"$set": {"prefix": prefix}})
+        await ctx.send(embed=discord.Embed(title="Prefix change",
+        description=f"From: `{raw}`\nTo: `{prefix}`",
+        colour=discord.Colour.green(),
+        timestamp=datetime.now())
+        .set_footer(text=str(ctx.author), icon_url=ctx.author.avatar_url_as(format="png", static_format='png', size=256)))
+
 
     @cmd.command(name="Bot", aliases=['bot', 'about'], usage="bot")
-    @cmd.guild_only()
     async def _bot(self, ctx: cmd.Context):
         system = platform.uname()
         cpu = f"`cores: {psutil.cpu_count(logical=True)}" \
@@ -103,7 +121,7 @@ class System(cmd.Cog):
               f" {(psutil.virtual_memory().total // 1024) // 1000}mb\n" \
               f"percentage: {round(psutil.virtual_memory().available * 100 / psutil.virtual_memory().total, 1)}%`"
 
-        em = discord.Embed(title=f"{self.arrowl} {ctx.me.name} info {self.arrowr}",
+        em = discord.Embed(title=f"{self.arrowl} {ctx.me.name} {self.bot.version} info {self.arrowr}",
                            colour=discord.Colour.green(),
                            timestamp=datetime.now())
         em.add_field(name="OS:", value=f"`{system[0]} {system[2]}`")
@@ -112,14 +130,15 @@ class System(cmd.Cog):
         em.add_field(name="Users:", value=f"`{len(self.bot.users)}`")
         em.add_field(name="Guilds:", value=f"`{len(self.bot.guilds)}`")
         em.add_field(name='\u200b', value="\u200b")
-        em.add_field(name="Up-time:", value=f"`in development`")
+        em.add_field(name="Up-time:", value=f"`{self.utils.uptime(self.bot.start, datetime.now())}`")
         em.add_field(name="Ping:", value=f"`{round(self.bot.latency, 1)}s`")
         em.add_field(name='\u200b', value="\u200b")
         em.add_field(name="Python version:", value=f"`{platform.python_version()}`")
         em.add_field(name="Discord.Py version:",
                      value=f"`{discord.version_info[0]}.{discord.version_info[1]}.{discord.version_info[2]}`")
         em.add_field(name='\u200b', value="\u200b")
-        em.add_field(name="Bot invite:", value=f"[Click]({self.bot_invite.format(id=self.bot.user.id, perms=536210647)})")
+        em.add_field(name="Bot invite:",
+                     value=f"[Click]({self.bot_invite.format(id=self.bot.user.id, perms=536210647)})")
         em.add_field(name="Support server:", value=f"[Click]({self.supp_link})")
         em.add_field(name="Patreon:", value=f"[Click]({self.patreon_link})")
 
