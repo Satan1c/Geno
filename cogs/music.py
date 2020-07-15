@@ -12,60 +12,34 @@ class Music(cmd.Cog):
         self.bot = bot
         self.config = bot.servers
         self.Video = bot.Video
+        self.Paginator = bot.Paginator
         self.utils = bot.utils
+        self.models = bot.models
 
     @cmd.command(name="Play", aliases=['play', 'p'], usage="play <url | query>")
     @cmd.guild_only()
     async def _play(self, ctx: cmd.Context, *, url: str = None):
+        c = await self.utils.play_check(ctx, url, ctx.voice_client)
+        if c:
+            raise cmd.BadArgument(c)
+
         client = ctx.voice_client
-
-        if not url:
-            return await ctx.send("Please give video url or title")
-        if not ctx.author.voice or not ctx.author.voice.channel:
-            raise cmd.BadArgument("To use this command: you must be in voice channel, or check bot permissions to "
-                                  "view it")
-        if not client or not client.channel:
-            client = await ctx.author.voice.channel.connect()
-
-        source, video = self.utils.play(ctx=ctx, url=url)
-
         music = self.config.find_one({"_id": f"{ctx.guild.id}"})['music']
-        req = f"{ctx.author.id}"
+        source, video = self.utils.play(ctx=ctx, url=url, cfg=music)
 
-        if client.is_playing():
-            em = video.get_embed()
-            music['queue'].append({"req": req, "url": video.video_url})
-            self.config.update_one({"_id": f"{ctx.guild.id}"}, {"$set": {"music": dict(music)}})
-            return await ctx.send(embed=discord.Embed(title=video.title, url=video.video_url, colour=discord.Colour.green())
-                                    .set_thumbnail(url=em.image.url)
-                                    .set_author(name=f"{str(ctx.author)} add to queue:",
-                                            icon_url=ctx.author.avatar_url_as(format="png", static_format='png', size=256)))
+        if client.is_playing() or music['now_playing']:
+            return await self.utils.queue(ctx, music, video)
 
-        music['now_playing'] = {"req": req, "url": video.video_url}
+        music['now_playing'] = self.models.NowPlaying(video).get_dict()
+
+        np = str(type(music['now_playing']['title']))
+        if np in ["<class 'tuple'>", "<class 'list'>"]:
+            music['now_playing']['title'] = music['now_playing']['title'][0]
+
         self.config.update_one({"_id": f"{ctx.guild.id}"}, {"$set": {"music": dict(music)}})
 
         def after_playing(err):
-            if err:
-                raise err
-            music = self.config.find_one({"_id": f"{ctx.guild.id}"})['music']
-
-            if len(music['queue']) < 1:
-                music['now_playing'] = ""
-                self.config.update_one({"_id": f"{ctx.guild.id}"}, {"$set": {"music": dict(music)}})
-
-                client.stop()
-                asyncio.run_coroutine_threadsafe(client.disconnect(), self.bot.loop)
-
-            else:
-                q = music['queue'].pop(0)
-                music['now_playing'] = {"req": q['req'], "url": q['url']}
-
-                self.config.update_one({"_id": f"{ctx.guild.id}"}, {"$set": {"music": dict(music)}})
-                source, video = self.utils.play(url=q['url'], req=self.bot.get_user(int(q['req'])))
-
-                asyncio.run_coroutine_threadsafe(ctx.send(embed=video.get_embed()), self.bot.loop)
-
-                client.play(source, after=after_playing)
+            self.utils.after(ctx, client, err, after_playing)
 
         client.play(source, after=after_playing)
 
@@ -77,7 +51,7 @@ class Music(cmd.Cog):
         client = ctx.voice_client
         music = self.config.find_one({"_id": f"{ctx.guild.id}"})['music']
 
-        if client and client.guild and client.channel and ctx.author.voice and ctx.author.voice.channel and client.is_playing():
+        if client and client.channel and ctx.author.voice and ctx.author.voice.channel:
             music['queue'] = []
             self.config.update_one({"_id": f"{ctx.guild.id}"}, {"$set": {"music": dict(music)}})
 
@@ -97,9 +71,10 @@ class Music(cmd.Cog):
     @cmd.guild_only()
     async def _skip(self, ctx: cmd.Context):
         client = ctx.voice_client
+        cfg = self.config.find_one({"_id": f"{ctx.guild.id}"})['music']
 
         if client and client.guild and client.channel \
-        and ctx.author.voice and ctx.author.voice.channel and ctx.author.voice.channel.id == client.channel.id and client.is_playing():
+        and ctx.author.voice and ctx.author.voice.channel and ctx.author.voice.channel.id == client.channel.id and cfg['now_playing']:
             return client.stop()
 
     @cmd.command(name="Pause", aliases=['pause', 'resume'], usage="pause")
@@ -122,39 +97,28 @@ class Music(cmd.Cog):
     async def _volume(self, ctx: cmd.Context, value: float = 0.5):
         client = ctx.voice_client
         cfg = self.config.find_one({"_id": f"{ctx.guild.id}"})['music']
-
-        em = discord.Embed(title="Volume change",
-        description="From: `{raw}%`\nTo: `{end}%`",
-        colour=discord.Colour.green(),
-        timestamp=datetime.now())
-
+        em = discord.Embed(title="Volume change", description="From: `{raw}%`\nTo: `{end}%`", colour=discord.Colour.green(), timestamp=datetime.now())
         em.set_footer(text=str(ctx.author), icon_url=ctx.author.avatar_url_as(format="png", static_format='png', size=256))
 
         if not ctx.author.voice or not ctx.author.voice.channel:
-            raise cmd.BadArgument("To use this command: you must be in voice channel, or check bot permissions to "
-                                  "view it")
-                                  
+            raise cmd.BadArgument("To use this command: you must be in voice channel, or check bot permissions to view it")
         if value < 0.1:
             value = 0.1
-            await ctx.send("Volume value can't be less than 0.1%")
-
+            await ctx.send(f"Volume value can't be less than {value}%")
         elif value > cfg['volume_max']:
             value = cfg['volume_max']
-            await ctx.send(f"Volume value can't be more than {cfg['volume_max']}")
-
+            await ctx.send(f"Volume value can't be more than {value}")
         raw = ctx.voice_client.source.volume if client and client.source else cfg['volume']
         value /= 100
-
         if value == raw:
             return await ctx.send("New volume value can't equals to old")
+
         if client and client.source:
             ctx.voice_client.source.volume = value
         else:
             cfg['volume'] = value
-
         end = ctx.voice_client.source.volume if client and client.source else cfg['volume']
-
-        self.config.update_one({"_id": f"{ctx.guild.id}"}, {"$set": dict(cfg)})
+        self.config.update_one({"_id": f"{ctx.guild.id}"}, {"$set": {"music": dict(cfg)}})
         em.description = em.description.format(raw=raw*100, end=end*100)
 
         await ctx.send(embed=em)
@@ -162,36 +126,81 @@ class Music(cmd.Cog):
     @cmd.command(name="Now playing", aliases=['now_playing', 'nowplaying', 'np'], usage="now_playing")
     @cmd.guild_only()
     async def _now_playing(self, ctx: cmd.Context):
-        cfg = self.config.find_one({"_id": f"{ctx.guild.id}"})['music']
-        source, video = self.utils.play(req=self.bot.get_user(int(cfg['now_playing']['req'])), url=cfg['now_playing']['url'])
-        em = video.get_embed()
+        np = self.config.find_one({"_id": f"{ctx.guild.id}"})['music']['now_playing']
+        if not np:
+            await ctx.send(embed=discord.Embed(description="Seems like nothing playing now"))
+        raw = self.utils.parser(typ="time", start=np['start_at'], end=datetime.now())
+        dur = self.utils.parser(typ="time", raw=np['duration'])
+        mem = ctx.guild.get_member(int(np['req']))
 
-        return await ctx.send(embed=discord.Embed(colour=discord.Colour.green(), description=f"Requested by: {video.req['tag']}", timestamp=datetime.now())
-                                .set_thumbnail(url=em.image.url)
-                                .set_author(name=em.title, url=em.url, icon_url=em.author.icon_url)
-                                .set_footer(text=str(ctx.author), icon_url=ctx.author.avatar_url_as(format="png", static_format='png', size=256)))
-
+        return await ctx.send(embed=discord.Embed(colour=discord.Colour.green(),
+                                description=f"Duration: `{raw}` / `{dur}`\n"
+                                f"Requested by: `{str(mem or 'User not found')}` {f'[{mem.mention}]' if mem else ''}",
+                                timestamp=datetime.now())
+                                .set_thumbnail(url=np['thumb_url'])
+                                .set_author(name=np['title'], url=np['url'], icon_url=np['channel_icon_url'])
+                                .set_footer(text=str(ctx.author),
+                                            icon_url=ctx.author.avatar_url_as(format="png", static_format='png', size=256)))
+    
     @cmd.command(name="Queue", aliases=['queue', 'q'], usage="queue")
     @cmd.guild_only()
     async def _queue(self, ctx: cmd.Context):
         cfg = self.config.find_one({"_id": f"{ctx.guild.id}"})['music']
-        em = discord.Embed(colour=discord.Colour.green(),
-        timestamp=datetime.now())
+        np = cfg['now_playing']
+
+        em = discord.Embed( title="Seems like queue is empty",
+                            colour=discord.Colour.green(),
+                            timestamp=datetime.now())
+        em.set_author(name="Seems like nothing is plying now",
+                        icon_url="https://maestroselectronics.com/wp-content/uploads/2017/12/No_Image_Available.jpg")
+
+        em.set_thumbnail(url="https://maestroselectronics.com/wp-content/uploads/2017/12/No_Image_Available.jpg")
+
+        if len(cfg['queue']):
+            embeds = []
+            desc = []
+            for i in range(len(cfg['queue'])):
+                n = i + 1
+                j = cfg['queue'][i]
+                mem = ctx.guild.get_member(int(j['req']))
+                desc.append(f"`{n}`` Requested by: {str(mem or 'User not found')} [{mem.mention if mem else ''}]\n[{j['title']}]({j['url']})")
+
+                if n % 5 == 0:
+                    embeds.append(discord.Embed(title="Queue list:",
+                            colour=discord.Colour.green(),
+                            timestamp=datetime.now(),
+                            description="\n".join(desc[len(embeds)*5:]))
+                            .set_thumbnail(url=np['thumb_url'])
+                            .set_author(name=np['title'], url=np['url'], icon_url=np['channel_icon_url'])
+                            .set_footer(text=str(ctx.author), icon_url=ctx.author.avatar_url_as(format="png",
+                                                                                                static_format='png', size=256)))
+            else:
+                try:
+                    embeds.append(discord.Embed(title="Queue list:",
+                            colour=discord.Colour.green(),
+                            timestamp=datetime.now(),
+                            description="\n".join(desc[len(embeds)*5:]))
+                            .set_thumbnail(url=np['thumb_url'])
+                            .set_author(name=np['title'], url=np['url'], icon_url=np['channel_icon_url'])
+                            .set_footer(text=str(ctx.author), icon_url=ctx.author.avatar_url_as(format="png",
+                                                                                                static_format='png', size=256)))
+                except:
+                    pass
+
+            if len(embeds) > 1:
+                p = self.Paginator(ctx, embeds=embeds, music=cfg, cfg=self.config)
+                return await p.call_controller()
+
+            if len(embeds) == 1:
+                return await ctx.send(embed=embeds[0])
+
+        if np:
+            em.set_thumbnail(url=np['thumb_url'])
+            em.set_author(name=np['title'], url=np['url'], icon_url=np['channel_icon_url'])
         em.set_footer(text=str(ctx.author), icon_url=ctx.author.avatar_url_as(format="png", static_format='png', size=256))
-        if len(cfg['queue']) > 0:
-            em.title = "Queue list:"
 
-        for i in cfg['queue']:
-            source, video = self.utils.play(req=self.bot.get_user(int(i['req'])), url=i['url'])
-            em.add_field(name=f"Requested by: {video.req['tag']}", value=f"[{video.title}]({video.video_url})", inline=False)
-        else:
-            source, video = self.utils.play(req=self.bot.get_user(int(cfg['now_playing']['req'])), url=cfg['now_playing']['url'])
-            raw = video.get_embed()
-            em.set_thumbnail(url=raw.image.url)
-            em.set_author(name=raw.title, url=raw.url, icon_url=raw.author.icon_url)
-            em.set_footer(text=video.req['tag'], icon_url=video.req['ava'])
-
-        await ctx.send(embed=em)
+        return await ctx.send(embed=em)
+        
 
 def setup(bot):
     bot.add_cog(Music(bot))
