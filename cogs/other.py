@@ -6,6 +6,7 @@ from datetime import datetime
 import discord
 import psutil
 from discord.ext import commands as cmd
+from asyncio import sleep
 
 
 class System(cmd.Cog):
@@ -15,6 +16,7 @@ class System(cmd.Cog):
         self.profile = bot.profiles
         self.utils = bot.utils
         self.Paginator = bot.Paginator
+        self.EmbedGenerator = bot.EmbedGenerator
         self.arrowl = "<a:31:637653092749410304>"
         self.arrowr = "<a:30:637653060726030337>"
         self.bot_invite = "https://discord.com/oauth2/authorize?client_id={id}&permissions={perms}&scope=bot"
@@ -24,12 +26,18 @@ class System(cmd.Cog):
 
     @cmd.command(name="Test", aliases=['test'], hidden=True)
     @cmd.is_owner()
-    async def _test(self, ctx: cmd.Context, value: float = None):
-        cfg = self.config.find_one({"_id": f"{ctx.guild.id}"})['music']
-        u1 = self.bot.get_user(ctx.author.id)
-        u2 = self.bot.get_user(int(cfg['now_playing']['req']))
-        await ctx.send(f"{str(u1)}\n{str(u2)}")
-
+    async def _test(self, ctx: cmd.Context):
+        em = discord.Embed(title="Test").to_dict()
+        await ctx.send(embed=discord.Embed.from_dict(em))
+    
+    @cmd.command(name="Announcer", aliases=['announce'], hidden=True)
+    @cmd.is_owner()
+    async def _announce(self, ctx: cmd.Context, *, text: str):
+        print(text)
+        owners = [j for i in self.bot.guilds for j in i.members if i.owner_id == j.id]
+        for member in owners:
+            await member.send(embed=discord.Embed.from_dict(dict(text)))
+ 
     @cmd.command(name="Help", hidden=True, aliases=['h', 'help', 'commands', 'cmds'])
     async def _help(self, ctx: cmd.Context):
         prefix = "-" if not ctx.guild else self.config.find_one({"_id": f"{ctx.guild.id}"})['prefix']
@@ -121,30 +129,7 @@ class System(cmd.Cog):
               f" {(psutil.virtual_memory().total // 1024) // 1000}mb\n" \
               f"percentage: {round(psutil.virtual_memory().available * 100 / psutil.virtual_memory().total, 1)}%`"
 
-        em = discord.Embed(title=f"{self.arrowl} {ctx.me.name} {self.bot.version} info {self.arrowr}",
-                           colour=discord.Colour.green(),
-                           timestamp=datetime.now())
-        em.add_field(name="OS:", value=f"`{system[0]} {system[2]}`")
-        em.add_field(name="CPU:", value=f'`{cpu}`')
-        em.add_field(name="RAM:", value=ram)
-        em.add_field(name="Users:", value=f"`{len(self.bot.users)}`")
-        em.add_field(name="Guilds:", value=f"`{len(self.bot.guilds)}`")
-        em.add_field(name='\u200b', value="\u200b")
-        em.add_field(name="Up-time:", value=f"`{self.utils.uptime(self.bot.start, datetime.now())}`")
-        em.add_field(name="Ping:", value=f"`{round(self.bot.latency, 1)}s`")
-        em.add_field(name='\u200b', value="\u200b")
-        em.add_field(name="Python version:", value=f"`{platform.python_version()}`")
-        em.add_field(name="Discord.Py version:",
-                     value=f"`{discord.version_info[0]}.{discord.version_info[1]}.{discord.version_info[2]}`")
-        em.add_field(name='\u200b', value="\u200b")
-        em.add_field(name="Bot invite:",
-                     value=f"[Click]({self.bot_invite.format(id=self.bot.user.id, perms=536210647)})")
-        em.add_field(name="Support server:", value=f"[Click]({self.supp_link})")
-        em.add_field(name="Patreon:", value=f"[Click]({self.patreon_link})")
-
-        em.set_footer(text=str(ctx.author),
-                      icon_url=ctx.author.avatar_url_as(format="png", static_format='png', size=256))
-
+        em = self.EmbedGenerator(target="bot", ctx=ctx, system=system, cpu=cpu, ram=ram, platform=platform, data=self).get()
         await ctx.send(embed=em)
 
 

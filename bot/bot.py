@@ -8,11 +8,10 @@ import discord
 import pymongo
 from discord.ext import commands as cmd
 
-from . import models
-from .utils import Utils, Video, Paginator, DataBase
+from . import models#, config
+from .utils import Utils, Video, Paginator, DataBase, EmbedGenerator
 
 client = pymongo.MongoClient(config.MONGO)
-
 
 class Geno(cmd.Bot):
     def __init__(self):
@@ -23,13 +22,14 @@ class Geno(cmd.Bot):
         self.token = config.TOKEN
         #self.prefix = "t-"
         self.prefix = "-"
-        self.version = "(v0.1.2a)"
+        self.version = "(v0.1.3a)"
         self.servers = client.servers.configs
         self.profiles = client.users.profiles
-        self.main = client
+        self.main = client.cfg.main
         self.models = models
         self.utils = Utils(self)
         self.Video = Video
+        self.EmbedGenerator = EmbedGenerator
         self.DataBase = DataBase
         self.Paginator = Paginator
 
@@ -55,8 +55,16 @@ class Geno(cmd.Bot):
 
         if isinstance(err, cmd.NoPrivateMessage):
             em.description = "Not a giuld"
-
+            
         return await ctx.send(embed=em)
+
+    async def on_command(self, ctx: cmd.Context):
+        if isinstance(ctx.channel, discord.DMChannel):
+            return
+        await ctx.message.delete()
+
+    async def on_connect(self):
+        self.main.update_one({"_id": 0}, {"$set": {"uptime": datetime.now()}})
 
     async def get_prefix(self, message):
         prefix = self.prefix
@@ -66,9 +74,6 @@ class Geno(cmd.Bot):
             prefix = self.servers.find_one({"_id": f"{message.guild.id}"})['prefix']
 
         return prefix
-
-    async def on_connect(self):
-        self.start = datetime.now()
 
     def run(self):
         super().run(self.token)
