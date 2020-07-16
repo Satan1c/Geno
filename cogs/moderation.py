@@ -33,7 +33,7 @@ class Moderation(cmd.Cog):
             bans = await ctx.guild.bans()
             bans = [f"{i.user.name}#{i.user.discriminator}" for i in bans if i.user.id == user.id][0]
 
-            embed.description = self.embed.description.format(user=bans, reason=reason)
+            embed.description = embed.description.format(user=bans, reason=reason)
             embed.title = "Soft Ban"
 
             m = await ctx.send(embed=embed)
