@@ -25,7 +25,7 @@ class Moderation(cmd.Cog):
                                   static_format='png',
                                   size=256))
 
-        if (len(ctx.message.mentions) >= 1 and ctx.message.mentions[0].mention != re.sub('!', '', user)) \
+        if (ctx.message.mentions and ctx.message.mentions[0].mention != re.sub('!', '', user)) \
                 and len(re.sub(r"[^0-9]", r"", user)) == 18:
             user = discord.Object(id=int(user))
             await ctx.guild.ban(user, reason=reason)
