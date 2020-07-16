@@ -24,25 +24,24 @@ class Moderation(cmd.Cog):
                                   format="png",
                                   static_format='png',
                                   size=256))
-
-        if (ctx.message.mentions and ctx.message.mentions[0].mention != re.sub('!', '', user)) \
-                and len(re.sub(r"[^0-9]", r"", user)) == 18:
+        user = re.sub(r"[^0-9]", r"", user) if not ctx.guild.get_member(int(re.sub(r"[^0-9]", r"", user))) else user
+        if len(re.sub(r"[^0-9]", r"", user)) == 18 and not ctx.guild.get_member(int(user)):
             user = discord.Object(id=int(user))
-            await ctx.guild.ban(user, reason=reason)
+            await ctx.guild.ban(user=user, reason=reason, delete_message_days=0)
 
             bans = await ctx.guild.bans()
             bans = [f"{i.user.name}#{i.user.discriminator}" for i in bans if i.user.id == user.id][0]
 
             embed.description = embed.description.format(user=bans, reason=reason)
-            embed.title = "Soft Ban"
+            embed.title = "ID Ban"
 
             m = await ctx.send(embed=embed)
             await m.delete(delay=120)
             return
 
-        user = ctx.message.mentions[0]
+        user = ctx.guild.get_member(int(user) if len(re.sub(r"[^0-9]", r"", user)) == 18 else ctx.message.mentions[0].id)
 
-        await ctx.guild.ban(user, reason=reason)
+        await ctx.guild.ban(user, reason=reason, delete_message_days=0)
         embed.description = embed.description.format(user=str(user), reason=reason)
 
         m = await ctx.send(embed=embed)
@@ -51,7 +50,7 @@ class Moderation(cmd.Cog):
     @cmd.command(name="Kick", aliases=['kick', 'k'], usage="kick <user> [reason]")
     @cmd.guild_only()
     async def _kick(self, ctx: cmd.Context, user: discord.Member, *, reason: str = "no reason"):
-        embed = discord.Embed(title="Лшсл",
+        embed = discord.Embed(title="Kick",
                                    description="User: {user}\nReason: {reason}",
                                    timestamp=datetime.now(),
                                    colour=discord.Colour.green())
