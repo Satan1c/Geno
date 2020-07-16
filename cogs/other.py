@@ -7,6 +7,7 @@ import discord
 import psutil
 from discord.ext import commands as cmd
 from asyncio import sleep
+import re
 
 
 class System(cmd.Cog):
@@ -37,7 +38,27 @@ class System(cmd.Cog):
         owners = [j for i in self.bot.guilds for j in i.members if i.owner_id == j.id]
         for member in owners:
             await member.send(embed=discord.Embed.from_dict(dict(text)))
- 
+    
+    @cmd.command(name="Editor", aliases=['editor', 'edit'], hidden=True)
+    @cmd.is_owner()
+    async def _editor(self, ctx: cmd.Context, *, member: str, param: str, value):
+        cfg = self.config.find_one({"_id": f"{ctx.guild.id}"})
+
+        if len(re.sub(r'[^0-9]', r'', member)) == 18:
+            mem = ctx.message.mentions[0] if ctx.mentions else ctx.guild.get_member(int(member))
+            mem = mem if mem else discord.Object(id=int(member))
+
+            cfg = self.config.find_one({"sid": f"{ctx.guild.id}", "uid": f"{mem.id}"})
+        
+        else:
+            param, value = member, param
+
+        cfg[param] = int(value) if len(re.sub(r'[^0-9]', r'', value)) == len(value)\
+                    else dict(value) if ("{" and "}") in str(value) else str(value)
+        
+        if "sid" in cfg:
+            self.config.update_one({"sid": cfg['sid'], "uid": cfg['uid']}, {"$set": dict(cfg)})
+
     @cmd.command(name="Help", hidden=True, aliases=['h', 'help', 'commands', 'cmds'])
     async def _help(self, ctx: cmd.Context):
         prefix = "-" if not ctx.guild else self.config.find_one({"_id": f"{ctx.guild.id}"})['prefix']
@@ -80,7 +101,8 @@ class System(cmd.Cog):
                       icon_url=ctx.author.avatar_url_as(format="png", static_format='png', size=256))
         em.add_field(name="messages:", value=f"`{prf['messages']}`")
 
-        return await ctx.send(embed=em)
+        m = await ctx.send(embed=em)
+        await m.delete(delay=120)
 
     @cmd.command(name="Server", aliases=['server', 'srv', 'information', 'info'], usage="server")
     @cmd.guild_only()
@@ -101,7 +123,8 @@ class System(cmd.Cog):
                      value=f"<:voice:730689231139241984> Voices: `{len(g.voice_channels)}`\n"
                            f"<:text:730689530461552710> Texts: `{len(g.text_channels)}`")
 
-        await ctx.send(embed=em)
+        m = await ctx.send(embed=em)
+        await m.delete(delay=120)
     
     @cmd.command(name="Prefix", aliases=['prefix'], usage="prefix <prefix>")
     @cmd.guild_only()
@@ -112,12 +135,12 @@ class System(cmd.Cog):
             raise cmd.BadArgument("New prefix can't be equals old")
 
         self.config.update_one({"_id": f"{ctx.guild.id}"}, {"$set": {"prefix": prefix}})
-        await ctx.send(embed=discord.Embed(title="Prefix change",
-        description=f"From: `{raw}`\nTo: `{prefix}`",
-        colour=discord.Colour.green(),
-        timestamp=datetime.now())
-        .set_footer(text=str(ctx.author), icon_url=ctx.author.avatar_url_as(format="png", static_format='png', size=256)))
-
+        m = await ctx.send(embed=discord.Embed(title="Prefix change",
+                            description=f"From: `{raw}`\nTo: `{prefix}`",
+                            colour=discord.Colour.green(),
+                            timestamp=datetime.now())
+                            .set_footer(text=str(ctx.author), icon_url=ctx.author.avatar_url_as(format="png", static_format='png', size=256)))
+        await m.delete(delay=120)
 
     @cmd.command(name="Bot", aliases=['bot', 'about'], usage="bot")
     async def _bot(self, ctx: cmd.Context):
@@ -130,7 +153,8 @@ class System(cmd.Cog):
               f"percentage: {round(psutil.virtual_memory().available * 100 / psutil.virtual_memory().total, 1)}%`"
 
         em = self.EmbedGenerator(target="bot", ctx=ctx, system=system, cpu=cpu, ram=ram, platform=platform, data=self).get()
-        await ctx.send(embed=em)
+        m = await ctx.send(embed=em)
+        await m.delete(delay=120)
 
 
 def setup(bot):

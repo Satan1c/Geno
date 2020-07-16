@@ -43,7 +43,8 @@ class Music(cmd.Cog):
 
         client.play(source, after=after_playing)
 
-        return await ctx.send(embed=video.get_embed())
+        m = await ctx.send(embed=video.get_embed())
+        await m.delete(delay=120)
 
     @cmd.command(name="Stop", aliases=['stop'], usage="stop")
     @cmd.guild_only()
@@ -94,11 +95,18 @@ class Music(cmd.Cog):
     
     @cmd.command(name="Volume", aliases=['volume', 'v'], usage="volume <value>")
     @cmd.guild_only()
-    async def _volume(self, ctx: cmd.Context, value: float = 0.5):
+    async def _volume(self, ctx: cmd.Context, value: float = None):
         client = ctx.voice_client
         cfg = self.config.find_one({"_id": f"{ctx.guild.id}"})['music']
         em = discord.Embed(title="Volume change", description="From: `{raw}%`\nTo: `{end}%`", colour=discord.Colour.green(), timestamp=datetime.now())
         em.set_footer(text=str(ctx.author), icon_url=ctx.author.avatar_url_as(format="png", static_format='png', size=256))
+
+        if not value:
+            em.title = "Volume"
+            em.description = f"`{cfg['volume']*100}%`"
+            m = await ctx.send(embed=em)
+            await m.delete(delay=120)
+            return
 
         if not ctx.author.voice or not ctx.author.voice.channel:
             raise cmd.BadArgument("To use this command: you must be in voice channel, or check bot permissions to view it")
@@ -121,7 +129,8 @@ class Music(cmd.Cog):
         self.config.update_one({"_id": f"{ctx.guild.id}"}, {"$set": {"music": dict(cfg)}})
         em.description = em.description.format(raw=raw*100, end=end*100)
 
-        await ctx.send(embed=em)
+        m = await ctx.send(embed=em)
+        await m.delete(delay=120)
 
     @cmd.command(name="Now playing", aliases=['now_playing', 'nowplaying', 'np'], usage="now_playing")
     @cmd.guild_only()
@@ -133,7 +142,7 @@ class Music(cmd.Cog):
         dur = self.utils.parser(typ="time", raw=np['duration'])
         mem = ctx.guild.get_member(int(np['req']))
 
-        return await ctx.send(embed=discord.Embed(colour=discord.Colour.green(),
+        m = await ctx.send(embed=discord.Embed(colour=discord.Colour.green(),
                                 description=f"Duration: `{raw}` / `{dur}`\n"
                                 f"Requested by: `{str(mem or 'User not found')}` {f'[{mem.mention}]' if mem else ''}",
                                 timestamp=datetime.now())
@@ -141,6 +150,7 @@ class Music(cmd.Cog):
                                 .set_author(name=np['title'], url=np['url'], icon_url=np['channel_icon_url'])
                                 .set_footer(text=str(ctx.author),
                                             icon_url=ctx.author.avatar_url_as(format="png", static_format='png', size=256)))
+        await m.delete(delay=120)
     
     @cmd.command(name="Queue", aliases=['queue', 'q'], usage="queue")
     @cmd.guild_only()
@@ -163,7 +173,7 @@ class Music(cmd.Cog):
                 n = i + 1
                 j = cfg['queue'][i]
                 mem = ctx.guild.get_member(int(j['req']))
-                desc.append(f"`{n}`` Requested by: {str(mem or 'User not found')} [{mem.mention if mem else ''}]\n[{j['title']}]({j['url']})")
+                desc.append(f"`{n}` Requested by: {str(mem or 'User not found')} [{mem.mention if mem else ''}]\n[{j['title']}]({j['url']})")
 
                 if n % 5 == 0:
                     embeds.append(discord.Embed(title="Queue list:",
@@ -175,31 +185,35 @@ class Music(cmd.Cog):
                             .set_footer(text=str(ctx.author), icon_url=ctx.author.avatar_url_as(format="png",
                                                                                                 static_format='png', size=256)))
             else:
-                try:
-                    embeds.append(discord.Embed(title="Queue list:",
-                            colour=discord.Colour.green(),
-                            timestamp=datetime.now(),
-                            description="\n".join(desc[len(embeds)*5:]))
-                            .set_thumbnail(url=np['thumb_url'])
-                            .set_author(name=np['title'], url=np['url'], icon_url=np['channel_icon_url'])
-                            .set_footer(text=str(ctx.author), icon_url=ctx.author.avatar_url_as(format="png",
-                                                                                                static_format='png', size=256)))
-                except:
-                    pass
+                if len(desc[len(embeds)*5:]) > 0:
+                    try:
+                        embeds.append(discord.Embed(title="Queue list:",
+                                colour=discord.Colour.green(),
+                                timestamp=datetime.now(),
+                                description="\n".join(desc[len(embeds)*5:]))
+                                .set_thumbnail(url=np['thumb_url'])
+                                .set_author(name=np['title'], url=np['url'], icon_url=np['channel_icon_url'])
+                                .set_footer(text=str(ctx.author), icon_url=ctx.author.avatar_url_as(format="png",
+                                                                                                    static_format='png', size=256)))
+                    except:
+                        pass
 
             if len(embeds) > 1:
                 p = self.Paginator(ctx, embeds=embeds, music=cfg, cfg=self.config)
                 return await p.call_controller()
 
             if len(embeds) == 1:
-                return await ctx.send(embed=embeds[0])
+                m = await ctx.send(embed=embeds[0])
+                await m.delete(delay=120)
+                return
 
         if np:
             em.set_thumbnail(url=np['thumb_url'])
             em.set_author(name=np['title'], url=np['url'], icon_url=np['channel_icon_url'])
         em.set_footer(text=str(ctx.author), icon_url=ctx.author.avatar_url_as(format="png", static_format='png', size=256))
 
-        return await ctx.send(embed=em)
+        m = await ctx.send(embed=em)
+        await m.delete(delay=120)
         
 
 def setup(bot):

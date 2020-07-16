@@ -8,7 +8,7 @@ import discord
 import pymongo
 from discord.ext import commands as cmd
 
-from . import models#, config
+from . import models
 from .utils import Utils, Video, Paginator, DataBase, EmbedGenerator
 
 client = pymongo.MongoClient(config.MONGO)
@@ -64,6 +64,7 @@ class Geno(cmd.Bot):
         await ctx.message.delete()
 
     async def on_connect(self):
+        #return
         self.main.update_one({"_id": 0}, {"$set": {"uptime": datetime.now()}})
 
     async def get_prefix(self, message):

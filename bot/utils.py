@@ -8,7 +8,7 @@ from typing import Union
 
 import youtube_dl
 from dateutil.relativedelta import relativedelta
-from discord import Embed, VoiceClient, User, Colour
+from discord import Embed, VoiceClient, User, Colour, AudioSource
 from discord.ext import commands as cmd
 from discord.ext.commands import Context
 from googleapiclient import discovery
@@ -176,7 +176,7 @@ class Utils:
 
     # _music----------------------------------------------------------------------------------------------
 
-    def play(self, url: str, cfg: dict, ctx: cmd.Context = None, req: User = None, ):
+    def play(self, url: str, cfg: dict, ctx: cmd.Context = None, req: User = None):
         if not req:
             req = ctx.author
 
@@ -196,7 +196,8 @@ class Utils:
         self.config.update_one({"_id": f"{ctx.guild.id}"}, {"$set": {"music": dict(music)}})
 
         em = EmbedGenerator(target="queue", video=video, ctx=ctx).get()
-        return await ctx.send(embed=em)
+        m = await ctx.send(embed=em)
+        await m.delete(delay=120)
     
     def after(self, ctx: cmd.Context, client: VoiceClient, err, after_playing):
         if err:
@@ -277,8 +278,11 @@ class Paginator:
         else:
             await self.controller.edit(embed=self.pages[start_page])
 
-        if not isinstance(self.ctx.channel, discord.DMChannel):
+        try:
             await self.controller.clear_reactions()
+        except:
+            pass
+        
         for emoji in self.reactions:
             await self.controller.add_reaction(emoji)
 
@@ -302,10 +306,10 @@ class Paginator:
                 await self.controller.edit(embed=self.pages[self.current])
 
             if response[0].emoji == self.reactions[1]:
-                em = self.controller.embeds[0]
-                if em.title == "Queue list:":
-                    self.music['queue'] = []
-                    self.cfg.update_one({"_id": f"{self.ctx.guild.id}"}, {"$set": {"music": dict(self.music)}})
+                # em = self.controller.embeds[0]
+                # if em.title == "Queue list:":
+                #     self.music['queue'] = []
+                #     self.cfg.update_one({"_id": f"{self.ctx.guild.id}"}, {"$set": {"music": dict(self.music)}})
                 break
 
             if response[0].emoji == self.reactions[2]:
