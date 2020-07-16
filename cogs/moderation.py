@@ -37,14 +37,17 @@ class Moderation(cmd.Cog):
             self.embed.description = self.embed.description.format(user=bans, reason=reason)
             self.embed.title = "Soft Ban"
 
-            return await ctx.send(embed=self.embed)
+            m = await ctx.send(embed=self.embed)
+            await m.delete(delay=120)
+            return
 
         user = ctx.message.mentions[0]
 
         await ctx.guild.ban(user, reason=reason)
         self.embed.description = self.embed.description.format(user=str(user), reason=reason)
 
-        return await ctx.send(embed=self.embed)
+        m = await ctx.send(embed=self.embed)
+        await m.delete(delay=120)
 
     @cmd.command(name="Kick", aliases=['kick', 'k'], usage="kick <user> [reason]")
     @cmd.guild_only()
@@ -57,7 +60,8 @@ class Moderation(cmd.Cog):
                                   size=256))
 
         await ctx.guild.kick(user, reason=reason)
-        return await ctx.send(embed=self.embed)
+        m = await ctx.send(embed=self.embed)
+        await m.delete(delay=120)
 
 
 def setup(bot):
