@@ -14,6 +14,8 @@ class Moderation(cmd.Cog):
 
     @cmd.command(name="Ban", aliases=['ban', 'b'], usage="ban <user> [reason]")
     @cmd.guild_only()
+    @cmd.bot_has_permissions(ban_members=True)
+    @cmd.has_permissions(ban_members=True)
     async def _ban(self, ctx: cmd.Context, user, *, reason: str = "no reason"):
         embed = discord.Embed(title="Ban",
                                    description="User: {user}\nReason: {reason}",
@@ -49,6 +51,8 @@ class Moderation(cmd.Cog):
 
     @cmd.command(name="Kick", aliases=['kick', 'k'], usage="kick <user> [reason]")
     @cmd.guild_only()
+    @cmd.bot_has_permissions(kick_members=True)
+    @cmd.has_permissions(kick_members=True)
     async def _kick(self, ctx: cmd.Context, user: discord.Member, *, reason: str = "no reason"):
         embed = discord.Embed(title="Kick",
                                    description="User: {user}\nReason: {reason}",
