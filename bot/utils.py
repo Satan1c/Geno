@@ -362,7 +362,7 @@ class DataBase:
             print(f"created: {i['_id']}")
     
     async def create_user(self, member: discord.Member):
-        i = self.models.User(i).get_dict()
+        i = self.models.User(member).get_dict()
         usr = self.servers.find_one({"sid": f"{i['sid']}", "uid": f"{i['uid']}"})
 
         if not usr:
