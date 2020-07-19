@@ -128,6 +128,7 @@ class System(cmd.Cog):
     
     @cmd.command(name="Prefix", aliases=['prefix'], usage="prefix <prefix>")
     @cmd.guild_only()
+    @cmd.has_permissions(manage_messages=True)
     async def _prefix(self, ctx: cmd.Context, *, prefix: str = "-"):
         cfg = self.config.find_one({"_id": f"{ctx.guild.id}"})
         raw = cfg['prefix']
