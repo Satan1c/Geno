@@ -10,7 +10,6 @@ from discord.ext import commands as cmd
 class Moderation(cmd.Cog):
     def __int__(self, bot):
         self.bot = bot
-        self.config = bot.servers
 
     @cmd.command(name="Ban", aliases=['ban', 'b'], usage="ban <user> [reason]")
     @cmd.bot_has_guild_permissions(ban_members=True)
@@ -50,7 +49,7 @@ class Moderation(cmd.Cog):
             elif mem:
                 user = mem
 
-        if user.id == self.bot.owner_id:
+        if user.id == ctx.bot.owner_id:
             raise cmd.BadArgument("Can't ban my owner")
 
         await ctx.guild.ban(user, reason=reason, delete_message_days=0)
@@ -73,7 +72,7 @@ class Moderation(cmd.Cog):
                              static_format='png',
                              size=256))
 
-        if user.id == self.bot.owner_id:
+        if user.id == ctx.bot.owner_id:
             raise cmd.BadArgument("Can't kick my owner")
 
         await ctx.guild.kick(user, reason=reason)
