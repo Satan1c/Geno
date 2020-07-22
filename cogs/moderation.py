@@ -50,8 +50,8 @@ class Moderation(cmd.Cog):
             elif mem:
                 user = mem
 
-        if not await ctx.bot.is_owner(user):
-            raise cmd.BotMissingPermissions("Missing Permissions")
+        if user.id == self.bot.owner_id:
+            raise cmd.BadArgument("Can't ban my owner")
 
         await ctx.guild.ban(user, reason=reason, delete_message_days=0)
         embed.description = embed.description.format(user=str(user), reason=reason)
@@ -73,8 +73,8 @@ class Moderation(cmd.Cog):
                              static_format='png',
                              size=256))
 
-        if not await ctx.bot.is_owner(user):
-            raise cmd.BotMissingPermissions("Missing Permissions")
+        if user.id == self.bot.owner_id:
+            raise cmd.BadArgument("Can't kick my owner")
 
         await ctx.guild.kick(user, reason=reason)
         m = await ctx.send(embed=embed)
