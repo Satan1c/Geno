@@ -13,35 +13,45 @@ class Moderation(cmd.Cog):
         self.config = bot.servers
 
     @cmd.command(name="Ban", aliases=['ban', 'b'], usage="ban <user> [reason]")
-    @cmd.guild_only()
-    @cmd.bot_has_permissions(ban_members=True)
-    @cmd.has_permissions(ban_members=True)
+    @cmd.bot_has_guild_permissions(ban_members=True)
+    @cmd.has_guild_permissions(ban_members=True)
     async def _ban(self, ctx: cmd.Context, user, *, reason: str = "no reason"):
         embed = discord.Embed(title="Ban",
-                                   description="User: {user}\nReason: {reason}",
-                                   timestamp=datetime.now(),
-                                   colour=discord.Colour.green())
+                              description="User: {user}\nReason: {reason}",
+                              timestamp=datetime.now(),
+                              colour=discord.Colour.green())
         embed.set_author(name=str(ctx.author),
-                              icon_url=ctx.author.avatar_url_as(
-                                  format="png",
-                                  static_format='png',
-                                  size=256))
-        user = re.sub(r"[^0-9]", r"", user) if not ctx.guild.get_member(int(re.sub(r"[^0-9]", r"", user))) else user
-        if len(re.sub(r"[^0-9]", r"", user)) == 18 and not ctx.guild.get_member(int(user)):
-            user = discord.Object(id=int(user))
-            await ctx.guild.ban(user=user, reason=reason, delete_message_days=0)
+                         icon_url=ctx.author.avatar_url_as(
+                             format="png",
+                             static_format='png',
+                             size=256))
 
-            bans = await ctx.guild.bans()
-            bans = [f"{i.user.name}#{i.user.discriminator}" for i in bans if i.user.id == user.id][0]
+        user = re.sub(r"[^0-9]", r"", user)
 
-            embed.description = embed.description.format(user=bans, reason=reason)
-            embed.title = "ID Ban"
+        if len(ctx.message.mentions) > 0:
+            user = ctx.guild.get_member(int(ctx.message.mentions[0].id))
 
-            m = await ctx.send(embed=embed)
-            await m.delete(delay=120)
-            return
+        elif len(user) == 18:
+            mem = ctx.guild.get_member(int(user))
+            if not mem:
+                user = discord.Object(id=int(user))
+                await ctx.guild.ban(user=user, reason=reason, delete_message_days=0)
 
-        user = ctx.guild.get_member(int(user) if len(re.sub(r"[^0-9]", r"", user)) == 18 else ctx.message.mentions[0].id)
+                bans = await ctx.guild.bans()
+                bans = [f"{i.user.name}#{i.user.discriminator}" for i in bans if i.user.id == user.id][0]
+
+                embed.description = embed.description.format(user=bans, reason=reason)
+                embed.title = "ID Ban"
+
+                m = await ctx.send(embed=embed)
+                await m.delete(delay=120)
+                return
+
+            elif mem:
+                user = mem
+
+        if not await ctx.bot.is_owner(user):
+            raise cmd.BotMissingPermissions("Missing Permissions")
 
         await ctx.guild.ban(user, reason=reason, delete_message_days=0)
         embed.description = embed.description.format(user=str(user), reason=reason)
@@ -50,19 +60,21 @@ class Moderation(cmd.Cog):
         await m.delete(delay=120)
 
     @cmd.command(name="Kick", aliases=['kick', 'k'], usage="kick <user> [reason]")
-    @cmd.guild_only()
-    @cmd.bot_has_permissions(kick_members=True)
-    @cmd.has_permissions(kick_members=True)
+    @cmd.bot_has_guild_permissions(kick_members=True)
+    @cmd.has_guild_permissions(kick_members=True)
     async def _kick(self, ctx: cmd.Context, user: discord.Member, *, reason: str = "no reason"):
         embed = discord.Embed(title="Kick",
-                                   description="User: {user}\nReason: {reason}",
-                                   timestamp=datetime.now(),
-                                   colour=discord.Colour.green())
+                              description=f"User: {user}\nReason: {reason}",
+                              timestamp=datetime.now(),
+                              colour=discord.Colour.green())
         embed.set_author(name=str(ctx.author),
-                              icon_url=ctx.author.avatar_url_as(
-                                  format="png",
-                                  static_format='png',
-                                  size=256))
+                         icon_url=ctx.author.avatar_url_as(
+                             format="png",
+                             static_format='png',
+                             size=256))
+
+        if not await ctx.bot.is_owner(user):
+            raise cmd.BotMissingPermissions("Missing Permissions")
 
         await ctx.guild.kick(user, reason=reason)
         m = await ctx.send(embed=embed)

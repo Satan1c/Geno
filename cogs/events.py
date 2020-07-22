@@ -15,7 +15,7 @@ class Events(cmd.Cog):
         await self.DB(self.bot).create()
         print(f"{self.bot.user.name}, is ready")
         await self.bot.get_guild(648571219674923008).get_channel(648780121419022336).send("Ready")
-    
+
     @cmd.Cog.listener()
     async def on_guild_join(self, guild: discord.Guild):
         await self.DB(self.bot).create_server(guild)
@@ -31,7 +31,7 @@ class Events(cmd.Cog):
         cfg = self.config.find_one({"_id": f"{member.guild.id}"})['music']
         if member.id == self.bot.user.id and after.channel and member.voice and not member.voice.deaf:
             await member.edit(deafen=True)
-        
+
         if member.id == member.guild.me.id and not after.channel and cfg['now_playing']:
             cfg['queue'] = []
             cfg['now_playing'] = ""

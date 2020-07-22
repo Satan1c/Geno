@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 
-from discord import Guild, Member
 from datetime import datetime
+
+from discord import Guild, Member
+
 
 class Server:
     def __init__(self, guild: Guild):
@@ -42,12 +44,13 @@ class User:
             "mute_time": self.mute_time
         }
 
+
 class Queue:
     def __init__(self, video):
         self.req = str(video.req['id'])
         self.url = str(video.video_url)
         self.title = str(video.title)
-    
+
     def get_dict(self) -> dict:
         data = {
             "req": self.req,
@@ -55,6 +58,7 @@ class Queue:
             "title": self.title
         }
         return data
+
 
 class NowPlaying:
     def __init__(self, video):
@@ -67,7 +71,7 @@ class NowPlaying:
         self.channel_url = str(video.uploader['url'])
         self.channel_icon_url = str(video.uploader['icon'])
         self.channel_name = str(video.uploader['name'])
-    
+
     def get_dict(self) -> dict:
         data = {
             "req": self.req,

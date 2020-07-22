@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-
 
 import platform
+import re
 from datetime import datetime
 
 import discord
 import psutil
 from discord.ext import commands as cmd
-from asyncio import sleep
-import re
 
 
 class System(cmd.Cog):
@@ -30,7 +29,7 @@ class System(cmd.Cog):
     async def _test(self, ctx: cmd.Context):
         em = discord.Embed(title="Test").to_dict()
         await ctx.send(embed=discord.Embed.from_dict(em))
-    
+
     @cmd.command(name="Announcer", aliases=['announce'], hidden=True)
     @cmd.is_owner()
     async def _announce(self, ctx: cmd.Context, *, text: str):
@@ -38,7 +37,7 @@ class System(cmd.Cog):
         owners = [j for i in self.bot.guilds for j in i.members if i.owner_id == j.id]
         for member in owners:
             await member.send(embed=discord.Embed.from_dict(dict(text)))
-    
+
     @cmd.command(name="Editor", aliases=['editor', 'edit'], hidden=True)
     @cmd.is_owner()
     async def _editor(self, ctx: cmd.Context, *, member: str, param: str, value):
@@ -49,13 +48,13 @@ class System(cmd.Cog):
             mem = mem if mem else discord.Object(id=int(member))
 
             cfg = self.config.find_one({"sid": f"{ctx.guild.id}", "uid": f"{mem.id}"})
-        
+
         else:
             param, value = member, param
 
-        cfg[param] = int(value) if len(re.sub(r'[^0-9]', r'', value)) == len(value)\
-                    else dict(value) if ("{" and "}") in str(value) else str(value)
-        
+        cfg[param] = int(value) if len(re.sub(r'[^0-9]', r'', value)) == len(value) \
+            else dict(value) if ("{" and "}") in str(value) else str(value)
+
         if "sid" in cfg:
             self.config.update_one({"sid": cfg['sid'], "uid": cfg['uid']}, {"$set": dict(cfg)})
 
@@ -125,10 +124,9 @@ class System(cmd.Cog):
 
         m = await ctx.send(embed=em)
         await m.delete(delay=120)
-    
+
     @cmd.command(name="Prefix", aliases=['prefix'], usage="prefix <prefix>")
-    @cmd.guild_only()
-    @cmd.has_permissions(manage_messages=True)
+    @cmd.has_guild_permissions(manage_messages=True)
     async def _prefix(self, ctx: cmd.Context, *, prefix: str = "-"):
         cfg = self.config.find_one({"_id": f"{ctx.guild.id}"})
         raw = cfg['prefix']
@@ -137,10 +135,11 @@ class System(cmd.Cog):
 
         self.config.update_one({"_id": f"{ctx.guild.id}"}, {"$set": {"prefix": prefix}})
         m = await ctx.send(embed=discord.Embed(title="Prefix change",
-                            description=f"From: `{raw}`\nTo: `{prefix}`",
-                            colour=discord.Colour.green(),
-                            timestamp=datetime.now())
-                            .set_footer(text=str(ctx.author), icon_url=ctx.author.avatar_url_as(format="png", static_format='png', size=256)))
+                                               description=f"From: `{raw}`\nTo: `{prefix}`",
+                                               colour=discord.Colour.green(),
+                                               timestamp=datetime.now())
+                           .set_footer(text=str(ctx.author),
+                                       icon_url=ctx.author.avatar_url_as(format="png", static_format='png', size=256)))
         await m.delete(delay=120)
 
     @cmd.command(name="Bot", aliases=['bot', 'about'], usage="bot")
@@ -153,7 +152,8 @@ class System(cmd.Cog):
               f" {(psutil.virtual_memory().total // 1024) // 1000}mb\n" \
               f"percentage: {round(psutil.virtual_memory().available * 100 / psutil.virtual_memory().total, 1)}%`"
 
-        em = self.EmbedGenerator(target="bot", ctx=ctx, system=system, cpu=cpu, ram=ram, platform=platform, data=self).get()
+        em = self.EmbedGenerator(target="bot", ctx=ctx, system=system, cpu=cpu, ram=ram, platform=platform,
+                                 data=self).get()
         m = await ctx.send(embed=em)
         await m.delete(delay=120)
 
