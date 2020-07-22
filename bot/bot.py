@@ -16,7 +16,7 @@ client = pymongo.MongoClient(config.MONGO)
 
 class Geno(cmd.Bot):
     def __init__(self):
-        super().__init__(command_prefix=self.get_prefix, , owner_id=348444859360608256)
+        super().__init__(command_prefix=self.get_prefix, owner_id=348444859360608256)
         self.init()
 
     def init(self):
