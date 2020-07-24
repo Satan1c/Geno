@@ -44,7 +44,10 @@ class Events(cmd.Cog):
     async def on_voice_state_update(self, member: discord.Member, before, after):
         cfg = self.config.find_one({"_id": f"{member.guild.id}"})['music']
         if member.id == self.bot.user.id and after.channel and member.voice and not member.voice.deaf:
-            await member.edit(deafen=True)
+            try:
+                await member.edit(deafen=True)
+            except:
+                pass
 
         if member.id == member.guild.me.id and not after.channel and cfg['now_playing']:
             cfg['queue'] = []
