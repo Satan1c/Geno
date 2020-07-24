@@ -2,6 +2,9 @@
 
 import discord
 from discord.ext import commands as cmd
+from asyncio import sleep
+from requests import post
+from config import SDC
 
 
 class Events(cmd.Cog):
@@ -15,6 +18,19 @@ class Events(cmd.Cog):
         await self.DB(self.bot).create()
         print(f"{self.bot.user.name}, is ready")
         await self.bot.get_guild(648571219674923008).get_channel(648780121419022336).send("Ready")
+
+        while 1:
+            url = f"https://api.server-discord.com/v2/bots/{self.bot.user.id}/stats"
+            headers = {
+                "Authorization": str(SDC)
+                }
+            data = {
+                "servers": len(self.bot.guilds)
+            }
+
+            post(url=url, data=data, headers=headers)
+
+            await sleep(901)
 
     @cmd.Cog.listener()
     async def on_guild_join(self, guild: discord.Guild):
