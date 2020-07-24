@@ -59,7 +59,7 @@ class Geno(cmd.Bot):
         try:
             m = await ctx.send(embed=em)
             await m.delete(delay=120)
-        exept:
+        except:
             pass
 
     async def on_command(self, ctx: cmd.Context):
