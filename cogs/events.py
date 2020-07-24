@@ -35,8 +35,6 @@ class Events(cmd.Cog):
     @cmd.Cog.listener()
     async def on_guild_join(self, guild: discord.Guild):
         await self.DB(self.bot).create_server(guild)
-        if not guild.me.deafen:
-            await guild.me.edit(deafen=True)
 
     @cmd.Cog.listener()
     async def on_member_join(self, member: discord.Member):
