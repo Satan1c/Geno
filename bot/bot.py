@@ -56,9 +56,11 @@ class Geno(cmd.Bot):
 
         if isinstance(err, cmd.NoPrivateMessage):
             em.description = "Not a giuld"
-
-        m = await ctx.send(embed=em)
-        await m.delete(delay=120)
+        try:
+            m = await ctx.send(embed=em)
+            await m.delete(delay=120)
+        exept:
+            pass
 
     async def on_command(self, ctx: cmd.Context):
         if isinstance(ctx.channel, discord.DMChannel):
