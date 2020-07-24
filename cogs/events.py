@@ -22,7 +22,7 @@ class Events(cmd.Cog):
         while 1:
             url = f"https://api.server-discord.com/v2/bots/{self.bot.user.id}/stats"
             headers = {
-                "Authorization": str(SDC)
+                "Authorization": f"SDC {SDC}"
                 }
             data = {
                 "servers": len(self.bot.guilds)
