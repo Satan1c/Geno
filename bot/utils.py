@@ -361,6 +361,8 @@ class DataBase:
         if not srv:
             self.servers.insert_one(i)
             print(f"created: {i['_id']}")
+        for i in guild.members:
+                  await self.create_user(i)
 
     async def create_user(self, member: discord.Member):
         i = self.models.User(member).get_dict()
