@@ -346,7 +346,7 @@ class DataBase:
                 continue
 
     async def _create_users(self):
-        if len(self.bot.usrs) == len([i for i in self.profiles.find()]):
+        if len(self.bot.users) == len([i for i in self.profiles.find()]):
             return
         raw = [i.members for i in self.bot.guilds]
 
