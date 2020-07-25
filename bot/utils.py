@@ -336,23 +336,29 @@ class DataBase:
         guilds = [self.models.Server(i).get_dict() for i in self.bot.guilds]
 
         for i in guilds:
-            srv = self.servers.find_one({"_id": f"{i['_id']}"})
+            try:
+                srv = self.servers.find_one({"_id": f"{i['_id']}"})
 
-            if not srv:
-                self.servers.insert_one(i)
-                print(f"created: {i['_id']}")
+                if not srv:
+                    self.servers.insert_one(i)
+                    print(f"created: {i['_id']}")
+            except:
+                continue
 
     async def _create_users(self):
         raw = [i.members for i in self.bot.guilds]
 
         for x in raw:
             for i in x:
-                prf = self.profiles.find_one({"sid": f"{i.guild.id}", "uid": f"{i.id}"})
+                try:
+                    prf = self.profiles.find_one({"sid": f"{i.guild.id}", "uid": f"{i.id}"})
 
-                if not prf:
-                    mem = self.models.User(i).get_dict()
-                    self.profiles.insert_one(mem)
-                    print(f"created: {mem['sid']} | {mem['uid']}")
+                    if not prf:
+                        mem = self.models.User(i).get_dict()
+                        self.profiles.insert_one(mem)
+                        print(f"created: {mem['sid']} | {mem['uid']}")
+                except:
+                    continue
 
     async def create_server(self, guild: discord.Guild):
         i = self.models.Server(guild).get_dict()
