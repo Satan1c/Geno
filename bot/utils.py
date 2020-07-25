@@ -333,34 +333,22 @@ class DataBase:
         print(f"created: users")
 
     async def _create_servers(self):
-        if len(self.bot.guilds) == len([i for i in self.servers.find()]):
-            return
-        for i in self.bot.guilds:
-            try:
-                srv = self.servers.find_one({"_id": f"{i.id}"})
+        all = [int(i['_id']) for i in self.servers.find()]
 
-                if not srv:
-                    self.servers.insert_one(self.models.Server(i).get_dict())
-                    print(f"created: {i['_id']}")
-            except:
-                continue
+        create = [i for i in self.bot.guilds if i.id not in all]
+        for i in create:
+                self.servers.insert_one(self.models.Server(i).get_dict())
+                print(f"created: {i.id}")
 
     async def _create_users(self):
-        if len(self.bot.users) == len([i for i in self.profiles.find()]):
-            return
+        all = [f"{i['sid']} {i['uid']}" for i in self.profiles.find()]
+
         raw = [i.members for i in self.bot.guilds]
-
-        for x in raw:
-            for i in x:
-                try:
-                    prf = self.profiles.find_one({"sid": f"{i.guild.id}", "uid": f"{i.id}"})
-
-                    if not prf:
-                        mem = self.models.User(i).get_dict()
-                        self.profiles.insert_one(mem)
-                        print(f"created: {mem['sid']} | {mem['uid']}")
-                except:
-                    continue
+        create = [i for x in raw for i in x if f"{i.guild.id} {i.id}" not in all]
+        for i in create:
+            mem = self.models.User(i).get_dict()
+            self.profiles.insert_one(mem)
+            print(f"created: {mem['sid']} | {mem['uid']}")
 
     async def create_server(self, guild: discord.Guild):
         i = self.models.Server(guild).get_dict()
