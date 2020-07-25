@@ -4,7 +4,25 @@ import discord
 from discord.ext import commands as cmd
 from asyncio import sleep
 from requests import post
-from config import SDC
+from config import SDC, Boat
+
+def req(bot):
+    urls = [{"url": f"https://api.server-discord.com/v2/bots/{bot.user.id}/stats", "token": f"SDC {SDC}", "servers": "servers"},
+            {"url": f"https://discord.boats/api/bot/{bot.user.id}", "token": f"{}", "servers": "server_count"}]
+    while 1:
+        for i in urls
+            headers = {
+                "Authorization": i['token']
+            }
+            data = {
+                i['servers']: len(bot.guilds)
+            }
+            if i['token'].startswith("SDC "):
+                data['shards'] = 1
+            
+            post(url=i['url'], data=data, headers=headers)
+            
+        await sleep(901)
 
 
 class Events(cmd.Cog):
@@ -19,18 +37,7 @@ class Events(cmd.Cog):
         print(f"{self.bot.user.name}, is ready")
         await self.bot.get_guild(648571219674923008).get_channel(648780121419022336).send("Ready")
 
-        while 1:
-            url = f"https://api.server-discord.com/v2/bots/{self.bot.user.id}/stats"
-            headers = {
-                "Authorization": f"SDC {SDC}"
-                }
-            data = {
-                "servers": len(self.bot.guilds)
-            }
-
-            post(url=url, data=data, headers=headers)
-
-            await sleep(901)
+        req(self.bot)
 
     @cmd.Cog.listener()
     async def on_guild_join(self, guild: discord.Guild):
