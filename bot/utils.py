@@ -333,19 +333,21 @@ class DataBase:
         print(f"created: users")
 
     async def _create_servers(self):
-        guilds = [self.models.Server(i).get_dict() for i in self.bot.guilds]
-
-        for i in guilds:
+        if len(self.bot.guilds) == len(self.servers.find({})):
+            return
+        for i in self.bot.guilds:
             try:
-                srv = self.servers.find_one({"_id": f"{i['_id']}"})
+                srv = self.servers.find_one({"_id": f"{i.id}"})
 
                 if not srv:
-                    self.servers.insert_one(i)
+                    self.servers.insert_one(self.models.Server(i).get_dict())
                     print(f"created: {i['_id']}")
             except:
                 continue
 
     async def _create_users(self):
+        if len(self.bot.usrs) == len(self.profiles.find({}):
+            return
         raw = [i.members for i in self.bot.guilds]
 
         for x in raw:
