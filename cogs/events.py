@@ -6,7 +6,7 @@ from asyncio import sleep
 from requests import post
 from config import SDC, Boat
 
-def req(bot):
+async def req(bot):
     urls = [{"url": f"https://api.server-discord.com/v2/bots/{bot.user.id}/stats", "token": f"SDC {SDC}", "servers": "servers"},
             {"url": f"https://discord.boats/api/bot/{bot.user.id}", "token": f"{}", "servers": "server_count"}]
     while 1:
@@ -37,7 +37,7 @@ class Events(cmd.Cog):
         print(f"{self.bot.user.name}, is ready")
         await self.bot.get_guild(648571219674923008).get_channel(648780121419022336).send("Ready")
         
-        req(self.bot)
+        await req(self.bot)
 
     @cmd.Cog.listener()
     async def on_guild_join(self, guild: discord.Guild):
