@@ -333,7 +333,7 @@ class DataBase:
         print(f"created: users")
 
     async def _create_servers(self):
-        if len(self.bot.guilds) == len([i fir i in self.servers.find()]):
+        if len(self.bot.guilds) == len([i for i in self.servers.find()]):
             return
         for i in self.bot.guilds:
             try:
@@ -346,7 +346,7 @@ class DataBase:
                 continue
 
     async def _create_users(self):
-        if len(self.bot.usrs) == len([i fir i in self.profiles.find()]):
+        if len(self.bot.usrs) == len([i for i in self.profiles.find()]):
             return
         raw = [i.members for i in self.bot.guilds]
 
