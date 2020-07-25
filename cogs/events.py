@@ -8,7 +8,7 @@ from config import SDC, Boat
 
 async def req(bot):
     urls = [{"url": f"https://api.server-discord.com/v2/bots/{bot.user.id}/stats", "token": f"SDC {SDC}", "servers": "servers"},
-            {"url": f"https://discord.boats/api/bot/{bot.user.id}", "token": f"{}", "servers": "server_count"}]
+            {"url": f"https://discord.boats/api/bot/{bot.user.id}", "token": f"{Boat}", "servers": "server_count"}]
     while 1:
         for i in urls:
             headers = {
