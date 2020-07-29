@@ -418,13 +418,15 @@ class Paginator:
 
         try:
             await self.controller.clear_reactions()
-
-
+        except:
+            pass
+                                        
+        try:
             for emoji in self.reactions:
                     await self.controller.add_reaction(emoji)
         except:
             pass
-
+                                        
         while True:
             try:
                 response = await self.ctx.bot.wait_for('reaction_add', timeout=self.timeout,
