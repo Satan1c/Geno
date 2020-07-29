@@ -263,7 +263,7 @@ class Utils:
             "title": snipp['title'],
             "channel": channel,
             "csnipp": csnipp,
-            "tags": ", ".join(snipp['tags']),
+            "tags": ", ".join(snipp['tags']) if 'tags' in snipp else "No Tags",
         }
         return data
 
