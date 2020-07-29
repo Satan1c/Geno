@@ -292,7 +292,7 @@ class Music(cmd.Cog):
         em = discord.Embed(title=data['title'],
                            description=f"Duration:"
                                        f" `{self.utils.parser(start=data['start'], end=datetime.now(), typ='time')}` "
-                                       f"/ `{self.utils.parser(raw=int(player.current.duration)//10**6, typ='time')}`"
+                                       f"/ `{lavalink.format_time(int(player.current.duration)), typ='time')}`"
                                        f"\nRequested by: `{str(data['req'])}` [{data['req'].mention}]",
                            url=player.current.uri)
         em.set_thumbnail(url=data['thumbnail'])
