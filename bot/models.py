@@ -44,44 +44,15 @@ class User:
             "mute_time": self.mute_time
         }
 
-
-class Queue:
-    def __init__(self, video):
-        self.req = str(video.req['id'])
-        self.url = str(video.video_url)
-        self.title = str(video.title)
-
-    def get_dict(self) -> dict:
-        data = {
-            "req": self.req,
-            "url": self.url,
-            "title": self.title
-        }
-        return data
-
-
-class NowPlaying:
-    def __init__(self, video):
-        self.req = video.req['id']
-        self.url = str(video.video_url)
-        self.title = str(video.title),
-        self.start_at = datetime.now()
-        self.duration = video.duration
-        self.thumb_url = str(video.thumbnail)
-        self.channel_url = str(video.uploader['url'])
-        self.channel_icon_url = str(video.uploader['icon'])
-        self.channel_name = str(video.uploader['name'])
+class Streamer:
+    def __init__(self, login: str, guild: Guild):
+        self._id = login
+        self.stream_id = "0"
+        self.servers = []
 
     def get_dict(self) -> dict:
-        data = {
-            "req": self.req,
-            "url": self.url,
-            "title": self.title,
-            "start_at": self.start_at,
-            "duration": self.duration,
-            "thumb_url": self.thumb_url,
-            "channel_url": self.channel_url,
-            "channel_icon_url": self.channel_icon_url,
-            "channel_name": self.channel_name
+        return {
+            "_id": str(self._id),
+            "stream_id": str(self.stream_id),
+            "servers": list(self.servers)
         }
-        return data

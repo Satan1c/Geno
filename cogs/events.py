@@ -2,27 +2,6 @@
 
 import discord
 from discord.ext import commands as cmd
-from asyncio import sleep
-from requests import post
-from config import SDC, Boat
-
-async def req(bot):
-    urls = [{"url": f"https://api.server-discord.com/v2/bots/{bot.user.id}/stats", "token": f"SDC {SDC}", "servers": "servers"},
-            {"url": f"https://discord.boats/api/bot/{bot.user.id}", "token": f"{Boat}", "servers": "server_count"}]
-    while 1:
-        for i in urls:
-            headers = {
-                "Authorization": i['token']
-            }
-            data = {
-                i['servers']: len(bot.guilds)
-            }
-            if i['token'].startswith("SDC "):
-                data['shards'] = 1
-            
-            post(url=i['url'], data=data, headers=headers)
-            
-        await sleep(901)
 
 
 class Events(cmd.Cog):
@@ -30,14 +9,6 @@ class Events(cmd.Cog):
         self.bot = bot
         self.config = bot.servers
         self.DB = bot.DataBase
-
-    @cmd.Cog.listener()
-    async def on_ready(self):
-        await self.DB(self.bot).create()
-        print(f"{self.bot.user.name}, is ready")
-        await self.bot.get_guild(648571219674923008).get_channel(648780121419022336).send("Ready")
-
-        await req(self.bot)
 
     @cmd.Cog.listener()
     async def on_guild_join(self, guild: discord.Guild):
@@ -60,6 +31,30 @@ class Events(cmd.Cog):
             cfg['queue'] = []
             cfg['now_playing'] = ""
             self.config.update_one({"_id": f"{member.guild.id}"}, {"$set": {"music": dict(cfg)}})
+
+    @cmd.Cog.listener()
+    async def on_message(self, message: discord.Message):
+        if isinstance(message.channel, discord.DMChannel) or len(message.embeds) < 1:
+            return
+
+        em = discord.Embed()
+        if message.author.id == self.bot.user.id and isinstance(message.embeds[0].image.url, type(em.image.url)):
+            await message.delete(delay=120)
+
+    @cmd.Cog.listener()
+    async def on_raw_reaction_add(self, pay: discord.RawReactionActionEvent):
+        if pay.member.bot:
+            return
+        cfg = self.config.find_one({"_id": f"{pay.guild_id}"})['reactions']
+        if f"{pay.emoji.id}" in cfg:
+            guild = self.bot.get_guild(int(pay.guild_id))
+            msg = await guild.get_channel(pay.channel_id).fetch_message(pay.message_id)
+            role = guild.get_role(int(cfg[f"{pay.emoji.id}"]))
+            await msg.remove_reaction(pay.emoji, pay.member)
+            if role not in pay.member.roles:
+                return await pay.member.add_roles(role)
+            else:
+                return await pay.member.remove_roles(role)
 
 
 def setup(bot):

@@ -1,18 +1,22 @@
 # -*- coding: utf-8 -*-
-
-import asyncio
+import json
 import os
 from asyncio import TimeoutError
 from datetime import datetime
 from typing import Union
 
-import discord
+import lavalink
+import requests
 import youtube_dl
 from dateutil.relativedelta import relativedelta
-from discord import Embed, VoiceClient, User, Colour
+from googleapiclient import discovery
+
+import discord
+from discord import Embed, Colour, User
 from discord.ext import commands as cmd
 from discord.ext.commands import Context
-from googleapiclient import discovery
+from asyncio import sleep
+from math import floor
 
 YTDL_OPTS = {
     "default_search": "ytsearch",
@@ -24,58 +28,81 @@ YTDL_OPTS = {
 }
 
 
-class Video:
-    def __init__(self, url_or_search: str, requested_by: User, utils):
-        self.utils = utils
-        with youtube_dl.YoutubeDL(YTDL_OPTS):
-            video = self._get_info(url_or_search)
-            video_format = video["formats"][0]
-            self.stream_url = video_format["url"]
-            self.video_url = video["webpage_url"]
-            self.title = str(video["title"])
-            self.uploader = utils.uploader(video)
-            self.thumbnail = video["thumbnail"] if "thumbnail" in video else None
-            self.duration = video['duration']
-            self.req = {"id": str(requested_by.id), "tag": str(requested_by),
-                        "ava": requested_by.avatar_url_as(format="png", static_format='png', size=256)}
+class Twitch:
+    def __init__(self):
+        self.client_id = "zoucwv8yjggvgydciwu6vluq20c533"  # https://dev.twitch.tv/console/apps
+        self.token = "zrs93vtu8zxt532qwnnux1cs0jwjhk"  # https://twitchapps.com/tokengen/
+        self.url = "https://api.twitch.tv/helix/"
 
-    def _get_info(self, video_url):
-        with youtube_dl.YoutubeDL(YTDL_OPTS) as ydl:
-            try:
-                info = ydl.extract_info(video_url, download=False)
-            except:
-                info = self._get_info(video_url)
+    def get_response(self, query):
+        res = requests.get(f"{self.url}{query}",
+                           headers={"Client-ID": self.client_id, 'Authorization': f'Bearer {self.token}',
+                                    "Accept": "application/vnd.v5+json"})
+        return res
 
-            if "_type" in info and info["_type"] == "playlist":
-                info = self._get_info(info["entries"][0]['webpage_url'])
+    async def stream_embed(self, login, res1, res2, channel):
+        em = discord.Embed(title=f"{res1['title']}", url=f"https://twitch.tv/{login}",
+                           description=f"viewer count: `{res1['viewer_count']}`")
+        em.set_author(name=f"{res1['user_name']}", url=f"https://twitch.tv/{login}",
+                      icon_url=f"{res2['profile_image_url']}")
+        em.set_image(url=f"{res1['thumbnail_url'].format(width=1920, height=1080)}")
 
-            return info
+        await channel.send(embed=em)
 
-    def get_embed(self) -> Embed:
-        embed = Embed(title=self.title,
-                      description=f"Duration is: `{self.utils.parser(self.duration, 'time')}`"
-                                  f"\nVideo tags: `{self.uploader['tags']}`",
-                      url=self.video_url,
-                      colour=Colour.green(),
-                      timestamp=datetime.now())
+    def get_stream_query(self, login):
+        return f"streams?user_login={login}"
 
-        embed.set_footer(text=f"Requested by {self.req['tag']}", icon_url=self.req['ava'])
-        embed.set_author(name=self.uploader['name'], url=self.uploader['url'], icon_url=self.uploader['icon'])
+    def get_user_query(self, login):
+        return f"users?login={login}"
 
-        if self.thumbnail:
-            embed.set_image(url=self.uploader['thumbnail'])
-
-        return embed
+    def print_response(self, res):
+        res_json = res.json()
+        print_res = json.dumps(res_json, indent=2)
+        return print(print_res)
 
 
 class Utils:
     def __init__(self, bot):
         self.bot = bot
+        self.twitch = bot.twitch
         self.main = bot.main
         self.models = bot.models
         self.config = bot.servers
+        self.streamers = bot.streamers
         self.dev_key = "AIzaSyAZxekQbiyOvq1fCFNmq6-4VvNwcKQ2Vhs"
         self.dictionary = ["тыс", "млн", "млрд", "бил", "трл", "кдл", "квл", "сек", "сеп", "окт", "нон", "дец"]
+
+    @staticmethod
+    def binary_search(arr: list, item):
+        n = len(arr)
+        L = 0
+        R = n - 1
+
+        while L <= R:
+            mid = floor((L + R) / 2)
+            if arr[mid] < item:
+                L = mid + 1
+            elif arr[mid] > item:
+                R = mid - 1
+            else:
+                return mid
+        return None
+
+    @staticmethod
+    def bubble_sort(arr: list):
+        has_swapped = True
+        num_of_iterations = 0
+
+        while has_swapped:
+            has_swapped = False
+
+            for i in range(len(arr) - num_of_iterations - 1):
+                if arr[i] > arr[i + 1]:
+                    arr[i], arr[i + 1] = arr[i + 1], arr[i]
+                    has_swapped = True
+
+            num_of_iterations += 1
+        return arr
 
     def uptime(self):
         start = self.main.find_one()['uptime']
@@ -103,9 +130,21 @@ class Utils:
 
         return string
 
-    # google api------------------------------------------------------------------------------------------------------------
+    def get_info(self, video_url):
+        with youtube_dl.YoutubeDL(YTDL_OPTS) as ydl:
+            try:
+                info = ydl.extract_info(video_url, download=False)
+            except:
+                info = self.get_info(video_url)
 
-    def search_video(self, req: str = "×I62?564@6§85♦3◘4☻04♣"):
+            if "_type" in info and info["_type"] == "playlist":
+                info = self.get_info(info["entries"][0]['webpage_url'])
+
+            return info
+
+    # google api---------------------------------------------------------------------------------------------------
+
+    def search_video(self, req: str = "×I62?564@6§85♦3◘4☻04♣") -> dict:
         os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
 
         api_service_name = "youtube"
@@ -123,7 +162,7 @@ class Utils:
 
         return response
 
-    def search_channel(self, req: str, usid: bool = False, recurr: bool = False):
+    def search_channel(self, req: str, usid: bool = False, recurr: bool = False) -> dict:
         os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
 
         api_service_name = "youtube"
@@ -138,7 +177,7 @@ class Utils:
             if response['pageInfo']['totalResults'] < 1:
 
                 if recurr:
-                    return None
+                    raise cmd.BadArgument("Channel not found")
 
                 return self.search_channel(req, False, True)
 
@@ -150,91 +189,190 @@ class Utils:
         if response['pageInfo']['totalResults'] < 1:
 
             if recurr:
-                return None
+                raise cmd.BadArgument("Channel not found")
 
             return self.search_channel(req, True, True)
 
         return response
 
-    def uploader(self, video=None) -> dict:
-        ico = self.search_channel(video['uploader_id'])
-        thumb = self.search_video(video['id'])
-        snipp = thumb['items'][0]['snippet']
+    def uploader(self, track: dict = None, typ: str = "yt") -> dict:
+        if typ == "yt":
+            thumb = self.search_video(track['info']['identifier'])
+            snipp = thumb['items'][0]['snippet']
+
+            ico = self.search_channel(snipp['channelId'])
+            csnipp = ico['items'][0]['snippet']
+
+            img = snipp['thumbnails']
+            img = snipp['thumbnails'][
+                'maxres' if 'maxres' in img else 'standard' if 'standard' in img else 'high' if 'high' in img else 'medium' if 'medium' in img else 'default']
+
+            icon = csnipp['thumbnails']
+            icon = csnipp['thumbnails'][
+                'maxres' if 'maxres' in icon else 'standard' if 'standard' in icon else 'high' if 'high' in icon else 'medium' if 'medium' in icon else 'default']
+
+            data = {
+                "name": csnipp['title'],
+                "url": f"https://youtube.com/channel/{ico['items'][0]['id']}",
+                "icon": icon[
+                    'url'] if ico else "https://maestroselectronics.com/wp-content/uploads/2017/12/No_Image_Available.jpg",
+                "thumbnail": img[
+                    'url'] if img else "https://maestroselectronics.com/wp-content/uploads/2017/12/No_Image_Available.jpg",
+                "tags": ", ".join(snipp['tags']) if "tags" in snipp else "No tags",
+                "title": snipp['title'],
+                "duration": self.parser(int(track['info']['length']) // 1000, typ="time"),
+                "video_url": track['info']['uri']
+            }
+        elif typ == "sc":
+            r = track['info']['uri'][8:].split("/")
+            data = {
+                "name": track['info']['author'],
+                "url": f"https://{r[0]}/{r[1]}",
+                "icon": "https://maestroselectronics.com/wp-content/uploads/2017/12/No_Image_Available.jpg",
+                "thumbnail": "https://maestroselectronics.com/wp-content/uploads/2017/12/No_Image_Available.jpg",
+                "tags": "No tags",
+                "title": track['info']['title'],
+                "duration": self.parser(int(track['info']['length']) // 1000, typ="time"),
+                "video_url": track['info']['uri']
+            }
+        return data
+
+    def now_playing(self, player) -> dict:
+        if not player.current:
+            player.current = player.queue[0]
+        video = self.search_video(req=player.current.identifier)
+        snipp = video['items'][0]['snippet']
+
+        channel = self.search_channel(req=snipp['channelId'], usid=True)
+        csnipp = channel['items'][0]['snippet']
+
+        req = self.bot.get_guild(int(player.guild_id)).get_member(int(player.current.requester))
         img = snipp['thumbnails']
         img = snipp['thumbnails'][
-            'maxres' if 'maxres' in img else 'standard' if 'standard' in img else 'high' if 'high' in img else 'medium' if 'medium' in img else 'default']
+            'maxres' if 'maxres' in img else 'standard' if 'standard' in img else 'high' if 'high' in img else
+            'medium' if 'medium' in img else 'default']
+
+        icon = csnipp['thumbnails']
+        icon = csnipp['thumbnails'][
+            'maxres' if 'maxres' in icon else 'standard' if 'standard' in icon else 'high' if 'high' in icon else
+            'medium' if 'medium' in icon else 'default']
         data = {
-            "name": video['uploader'],
-            "url": video['channel_url'],
-            "icon": ico['items'][0]['snippet']['thumbnails']['high']['url'] if ico \
-                else "https://maestroselectronics.com/wp-content/uploads/2017/12/No_Image_Available.jpg",
-            "thumbnail": img['url'],
-            "tags": ", ".join(snipp['tags']) if "tags" in snipp else "No tags"
+            "img": img,
+            "icon": icon,
+            "req": req,
+            "title": snipp['title'],
+            "channel": channel,
+            "csnipp": csnipp,
+            "tags": ", ".join(snipp['tags']),
         }
         return data
 
-    # _music----------------------------------------------------------------------------------------------
+    async def check_twitch(self):
+        while 1:
+            streamers = [i for i in self.streamers.find()]
 
-    def play(self, url: str, cfg: dict, ctx: cmd.Context = None, req: User = None):
-        if not req:
-            req = ctx.author
+            for streamer in streamers:
+                config = self.streamers.find_one({"_id": f"{streamer['_id']}"})
+                query = self.twitch.get_stream_query(streamer['_id'])
+                res1 = self.twitch.get_response(query).json()['data']
 
-        video = Video(url, req, self)
+                if len(res1) < 1 or int(res1['id']) == int(config['stream_id']):
+                    continue
 
-        source = discord.PCMVolumeTransformer(
-            discord.FFmpegPCMAudio(video.stream_url,
-                                   before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5",
-                                   options='-vn'), volume=cfg['volume'])
+                config['stream_id'] = f"{res1['id']}"
+                self.config.update_one({"_id": f"{streamer['_id']}"}, {"$set": {"twitch": dict(config)}})
 
-        return source, video
+                query = self.twitch.get_user_query(streamer['login'])
+                res2 = self.twitch.get_response(query).json()['data'][0]
 
-    async def queue(self, ctx: cmd.Context, music: dict, video: Video):
-        data = self.models.Queue(video).get_dict()
-        music['queue'].append(data)
+                for server in streamer['servers']:
+                    channel = self.bot.get_guild(int(server['id'])).get_channel(int(server['channel']))
+                    await self.twitch.stream_embed(streamer['_id'], res1, res2, channel)
 
-        self.config.update_one({"_id": f"{ctx.guild.id}"}, {"$set": {"music": dict(music)}})
+            await sleep(1800)
 
-        em = EmbedGenerator(target="queue", video=video, ctx=ctx).get()
-        m = await ctx.send(embed=em)
-        await m.delete(delay=120)
+    # lavalink music -----------------------------------------------------------------------------------------------
 
-    def after(self, ctx: cmd.Context, client: VoiceClient, err, after_playing):
-        if err:
-            raise err
-        music = self.config.find_one({"_id": f"{ctx.guild.id}"})['music']
+    async def ensure_voice(self, ctx):
+        """ This check ensures that the bot and command author are in the same voicechannel. """
+        player = self.bot.lavalink.player_manager.create(ctx.guild.id, endpoint=str(ctx.guild.region))
+        should_connect = ctx.command.name in ('Play',)
 
-        if len(music['queue']) < 1:
-            music['now_playing'] = ""
-            self.config.update_one({"_id": f"{ctx.guild.id}"}, {"$set": {"music": dict(music)}})
-
-            client.stop()
-            asyncio.run_coroutine_threadsafe(client.disconnect(), self.bot.loop)
-
-        else:
-            q = music['queue'].pop(0)
-            source, video = self.play(url=q['url'], req=self.bot.get_user(int(q['req'])), cfg=music)
-            music['now_playing'] = self.models.NowPlaying(video).get_dict()
-
-            np = str(type(music['now_playing']['title']))
-            if np in ["<class 'tuple'>", "<class 'list'>"]:
-                music['now_playing']['title'] = music['now_playing']['title'][0]
-
-            self.config.update_one({"_id": f"{ctx.guild.id}"}, {"$set": {"music": dict(music)}})
-            asyncio.run_coroutine_threadsafe(ctx.send(embed=video.get_embed()), self.bot.loop)
-
-            client.play(source, after=after_playing)
-
-    async def play_check(self, ctx: cmd.Context, url: str, client: VoiceClient):
-        if not url:
-            return "Please give video url or title"
         if not ctx.author.voice or not ctx.author.voice.channel:
-            return "To use this command: you must be in voice channel, or check bot permissions to view it"
-        if not client or not client.channel:
-            client = await ctx.author.voice.channel.connect()
-            return False
+            raise cmd.CommandInvokeError('Join a voicechannel first.')
 
-    async def volume_check(self):
-        pass
+        if not player.is_connected:
+            if not should_connect:
+                raise cmd.CommandInvokeError('Not connected.')
+
+            permissions = ctx.author.voice.channel.permissions_for(ctx.me)
+
+            if not permissions.connect or not permissions.speak:  # Check user limit too?
+                raise cmd.CommandInvokeError('I need the `CONNECT` and `SPEAK` permissions.')
+
+            player.store('channel', ctx.channel.id)
+            await self.connect_to(ctx.guild.id, str(ctx.author.voice.channel.id))
+        else:
+            if int(player.channel_id) != ctx.author.voice.channel.id:
+                raise cmd.CommandInvokeError('You need to be in my voicechannel.')
+
+    async def track_hook(self, event):
+        if isinstance(event, lavalink.events.QueueEndEvent):
+            guild_id = int(event.player.guild_id)
+            cfg = self.config.find_one({"_id": guild_id})['music']
+
+            cfg['queue'] = []
+            cfg['now_playing'] = ""
+
+            self.config.update_one({"_id": guild_id}, {"$set": {"music": dict(cfg)}})
+            await self.connect_to(guild_id, None)
+
+        elif isinstance(event, lavalink.TrackStartEvent):
+            player = event.player
+            cfg = self.config.find_one({"_id": f"{event.player.guild_id}"})['music']
+            data = self.now_playing(player=player)
+
+            if cfg['now_playing'] == "":
+                cfg['now_playing'] = {}
+            cfg['now_playing']['start'] = datetime.now()
+            cfg['now_playing']['req'] = str(data['req'].id)
+            cfg['now_playing']['title'] = data['title']
+            cfg['now_playing']['tags'] = data['tags'],
+            cfg['now_playing']['video_url'] = player.current.uri
+            cfg['now_playing']['thumbnail'] = data['img']['url']
+            cfg['now_playing']['name'] = data['csnipp']['title']
+            cfg['now_playing']['icon'] = data['icon']['url']
+            cfg['now_playing']['url'] = f"https://youtube.com/channel/{data['channel']['items'][0]['id']}"
+
+            self.config.update_one({"_id": f"{player.guild_id}"}, {"$set": {"music": dict(cfg)}})
+
+            em = discord.Embed(title=cfg['now_playing']['title'],
+                               description=f"Duration: `{self.parser(int(player.current.duration) // 1000, typ='time')}`"
+                                           f"\nTags: `{cfg['now_playing']['tags'][0]}`",
+                               url=cfg['now_playing']['video_url'],
+                               timestamp=datetime.now(),
+                               colour=discord.Colour.green())
+            em.set_image(url=cfg['now_playing']['thumbnail'])
+            em.set_author(name=cfg['now_playing']['name'], url=cfg['now_playing']['url'],
+                          icon_url=cfg['now_playing']['icon'])
+            em.set_footer(text=f"Requested by: {str(data['req'])}",
+                          icon_url=data['req'].avatar_url_as(format='png', static_format='png', size=256))
+
+            message = await self.bot.get_guild(int(player.guild_id)).get_channel(648571219674923011).send(embed=em)
+
+            cfg['last'] = {"message": f"{message.id}", "channel": f"{message.channel.id}"}
+            self.config.update_one({"_id": f"{player.guild_id}"}, {"$set": {"music": dict(cfg)}})
+
+        elif isinstance(event, lavalink.TrackEndEvent):
+            cfg = self.config.find_one({"_id": f"{event.player.guild_id}"})['music']
+            guild = self.bot.get_guild(int(event.player.guild_id))
+            message = await guild.get_channel(int(cfg['last']['channel'])).fetch_message(int(cfg['last']['message']))
+            await message.delete()
+
+    async def connect_to(self, guild_id: int, channel_id: str):
+        """ Connects to the given voicechannel ID. A channel_id of `None` means disconnect. """
+        ws = self.bot._connection._get_websocket(guild_id)
+        await ws.voice_state(str(guild_id), channel_id)
 
 
 class Paginator:
@@ -280,11 +418,12 @@ class Paginator:
 
         try:
             await self.controller.clear_reactions()
+
+
+            for emoji in self.reactions:
+                    await self.controller.add_reaction(emoji)
         except:
             pass
-
-        for emoji in self.reactions:
-            await self.controller.add_reaction(emoji)
 
         while True:
             try:
@@ -295,11 +434,10 @@ class Paginator:
             except TimeoutError:
                 break
 
-            if not isinstance(self.ctx.channel, discord.DMChannel):
-                try:
-                    await self.controller.remove_reaction(response[0], response[1])
-                except:
-                    pass
+            try:
+                await self.controller.remove_reaction(response[0], response[1])
+            except:
+                pass
 
             if response[0].emoji == self.reactions[0]:
                 self.current = self.current - 1 if self.current > 0 else len(self.pages) - 1
@@ -337,8 +475,8 @@ class DataBase:
 
         create = [i for i in self.bot.guilds if i.id not in all]
         for i in create:
-                self.servers.insert_one(self.models.Server(i).get_dict())
-                print(f"created: {i.id}")
+            self.servers.insert_one(self.models.Server(i).get_dict())
+            print(f"created: {i.id}")
 
     async def _create_users(self):
         all = [f"{i['sid']} {i['uid']}" for i in self.profiles.find()]
@@ -358,7 +496,7 @@ class DataBase:
             self.servers.insert_one(i)
             print(f"created: {i['_id']}")
         for i in guild.members:
-                  await self.create_user(i)
+            await self.create_user(i)
 
     async def create_user(self, member: discord.Member):
         i = self.models.User(member).get_dict()

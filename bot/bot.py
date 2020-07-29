@@ -1,38 +1,63 @@
 # -*- coding: utf-8 -*-
 
 import os
+from asyncio import sleep
 from datetime import datetime
 
-import discord
 import pymongo
-from discord.ext import commands as cmd
+from requests import post
 
 import config
+import discord
+from config import SDC, Boat
+from discord.ext import commands as cmd
+from discord.gateway import IdentifyConfig
 from . import models
-from .utils import Utils, Video, Paginator, DataBase, EmbedGenerator
+from .utils import Utils, Paginator, DataBase, EmbedGenerator, Twitch
 
 client = pymongo.MongoClient(config.MONGO)
+
+
+async def req(bot):
+    urls = [{"url": f"https://api.server-discord.com/v2/bots/{bot.user.id}/stats", "token": f"SDC {SDC}",
+             "servers": "servers"},
+            {"url": f"https://discord.boats/api/bot/{bot.user.id}", "token": f"{Boat}", "servers": "server_count"}]
+    while 1:
+        for i in urls:
+            headers = {
+                "Authorization": i['token']
+            }
+            data = {
+                i['servers']: len(bot.guilds)
+            }
+            if i['token'].startswith("SDC "):
+                data['shards'] = 1
+
+            post(url=i['url'], data=data, headers=headers)
+
+        await sleep(901)
 
 
 class Geno(cmd.Bot):
     def __init__(self):
         super().__init__(command_prefix=self.get_prefix, owner_id=348444859360608256)
-        self.init()
-
-    def init(self):
         self.token = config.TOKEN
         # self.prefix = "t-"
         self.prefix = "-"
-        self.version = "(v0.1.3a)"
-        self.servers = client.servers.configs
-        self.profiles = client.users.profiles
         self.main = client.cfg.main
+
+    def init(self):
+
+        self.version = "(v0.1.4a)"
+        self.servers = client.servers.configs
+        self.streamers = client.servers.streamers
+        self.profiles = client.users.profiles
         self.models = models
-        self.utils = Utils(self)
-        self.Video = Video
+        self.twitch = Twitch()
         self.EmbedGenerator = EmbedGenerator
         self.DataBase = DataBase
         self.Paginator = Paginator
+        self.utils = Utils(self)
 
         self.load_extension("jishaku")
         self.remove_command('help')
@@ -46,7 +71,22 @@ class Geno(cmd.Bot):
                     print(f'[!] cogs.{file[0:-3]} error: `{err}`')
         print('-' * 30)
 
+        IdentifyConfig.browser = 'Discord Android'
+
+    async def on_ready(self):
+        self.init()
+        await self.DataBase(self).create()
+        act = discord.Activity(name=f"-help | {self.version}",
+                               type=discord.ActivityType.listening)
+        await self.change_presence(status=discord.Status.online, activity=act)
+
+        await self.get_guild(648571219674923008).get_channel(648780121419022336).send("Ready")
+        print(f"{self.user.name}, is ready")
+
+        # await req(self)
+
     async def on_command_error(self, ctx: cmd.Context, err):
+        # raise err
         if isinstance(err, cmd.CommandNotFound):
             return
 
@@ -57,11 +97,8 @@ class Geno(cmd.Bot):
         if isinstance(err, cmd.NoPrivateMessage):
             em.description = "Not a giuld"
 
-        try:
-            m = await ctx.send(embed=em)
-            await m.delete(delay=120)
-        except:
-            pass
+        m = await ctx.send(embed=em)
+        await m.delete(delay=120)
 
     async def on_command(self, ctx: cmd.Context):
         if isinstance(ctx.channel, discord.DMChannel):
@@ -80,6 +117,9 @@ class Geno(cmd.Bot):
             prefix = self.servers.find_one({"_id": f"{message.guild.id}"})['prefix']
 
         return prefix
+
+    def run(self):
+        super().run(self.token)
 
 
 bot = Geno()

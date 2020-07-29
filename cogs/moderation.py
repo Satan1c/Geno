@@ -11,7 +11,25 @@ class Moderation(cmd.Cog):
     def __int__(self, bot):
         self.bot = bot
 
-    @cmd.command(name="Ban", aliases=['ban', 'b'], usage="ban <user> [reason]")
+    @cmd.command(name="Ban", aliases=['ban', 'b'], usage="ban `<user>` `[reason]`", description="""
+    user - must be user **mention** or **user id**,
+     example: <@!348444859360608256>, `348444859360608256`
+     
+    reason - any text of "reason" that you wanted,
+     example: `eat cookies in voice chat`
+     default: `no reason`
+     
+    Can ban user in guild, and can also ban anyone who not in guild
+    :-:
+    user - должен быть **упоминанием** или **id пользователя**,
+     example: <@!348444859360608256>, `348444859360608256`
+     
+    reason - любой текст "причины",
+     пример: `ест печеньки в голосовом канале`
+     по умолчанию: `no reason`
+    
+    Может забанить user на сервере, даже если его нет на нем
+    """)
     @cmd.bot_has_guild_permissions(ban_members=True)
     @cmd.has_guild_permissions(ban_members=True)
     async def _ban(self, ctx: cmd.Context, user, *, reason: str = "no reason"):
@@ -33,7 +51,9 @@ class Moderation(cmd.Cog):
         elif len(user) == 18:
             mem = ctx.guild.get_member(int(user))
             if not mem:
-                user = discord.Object(id=int(user))
+                user = await self.bot.fetch_user(int(user))
+                if not user:
+                    raise cmd.BadArgument("User not found")
                 await ctx.guild.ban(user=user, reason=reason, delete_message_days=0)
 
                 bans = await ctx.guild.bans()
@@ -49,16 +69,33 @@ class Moderation(cmd.Cog):
             elif mem:
                 user = mem
 
-        if user.id == ctx.bot.owner_id:
+        if user.id == self.bot.owner_id:
             raise cmd.BadArgument("Can't ban my owner")
 
         await ctx.guild.ban(user, reason=reason, delete_message_days=0)
         embed.description = embed.description.format(user=str(user), reason=reason)
 
-        m = await ctx.send(embed=embed)
-        await m.delete(delay=120)
+        await ctx.send(embed=embed)
 
-    @cmd.command(name="Kick", aliases=['kick', 'k'], usage="kick <user> [reason]")
+    @cmd.command(name="Kick", aliases=['kick', 'k'], usage="kick `<user>` `[reason]`", description="""
+    user - must be user **mention** or **user id**,
+     example: <@!348444859360608256>, `348444859360608256`
+     
+    reason - any text of "reason" that you wanted,
+     example: `eat cookies in voice chat`
+     default: `no reason`
+     
+    Can kick user from guild
+    :-:
+    user - должен быть **упоминанием** или **id пользователя**,
+     example: <@!348444859360608256>, `348444859360608256`
+     
+    reason - любой текст "причины",
+     пример: `ест печеньки в голосовом канале`
+     по умолчанию: `no reason`
+    
+    Может выгнать user с сервера
+    """)
     @cmd.bot_has_guild_permissions(kick_members=True)
     @cmd.has_guild_permissions(kick_members=True)
     async def _kick(self, ctx: cmd.Context, user: discord.Member, *, reason: str = "no reason"):
@@ -72,12 +109,11 @@ class Moderation(cmd.Cog):
                              static_format='png',
                              size=256))
 
-        if user.id == ctx.bot.owner_id:
+        if user.id == self.bot.owner_id:
             raise cmd.BadArgument("Can't kick my owner")
 
         await ctx.guild.kick(user, reason=reason)
-        m = await ctx.send(embed=embed)
-        await m.delete(delay=120)
+        await ctx.send(embed=embed)
 
 
 def setup(bot):

@@ -1,6 +1,5 @@
 setuptools>=40.3.0
 wheel
-discord.py
 pymongo
 datetime
 psutil
@@ -11,3 +10,6 @@ PyNaCl
 dnspython
 jishaku
 python-dateutil
+lavalink
+aiodns
+cchardet
