@@ -108,10 +108,12 @@ class Music(cmd.Cog):
             player.add(requester=ctx.author.id, track=track)
 
             track = results['tracks'][0]
-
+        
         if not player.is_playing:
             await player.play()
             await player.set_volume(cfg['volume']*100)
+            cfg['last'] = {"channel": f"{ctx.channel.id}"}
+            self.config.update_one({"_id": f"{ctx.guild.id}"}, {"$set": {"music": dict(cfg)}})
         else:
             data = self.utils.uploader(track, typ="yt" if "youtube.com" in track['info']['uri'] else "sc")
             em = discord.Embed(description=f"Duration: `{data['duration']}`"
