@@ -358,7 +358,7 @@ class Utils:
             em.set_footer(text=f"Requested by: {str(data['req'])}",
                           icon_url=data['req'].avatar_url_as(format='png', static_format='png', size=256))
 
-            message = await self.bot.get_guild(int(player.guild_id)).get_channel(648571219674923011).send(embed=em)
+            message = await self.bot.get_guild(int(player.guild_id)).get_channel(int(cfg['last']['channel'])).send(embed=em)
 
             cfg['last'] = {"message": f"{message.id}", "channel": f"{message.channel.id}"}
             self.config.update_one({"_id": f"{player.guild_id}"}, {"$set": {"music": dict(cfg)}})
