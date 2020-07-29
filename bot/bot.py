@@ -20,17 +20,18 @@ IdentifyConfig.browser = 'Discord Android'
 client = pymongo.MongoClient(config.MONGO)
 
 
-async def req(bot):
-    urls = [{"url": f"https://api.server-discord.com/v2/bots/{bot.user.id}/stats", "token": f"SDC {SDC}",
+async def req(bot_client):
+    urls = [{"url": f"https://api.server-discord.com/v2/bots/{bot_client.user.id}/stats", "token": f"SDC {SDC}",
              "servers": "servers"},
-            {"url": f"https://discord.boats/api/bot/{bot.user.id}", "token": f"{Boat}", "servers": "server_count"}]
+            {"url": f"https://discord.boats/api/bot/{bot_client.user.id}",
+             "token": f"{Boat}", "servers": "server_count"}]
     while 1:
         for i in urls:
             headers = {
                 "Authorization": i['token']
             }
             data = {
-                i['servers']: len(bot.guilds)
+                i['servers']: len(bot_client.guilds)
             }
             if i['token'].startswith("SDC "):
                 data['shards'] = 1
@@ -46,11 +47,10 @@ class Geno(cmd.Bot):
         self.token = config.TOKEN
         # self.prefix = "t-"
         self.prefix = "-"
+        self.version = "(v0.1.4a)"
         self.main = client.cfg.main
 
     def init(self):
-
-        self.version = "(v0.1.4a)"
         self.servers = client.servers.configs
         self.streamers = client.servers.streamers
         self.profiles = client.users.profiles
@@ -73,18 +73,16 @@ class Geno(cmd.Bot):
                     print(f'[!] cogs.{file[0:-3]} error: `{err}`')
         print('-' * 30)
 
-        
-
     async def on_ready(self):
         self.init()
-        await self.DataBase(self).create()
         act = discord.Activity(name=f"-help | {self.version}",
                                type=discord.ActivityType.listening)
         await self.change_presence(status=discord.Status.online, activity=act)
 
-        await self.get_guild(648571219674923008).get_channel(648780121419022336).send("Ready")
+        # await self.get_guild(648571219674923008).get_channel(648780121419022336).send("Ready")
+        await self.DataBase(self).create()
         print(f"{self.user.name}, is ready")
-        
+
         await self.utils.check_twitch()
         await req(self)
 
@@ -100,10 +98,10 @@ class Geno(cmd.Bot):
         if isinstance(err, cmd.NoPrivateMessage):
             em.description = "Not a giuld"
 
-        m = await ctx.send(embed=em)
-        await m.delete(delay=120)
+        await ctx.send(embed=em)
 
-    async def on_command(self, ctx: cmd.Context):
+    @staticmethod
+    async def on_command(ctx: cmd.Context):
         if isinstance(ctx.channel, discord.DMChannel):
             return
         await ctx.message.delete()

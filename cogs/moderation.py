@@ -51,7 +51,7 @@ class Moderation(cmd.Cog):
         elif len(user) == 18:
             mem = ctx.guild.get_member(int(user))
             if not mem:
-                user = await self.bot.fetch_user(int(user))
+                user = discord.Object(id=int(user))
                 if not user:
                     raise cmd.BadArgument("User not found")
                 await ctx.guild.ban(user=user, reason=reason, delete_message_days=0)

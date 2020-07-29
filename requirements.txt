@@ -13,3 +13,4 @@ python-dateutil
 lavalink
 aiodns
 cchardet
+requests

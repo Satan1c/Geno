@@ -25,7 +25,7 @@ class Music(cmd.Cog):
             threading.Thread(target=system, args=("java -jar s/Lavalink.jar",)).start()
 
         if not hasattr(bot, 'lavalink'):
-            bot.lavalink = lavalink.Client(731515827672711198)
+            bot.lavalink = lavalink.Client(bot.user.id)
             bot.lavalink.add_node('localhost', 8080, 'lavalavago', 'eu', 'music-node')
             bot.add_listener(bot.lavalink.voice_update_handler, 'on_socket_response')
 
