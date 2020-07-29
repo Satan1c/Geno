@@ -46,8 +46,10 @@ class Events(cmd.Cog):
     async def on_raw_reaction_add(self, pay: discord.RawReactionActionEvent):
         if pay.member.bot:
             return
-        cfg = self.config.find_one({"_id": f"{pay.guild_id}"})['reactions']
-        if f"{pay.emoji.id}" in cfg:
+        cfg = self.config.find_one({"_id": f"{pay.guild_id}"})
+        if not 'reactions'in cfg:
+            return
+        if f"{pay.emoji.id}" in cfg['reactions']:
             guild = self.bot.get_guild(int(pay.guild_id))
             msg = await guild.get_channel(pay.channel_id).fetch_message(pay.message_id)
             role = guild.get_role(int(cfg[f"{pay.emoji.id}"]))
