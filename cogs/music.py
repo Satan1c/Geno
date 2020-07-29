@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+
 import re
 import threading
 from datetime import datetime
