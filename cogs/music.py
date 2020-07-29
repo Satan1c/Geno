@@ -1,4 +1,4 @@
-
+# -*- coding: utf-8 -*-
 import re
 import threading
 from datetime import datetime
@@ -116,8 +116,7 @@ class Music(cmd.Cog):
             await player.set_volume(cfg['volume']*100)
         else:
             data = self.utils.uploader(track, typ="yt" if "youtube.com" in track['info']['uri'] else "sc")
-            em = discord.Embed(description=f"Duration: `{data['duration']}`"
-                                           f"\nTags: `{data['tags']}`",
+            em = discord.Embed(description=f"Duration: `{data['duration']}`\nTags: `{data['tags']}`",
                                timestamp=datetime.now(),
                                colour=discord.Colour.green())
             em.set_thumbnail(url=data['thumbnail'])
@@ -291,9 +290,7 @@ class Music(cmd.Cog):
 
         em = discord.Embed(title=data['title'],
                            description=f"Duration:"
-                                       f" `{self.utils.parser(start=data['start'], end=datetime.now(), typ='time')}` "
-                                       f"/ `{lavalink.format_time(int(player.current.duration)), typ='time')}`"
-                                       f"\nRequested by: `{str(data['req'])}` [{data['req'].mention}]",
+                                       f" `{self.utils.parser(start=data['start'], end=datetime.now(), typ='time')}` / `{lavalink.format_time(int(player.current.duration)), typ='time')}`\nRequested by: `{str(data['req'])}` [{data['req'].mention}]",
                            url=player.current.uri)
         em.set_thumbnail(url=data['thumbnail'])
         em.set_author(name=data['name'], url=data['url'],
