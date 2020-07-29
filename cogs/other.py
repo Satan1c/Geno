@@ -255,12 +255,12 @@ class System(cmd.Cog):
 
             self.streamers.update_one({"_id": nick}, {"$set": dict(cfg)})
 
-        return await ctx.send(embed=discord.Embed(title="Streamer announcements add for:",
+        return await channel.send(embed=discord.Embed(title="Streamer announcements add for:",
                                                   description=f"[{res2['display_name']}](https://twitch.tv/{res2['login']})\n"
                                                               f"In channel: <#{channel.id}>",
                                                   colour=discord.Colour.green(),
                                                   timestamp=datetime.now())
-                              .set_thumbnail(url=f"{res2['profile_image_url']}"))
+                              .set_image(url=f"{res2['profile_image_url']}"))
 
     @cmd.command(name="Role Reactions", aliases=['rr', 'role_reactions', 'rolereactions'],
                  usage="role_reactions <message id> <list: <emoji id> <role mention or id> >", description="""
@@ -315,16 +315,12 @@ class System(cmd.Cog):
         key = k
 
         value = args[1::2]
-        print(value)
         if len(ctx.message.role_mentions) > 0 and len(ctx.message.role_mentions) == len(value):
-            print("1")
             value = ctx.message.roles_mentions
         else:
-            print("2")
             v = []
             m = 0
             for i in range(len(value)):
-                print(i)
                 if len(re.sub(r"[^0-9]", r"", f"{value[i]}")) == 18:
                     r = ctx.guild.get_role(int(re.sub(r"[^0-9]", r"", f"{value[i]}")))
                     if not r:
