@@ -15,6 +15,8 @@ from discord.gateway import IdentifyConfig
 from . import models
 from .utils import Utils, Paginator, DataBase, EmbedGenerator, Twitch
 
+IdentifyConfig.browser = 'Discord Android'
+
 client = pymongo.MongoClient(config.MONGO)
 
 
@@ -71,7 +73,7 @@ class Geno(cmd.Bot):
                     print(f'[!] cogs.{file[0:-3]} error: `{err}`')
         print('-' * 30)
 
-        IdentifyConfig.browser = 'Discord Android'
+        
 
     async def on_ready(self):
         self.init()
@@ -82,8 +84,9 @@ class Geno(cmd.Bot):
 
         await self.get_guild(648571219674923008).get_channel(648780121419022336).send("Ready")
         print(f"{self.user.name}, is ready")
-
-        # await req(self)
+        
+        await self.utils.check_twitch()
+        await req(self)
 
     async def on_command_error(self, ctx: cmd.Context, err):
         # raise err
