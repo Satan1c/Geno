@@ -52,4 +52,5 @@ class LavalinkBootstrap:
             print(f"[ERROR] Failed to start Lavalink. Info: {exc}")
 
 if __name__ == "__main__":
+    LavalinkBootstrap().download()
     bot.run()
