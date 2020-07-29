@@ -290,7 +290,7 @@ class Music(cmd.Cog):
 
         em = discord.Embed(title=data['title'],
                            description=f"Duration:"
-                                       f" `{self.utils.parser(start=data['start'], end=datetime.now(), typ='time')}` / `{lavalink.format_time(int(player.current.duration)), typ='time')}`\nRequested by: `{str(data['req'])}` [{data['req'].mention}]",
+                                       f" `{self.utils.parser(start=data['start'], end=datetime.now(), typ='time')}` / `{lavalink.format_time(int(player.current.duration))}`\nRequested by: `{str(data['req'])}` [{data['req'].mention}]",
                            url=player.current.uri)
         em.set_thumbnail(url=data['thumbnail'])
         em.set_author(name=data['name'], url=data['url'],
