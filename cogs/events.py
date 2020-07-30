@@ -44,7 +44,7 @@ class Events(cmd.Cog):
 
     @cmd.Cog.listener()
     async def on_raw_reaction_add(self, pay: discord.RawReactionActionEvent):
-        if pay.member.bot:
+        if pay.member and pay.member.bot:
             return
         cfg = self.config.find_one({"_id": f"{pay.guild_id}"})
         if not 'reactions'in cfg:
