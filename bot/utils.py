@@ -269,27 +269,30 @@ class Utils:
 
     async def check_twitch(self):
         while 1:
-            streamers = [i for i in self.streamers.find()]
+            try:
+                streamers = [i for i in self.streamers.find()]
 
-            for streamer in streamers:
-                config = self.streamers.find_one({"_id": f"{streamer['_id']}"})
-                query = self.twitch.get_stream_query(streamer['_id'])
-                res1 = self.twitch.get_response(query).json()['data']
+                for streamer in streamers:
+                    config = self.streamers.find_one({"_id": f"{streamer['_id']}"})
+                    query = self.twitch.get_stream_query(streamer['_id'])
+                    res1 = self.twitch.get_response(query).json()['data']
 
-                if len(res1) < 1 or int(res1['id']) == int(config['stream_id']):
-                    continue
+                    if len(res1) < 1 or int(res1['id']) == int(config['stream_id']):
+                        continue
 
-                config['stream_id'] = f"{res1['id']}"
-                self.config.update_one({"_id": f"{streamer['_id']}"}, {"$set": {"twitch": dict(config)}})
+                    config['stream_id'] = f"{res1['id']}"
+                    self.config.update_one({"_id": f"{streamer['_id']}"}, {"$set": {"twitch": dict(config)}})
 
-                query = self.twitch.get_user_query(streamer['login'])
-                res2 = self.twitch.get_response(query).json()['data'][0]
+                    query = self.twitch.get_user_query(streamer['login'])
+                    res2 = self.twitch.get_response(query).json()['data'][0]
 
-                for server in streamer['servers']:
-                    channel = self.bot.get_guild(int(server['id'])).get_channel(int(server['channel']))
-                    await self.twitch.stream_embed(streamer['_id'], res1, res2, channel)
+                    for server in streamer['servers']:
+                        channel = self.bot.get_guild(int(server['id'])).get_channel(int(server['channel']))
+                        await self.twitch.stream_embed(streamer['_id'], res1, res2, channel)
+            except:
+                return await sleep(300)
 
-            await sleep(1800)
+            await sleep(300)
 
     # lavalink music -----------------------------------------------------------------------------------------------
 
