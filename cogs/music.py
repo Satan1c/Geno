@@ -311,6 +311,13 @@ class Music(cmd.Cog):
     @cmd.guild_only()
     async def _pause(self, ctx: cmd.Context):
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
+        
+        if not player.is_connected:
+            raise cmd.BadArgument('Not connected.')
+
+        if not ctx.author.voice or (player.is_connected and ctx.author.voice.channel.id != int(player.channel_id)):
+            raise cmd.BadArgument('You\'re not in my voicechannel!')
+            
         if player.is_playing and not player.paused:
             await player.set_pause(True)
 
@@ -320,8 +327,15 @@ class Music(cmd.Cog):
     Продолжает - снимает с паузы, проигрывание музыки
     """)
     @cmd.guild_only()
-    async def _pause(self, ctx: cmd.Context):
+    async def _resume(self, ctx: cmd.Context):
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
+        
+        if not player.is_connected:
+            raise cmd.BadArgument('Not connected.')
+
+        if not ctx.author.voice or (player.is_connected and ctx.author.voice.channel.id != int(player.channel_id)):
+            raise cmd.BadArgument('You\'re not in my voicechannel!')
+            
         if player.is_playing and player.paused:
             await player.set_pause(False)
 
