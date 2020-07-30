@@ -62,7 +62,7 @@ class Geno(cmd.Bot):
         await self.utils.req(self)
 
     async def on_command_error(self, ctx: cmd.Context, err):
-        # raise err
+        #raise err
         if isinstance(err, cmd.CommandNotFound):
             return
 

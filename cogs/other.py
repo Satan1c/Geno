@@ -265,7 +265,7 @@ class System(cmd.Cog):
         cfg = self.streamers.find_one({"_id": str(nick)})
 
         if not cfg:
-            cfg = self.models.Streamer(nick, ctx.guild).get_dict()
+            cfg = self.models.Streamer(nick).get_dict()
 
             if ctx.guild.id not in [int(i['id']) for i in cfg['servers'] if i and i['id'] and i['channel']]:
                 cfg['servers'].append({"id": f"{ctx.guild.id}", "channel": f"{channel.id}"})
