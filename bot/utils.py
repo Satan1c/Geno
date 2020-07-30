@@ -292,7 +292,7 @@ class Utils:
             "img": img,
             "icon": icon,
             "req": req,
-            "title": snipp['title'],
+            "title": player.current.title,
             "channel": channel,
             "csnipp": csnipp,
             "tags": ", ".join(snipp['tags']) if 'tags' in snipp else "No Tags",

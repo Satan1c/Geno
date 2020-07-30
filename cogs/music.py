@@ -241,7 +241,6 @@ class Music(cmd.Cog):
                        range(len(queue))]
 
         data = self.utils.now_playing(player)
-        dir(player.current)
         em = discord.Embed(description="\n".join(description),
                            title=player.current.title,
                            url=player.current.uri,
@@ -289,7 +288,7 @@ class Music(cmd.Cog):
         data = self.config.find_one({"_id": f"{ctx.guild.id}"})['music']['now_playing']
         data['req'] = ctx.guild.get_member(int(data['req']))
 
-        em = discord.Embed(title=data['title'],
+        em = discord.Embed(title=player.current.title,
                            description=f"Duration:"
                                        f" `{self.utils.parser(start=data['start'], end=datetime.now(), typ='time')}` /"
                                        f" `{lavalink.format_time(int(player.current.duration))}`"
