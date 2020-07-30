@@ -149,7 +149,7 @@ class Music(cmd.Cog):
 
         player.queue.clear()
         await player.stop()
-        await self.utils.connect_to(ctx.guild.id, None)
+        await self.utils.connect_to(ctx.guild.id)
 
     @cmd.command(name="Volume", aliases=['volume', 'v', 'громкость', 'г'], usage="volume `[value]`",
                  description="""

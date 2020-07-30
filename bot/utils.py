@@ -358,8 +358,18 @@ class Utils:
             cfg['queue'] = []
             cfg['now_playing'] = ""
 
-            self.config.update_one({"_id": guild_id}, {"$set": {"music": dict(cfg)}})
-            await self.connect_to(guild_id, None)
+            self.config.update_one({"_id": f"{guild_id}"}, {"$set": {"music": dict(cfg)}})
+            
+            await sleep(60)
+            
+            cfg = self.config.find_one({"_id": guild_id})['music']
+            guild = self.bot.get_guild(int(guild_id))
+            
+            if cfg['now_playing'] and event.player.is_connected and len(guild.get_channel(int(player.channel_id)).members) <= 1:
+                player.queue.clear()
+                await player.stop()
+                await self.connect_to(ctx.guild.id)
+                await guild.get_channel(cfg['last']['channel']).send("End of playback, auto disconnect")
 
         elif isinstance(event, lavalink.TrackStartEvent):
             player = event.player
@@ -401,10 +411,22 @@ class Utils:
         elif isinstance(event, lavalink.TrackEndEvent):
             cfg = self.config.find_one({"_id": f"{event.player.guild_id}"})['music']
             guild = self.bot.get_guild(int(event.player.guild_id))
+            
             message = await guild.get_channel(int(cfg['last']['channel'])).fetch_message(int(cfg['last']['message']))
             await message.delete()
+            
+            if len(guild.get_channel(int(player.channel_id)).members) <= 1:
+                player.queue.clear()
+                await player.stop()
+                await self.connect_to(ctx.guild.id)
+                
+                cfg['queue'] = []
+                cfg['now_playing'] = ""
+                self.config.update_one({"_id": str(event.player.guild_id)}, {"$set": {"music": dict(cfg)}})
+                
+                return await guild.get_channel(cfg['last']['channel']).send("Empty voice channel, auto disconnect")
 
-    async def connect_to(self, guild_id: int, channel_id):
+    async def connect_to(self, guild_id: int, channel_id: str = None):
         """ Connects to the given voicechannel ID. A channel_id of `None` means disconnect. """
         ws = self.bot._connection._get_websocket(guild_id)
         await ws.voice_state(str(guild_id), channel_id)
