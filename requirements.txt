@@ -14,4 +14,3 @@ lavalink
 aiodns
 cchardet
 requests
-googleapiclient
