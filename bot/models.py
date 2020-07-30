@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from datetime import datetime
-
 from discord import Guild, Member
 
 
@@ -44,8 +42,9 @@ class User:
             "mute_time": self.mute_time
         }
 
+
 class Streamer:
-    def __init__(self, login: str, guild: Guild):
+    def __init__(self, login: str):
         self._id = login
         self.stream_id = "0"
         self.servers = []

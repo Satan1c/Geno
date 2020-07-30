@@ -69,7 +69,7 @@ class Music(cmd.Cog):
     @cmd.guild_only()
     async def _play(self, ctx: cmd.Context, *, query: str):
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
-
+        track = None
         query = query.strip('<>')
         services = ['yt', 'sc']
         results = None
@@ -104,7 +104,7 @@ class Music(cmd.Cog):
                                                description=f'{desc} - {len(tracks)} tracks'))
         else:
             track = results['tracks'][0]
-            track = lavalink.models.AudioTrack(track, ctx.author.id, recommended=True)
+            track = lavalink.models.AudioTrack(data=track, requester=ctx.author.id)
             player.add(requester=ctx.author.id, track=track)
 
             track = results['tracks'][0]
@@ -190,7 +190,8 @@ class Music(cmd.Cog):
 
         try:
             value = int(value)
-        except:
+        except BaseException as err:
+            print(err)
             r = re.sub(r'[^.0-9]', r'', value)
             value = round(float(r)) if r else None
 
@@ -234,8 +235,8 @@ class Music(cmd.Cog):
 
         queue = [{"data": self.utils.search_video(req=i.identifier), "req": ctx.guild.get_member(int(i.requester))}
                  for i in player.queue]
-        description = [f"`{i + 1}`. Requested by: {str(queue[i]['req'])}\n" \
-                       f"[{queue[i]['data']['items'][0]['snippet']['title']}]" \
+        description = [f"`{i + 1}`. Requested by: {str(queue[i]['req'])}\n"
+                       f"[{queue[i]['data']['items'][0]['snippet']['title']}]"
                        f"(https://www.youtube.com/watch?v={queue[i]['data']['items'][0]['id']})" for i in
                        range(len(queue))]
 
@@ -290,7 +291,9 @@ class Music(cmd.Cog):
 
         em = discord.Embed(title=data['title'],
                            description=f"Duration:"
-                                       f" `{self.utils.parser(start=data['start'], end=datetime.now(), typ='time')}` / `{lavalink.format_time(int(player.current.duration))}`\nRequested by: `{str(data['req'])}` [{data['req'].mention}]",
+                                       f" `{self.utils.parser(start=data['start'], end=datetime.now(), typ='time')}` /"
+                                       f" `{lavalink.format_time(int(player.current.duration))}`"
+                                       f"\nRequested by: `{str(data['req'])}` [{data['req'].mention}]",
                            url=player.current.uri)
         em.set_thumbnail(url=data['thumbnail'])
         em.set_author(name=data['name'], url=data['url'],
@@ -299,6 +302,28 @@ class Music(cmd.Cog):
                       icon_url=ctx.author.avatar_url_as(format="png", static_format='png', size=256))
 
         await ctx.send(embed=em)
+
+    @cmd.command(name="Pause", aliases=['pause'], usage="pause", description="""
+    Pausing music playback
+    :-:
+    тавит музыку на паузу
+    """)
+    @cmd.guild_only()
+    async def _pause(self, ctx: cmd.Context):
+        player = self.bot.lavalink.player_manager.get(ctx.guild.id)
+        if player.is_playing and not player.paused:
+            await player.set_pause(True)
+
+    @cmd.command(name="Resume", aliases=['resume'], usage="resume", description="""
+    Resume - unpausing music playback
+    :-:
+    Продолжает - снимает с паузы, проигрывание музыки
+    """)
+    @cmd.guild_only()
+    async def _pause(self, ctx: cmd.Context):
+        player = self.bot.lavalink.player_manager.get(ctx.guild.id)
+        if player.is_playing and player.paused:
+            await player.set_pause(False)
 
 
 def setup(bot):

@@ -2,7 +2,9 @@
 import json
 import os
 from asyncio import TimeoutError
+from asyncio import sleep
 from datetime import datetime
+from math import floor
 from typing import Union
 
 import lavalink
@@ -12,11 +14,10 @@ from dateutil.relativedelta import relativedelta
 from googleapiclient import discovery
 
 import discord
-from discord import Embed, Colour, User
+from config import SDC, Boat
+from discord import Embed, Colour
 from discord.ext import commands as cmd
 from discord.ext.commands import Context
-from asyncio import sleep
-from math import floor
 
 YTDL_OPTS = {
     "default_search": "ytsearch",
@@ -40,7 +41,8 @@ class Twitch:
                                     "Accept": "application/vnd.v5+json"})
         return res
 
-    async def stream_embed(self, login, res1, res2, channel):
+    @staticmethod
+    async def stream_embed(login, res1, res2, channel):
         em = discord.Embed(title=f"{res1['title']}", url=f"https://twitch.tv/{login}",
                            description=f"viewer count: `{res1['viewer_count']}`")
         em.set_author(name=f"{res1['user_name']}", url=f"https://twitch.tv/{login}",
@@ -49,13 +51,16 @@ class Twitch:
 
         await channel.send(embed=em)
 
-    def get_stream_query(self, login):
+    @staticmethod
+    def get_stream_query(login):
         return f"streams?user_login={login}"
 
-    def get_user_query(self, login):
+    @staticmethod
+    def get_user_query(login):
         return f"users?login={login}"
 
-    def print_response(self, res):
+    @staticmethod
+    def print_response(res):
         res_json = res.json()
         print_res = json.dumps(res_json, indent=2)
         return print(print_res)
@@ -75,15 +80,15 @@ class Utils:
     @staticmethod
     def binary_search(arr: list, item):
         n = len(arr)
-        L = 0
-        R = n - 1
+        a = 0
+        b = n - 1
 
-        while L <= R:
-            mid = floor((L + R) / 2)
+        while a <= b:
+            mid = floor((a + b) / 2)
             if arr[mid] < item:
-                L = mid + 1
+                a = mid + 1
             elif arr[mid] > item:
-                R = mid - 1
+                b = mid - 1
             else:
                 return mid
         return None
@@ -103,6 +108,27 @@ class Utils:
 
             num_of_iterations += 1
         return arr
+
+    @staticmethod
+    async def req(bot_client):
+        urls = [{"url": f"https://api.server-discord.com/v2/bots/{bot_client.user.id}/stats", "token": f"SDC {SDC}",
+                 "servers": "servers"},
+                {"url": f"https://discord.boats/api/bot/{bot_client.user.id}",
+                 "token": f"{Boat}", "servers": "server_count"}]
+        while 1:
+            for i in urls:
+                headers = {
+                    "Authorization": i['token']
+                }
+                data = {
+                    i['servers']: len(bot_client.guilds)
+                }
+                if i['token'].startswith("SDC "):
+                    data['shards'] = 1
+
+                requests.post(url=i['url'], data=data, headers=headers)
+
+            await sleep(901)
 
     def uptime(self):
         start = self.main.find_one()['uptime']
@@ -134,7 +160,8 @@ class Utils:
         with youtube_dl.YoutubeDL(YTDL_OPTS) as ydl:
             try:
                 info = ydl.extract_info(video_url, download=False)
-            except:
+            except BaseException as err:
+                print(err)
                 info = self.get_info(video_url)
 
             if "_type" in info and info["_type"] == "playlist":
@@ -196,30 +223,33 @@ class Utils:
         return response
 
     def uploader(self, track: dict = None, typ: str = "yt") -> dict:
+        data = {}
         if typ == "yt":
             thumb = self.search_video(track['info']['identifier'])
-            snipp = thumb['items'][0]['snippet']
+            snippet = thumb['items'][0]['snippet']
 
-            ico = self.search_channel(snipp['channelId'])
-            csnipp = ico['items'][0]['snippet']
+            ico = self.search_channel(snippet['channelId'])
+            channel_snippet = ico['items'][0]['snippet']
 
-            img = snipp['thumbnails']
-            img = snipp['thumbnails'][
-                'maxres' if 'maxres' in img else 'standard' if 'standard' in img else 'high' if 'high' in img else 'medium' if 'medium' in img else 'default']
+            img = snippet['thumbnails']
+            img = snippet['thumbnails'][
+                'maxres' if 'maxres' in img else 'standard' if 'standard' in img
+                else 'high' if 'high' in img else 'medium' if 'medium' in img else 'default']
 
-            icon = csnipp['thumbnails']
-            icon = csnipp['thumbnails'][
-                'maxres' if 'maxres' in icon else 'standard' if 'standard' in icon else 'high' if 'high' in icon else 'medium' if 'medium' in icon else 'default']
+            icon = channel_snippet['thumbnails']
+            icon = channel_snippet['thumbnails'][
+                'maxres' if 'maxres' in icon else 'standard' if 'standard' in icon
+                else 'high' if 'high' in icon else 'medium' if 'medium' in icon else 'default']
 
             data = {
-                "name": csnipp['title'],
+                "name": channel_snippet['title'],
                 "url": f"https://youtube.com/channel/{ico['items'][0]['id']}",
-                "icon": icon[
-                    'url'] if ico else "https://maestroselectronics.com/wp-content/uploads/2017/12/No_Image_Available.jpg",
-                "thumbnail": img[
-                    'url'] if img else "https://maestroselectronics.com/wp-content/uploads/2017/12/No_Image_Available.jpg",
-                "tags": ", ".join(snipp['tags']) if "tags" in snipp else "No tags",
-                "title": snipp['title'],
+                "icon": icon['url'] if ico
+                else "https://maestroselectronics.com/wp-content/uploads/2017/12/No_Image_Available.jpg",
+                "thumbnail": img['url'] if img
+                else "https://maestroselectronics.com/wp-content/uploads/2017/12/No_Image_Available.jpg",
+                "tags": ", ".join(snippet['tags']) if "tags" in snippet else "No tags",
+                "title": snippet['title'],
                 "duration": self.parser(int(track['info']['length']) // 1000, typ="time"),
                 "video_url": track['info']['uri']
             }
@@ -269,27 +299,30 @@ class Utils:
 
     async def check_twitch(self):
         while 1:
-            streamers = [i for i in self.streamers.find()]
+            try:
+                streamers = [i for i in self.streamers.find()]
 
-            for streamer in streamers:
-                config = self.streamers.find_one({"_id": f"{streamer['_id']}"})
-                query = self.twitch.get_stream_query(streamer['_id'])
-                res1 = self.twitch.get_response(query).json()['data']
+                for streamer in streamers:
+                    config = self.streamers.find_one({"_id": f"{streamer['_id']}"})
+                    query = self.twitch.get_stream_query(streamer['_id'])
+                    res1 = self.twitch.get_response(query).json()['data']
 
-                if len(res1) < 1 or int(res1['id']) == int(config['stream_id']):
-                    continue
+                    if len(res1) < 1 or int(res1['id']) == int(config['stream_id']):
+                        continue
 
-                config['stream_id'] = f"{res1['id']}"
-                self.config.update_one({"_id": f"{streamer['_id']}"}, {"$set": {"twitch": dict(config)}})
+                    config['stream_id'] = f"{res1['id']}"
+                    self.config.update_one({"_id": f"{streamer['_id']}"}, {"$set": {"twitch": dict(config)}})
 
-                query = self.twitch.get_user_query(streamer['login'])
-                res2 = self.twitch.get_response(query).json()['data'][0]
+                    query = self.twitch.get_user_query(streamer['login'])
+                    res2 = self.twitch.get_response(query).json()['data'][0]
 
-                for server in streamer['servers']:
-                    channel = self.bot.get_guild(int(server['id'])).get_channel(int(server['channel']))
-                    await self.twitch.stream_embed(streamer['_id'], res1, res2, channel)
+                    for server in streamer['servers']:
+                        channel = self.bot.get_guild(int(server['id'])).get_channel(int(server['channel']))
+                        await self.twitch.stream_embed(streamer['_id'], res1, res2, channel)
+            except:
+                return await sleep(300)
 
-            await sleep(1800)
+            await sleep(300)
 
     # lavalink music -----------------------------------------------------------------------------------------------
 
@@ -347,7 +380,7 @@ class Utils:
             self.config.update_one({"_id": f"{player.guild_id}"}, {"$set": {"music": dict(cfg)}})
 
             em = discord.Embed(title=cfg['now_playing']['title'],
-                               description=f"Duration: `{self.parser(int(player.current.duration) // 1000, typ='time')}`"
+                               description=f"Duration: `{lavalink.format_time(int(player.current.duration))}`"
                                            f"\nTags: `{cfg['now_playing']['tags'][0]}`",
                                url=cfg['now_playing']['video_url'],
                                timestamp=datetime.now(),
@@ -358,7 +391,8 @@ class Utils:
             em.set_footer(text=f"Requested by: {str(data['req'])}",
                           icon_url=data['req'].avatar_url_as(format='png', static_format='png', size=256))
 
-            message = await self.bot.get_guild(int(player.guild_id)).get_channel(int(cfg['last']['channel'])).send(embed=em)
+            message = await self.bot.get_guild(int(player.guild_id)).get_channel(int(cfg['last']['channel'])).send(
+                embed=em)
 
             cfg['last'] = {"message": f"{message.id}", "channel": f"{message.channel.id}"}
             self.config.update_one({"_id": f"{player.guild_id}"}, {"$set": {"music": dict(cfg)}})
@@ -369,7 +403,7 @@ class Utils:
             message = await guild.get_channel(int(cfg['last']['channel'])).fetch_message(int(cfg['last']['message']))
             await message.delete()
 
-    async def connect_to(self, guild_id: int, channel_id: str):
+    async def connect_to(self, guild_id: int, channel_id):
         """ Connects to the given voicechannel ID. A channel_id of `None` means disconnect. """
         ws = self.bot._connection._get_websocket(guild_id)
         await ws.voice_state(str(guild_id), channel_id)
@@ -404,7 +438,7 @@ class Paginator:
     async def start(self):
         self.controller = await self.ctx.send(embed=self.begin)
         await self.controller.add_reaction(self.reactions[2])
-        await self.ctx.bot.wait_for('reaction_add', timeout=self.timeout, check=lambda r, u: u.bot != True)
+        await self.ctx.bot.wait_for('reaction_add', timeout=self.timeout, check=lambda r, u: u.bot is not True)
         await self.call_controller()
 
     async def call_controller(self, start_page: int = 0):
@@ -418,27 +452,32 @@ class Paginator:
 
         try:
             await self.controller.clear_reactions()
-        except:
+        except BaseException as err:
+            print(err)
             pass
-                                        
+
         try:
             for emoji in self.reactions:
-                    await self.controller.add_reaction(emoji)
-        except:
+                await self.controller.add_reaction(emoji)
+        except BaseException as err:
+            print(err)
             pass
-                                        
+
         while True:
             try:
+                def check(r, u) -> bool:
+                    return u.id == self.ctx.author.id \
+                                         and r.emoji in self.reactions \
+                                         and r.message.id == self.controller.id
                 response = await self.ctx.bot.wait_for('reaction_add', timeout=self.timeout,
-                                                       check=lambda r, u: u.id == self.ctx.author.id
-                                                                          and r.emoji in self.reactions \
-                                                                          and r.message.id == self.controller.id)
+                                                       check=check)
             except TimeoutError:
                 break
 
             try:
                 await self.controller.remove_reaction(response[0], response[1])
-            except:
+            except BaseException as err:
+                print(err)
                 pass
 
             if response[0].emoji == self.reactions[0]:
@@ -473,18 +512,18 @@ class DataBase:
         print(f"created: users")
 
     async def _create_servers(self):
-        all = [int(i['_id']) for i in self.servers.find()]
+        arr = [int(i['_id']) for i in self.servers.find()]
 
-        create = [i for i in self.bot.guilds if i.id not in all]
+        create = [i for i in self.bot.guilds if i.id not in arr]
         for i in create:
             self.servers.insert_one(self.models.Server(i).get_dict())
             print(f"created: {i.id}")
 
     async def _create_users(self):
-        all = [f"{i['sid']} {i['uid']}" for i in self.profiles.find()]
+        arr = [f"{i['sid']} {i['uid']}" for i in self.profiles.find()]
 
         raw = [i.members for i in self.bot.guilds]
-        create = [i for x in raw for i in x if f"{i.guild.id} {i.id}" not in all]
+        create = [i for x in raw for i in x if f"{i.guild.id} {i.id}" not in arr]
         for i in create:
             mem = self.models.User(i).get_dict()
             self.profiles.insert_one(mem)
@@ -510,7 +549,7 @@ class DataBase:
 
 
 class EmbedGenerator:
-    def __init__(self, target: str, inp: dict = {}, **kwargs):
+    def __init__(self, target: str, inp: dict = None, **kwargs):
         for name, value in kwargs.items():
             inp[str(name)] = value
 

@@ -158,6 +158,34 @@ class System(cmd.Cog):
                                  data=self).get()
         await ctx.send(embed=em)
 
+    @cmd.command(name="Prefix", aliases=['prefix', 'prf', 'set_prefix', 'set_pref'], usage="prefix <prefix>", description="""
+    prefix - any prefix what you want
+     examples: `g-`, `!`, `some_awesome_prefix`
+     default: `-`
+    
+    Changing current server prefix, to "prefix"
+    :-:
+    prefix - любой префикс, который вам надо
+     примеры: `g-`, `!`, `some_awesome_prefix`
+     по умолчанию: `-`
+    
+    Изменяет текущий префикс на сервере, на "prefix"
+    """)
+    @cmd.has_guild_permissions(manage_messages=True)
+    async def _prefix(self, ctx: cmd.Context, *, prefix: str = "-"):
+        cfg = self.config.find_one({"_id": f"{ctx.guild.id}"})
+        raw = cfg['prefix']
+        if str(raw) == str(prefix):
+            raise cmd.BadArgument("New prefix can't be equals old")
+
+        self.config.update_one({"_id": f"{ctx.guild.id}"}, {"$set": {"prefix": prefix}})
+        await ctx.send(embed=discord.Embed(title="Prefix change",
+                                           description=f"From: `{raw}`\nTo: `{prefix}`",
+                                           colour=discord.Colour.green(),
+                                           timestamp=datetime.now())
+                       .set_footer(text=str(ctx.author),
+                                   icon_url=ctx.author.avatar_url_as(format="png", static_format='png', size=256)))
+
     @cmd.command(name="Twitch", aliases=['twitch'], usage="twitch [channel | \"remove\"] <nickname>", description="""
     channel - can be channel **mention** or **channel id**,
      example: <#648622079779799040>, `648622079779799040`
@@ -209,7 +237,12 @@ class System(cmd.Cog):
             self.streamers.update_one({"_id": nick}, {"$set": dict(cfg)})
             return await ctx.send(embed=em)
 
-        if not nick and channel:
+        if len(ctx.message.channel_mentions) > 0:
+            channel = ctx.guild.get_channel(int(ctx.message.channel_mentions[0].id))
+        elif len(re.sub(r"[^0-9]", r"", f"{channel}")) == 18:
+            channel = ctx.guild.get_channel(int(re.sub(r"[^0-9]", r"", channel)))
+
+        if not nick and channel and channel not in ctx.guild.channels:
             nick = channel
             channel = ctx.channel
         elif not channel and not nick:
@@ -223,10 +256,6 @@ class System(cmd.Cog):
             channel = ctx.channel
         if nick and url_rx.match(nick):
             nick = nick.split("/")[-1]
-        if len(ctx.message.channel_mentions) > 0:
-            channel = ctx.guild.get_channel(int(ctx.message.channel_mentions[0].id))
-        elif len(re.sub(r"[^0-9]", r"", f"{channel}")) == 18:
-            channel = ctx.guild.get_channel(int(re.sub(r"[^0-9]", r"", channel)))
 
         query = self.twitch.get_user_query(nick)
         res2 = self.twitch.get_response(query).json()['data'][0]
@@ -256,11 +285,11 @@ class System(cmd.Cog):
             self.streamers.update_one({"_id": nick}, {"$set": dict(cfg)})
 
         return await channel.send(embed=discord.Embed(title="Streamer announcements add for:",
-                                                  description=f"[{res2['display_name']}](https://twitch.tv/{res2['login']})\n"
-                                                              f"In channel: <#{channel.id}>",
-                                                  colour=discord.Colour.green(),
-                                                  timestamp=datetime.now())
-                              .set_image(url=f"{res2['profile_image_url']}"))
+                                                      description=f"[{res2['display_name']}](https://twitch.tv/{res2['login']})\n"
+                                                                  f"In channel: <#{channel.id}>",
+                                                      colour=discord.Colour.green(),
+                                                      timestamp=datetime.now())
+                                  .set_image(url=f"{res2['profile_image_url']}"))
 
     @cmd.command(name="Role Reactions", aliases=['rr', 'role_reactions', 'rolereactions'],
                  usage="role_reactions <message id> <list: <emoji id> <role mention or id> >", description="""

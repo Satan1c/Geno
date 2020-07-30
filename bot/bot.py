@@ -1,15 +1,12 @@
 # -*- coding: utf-8 -*-
 
 import os
-from asyncio import sleep
 from datetime import datetime
 
 import pymongo
-from requests import post
 
 import config
 import discord
-from config import SDC, Boat
 from discord.ext import commands as cmd
 from discord.gateway import IdentifyConfig
 from . import models
@@ -18,27 +15,6 @@ from .utils import Utils, Paginator, DataBase, EmbedGenerator, Twitch
 IdentifyConfig.browser = 'Discord Android'
 
 client = pymongo.MongoClient(config.MONGO)
-
-
-async def req(bot_client):
-    urls = [{"url": f"https://api.server-discord.com/v2/bots/{bot_client.user.id}/stats", "token": f"SDC {SDC}",
-             "servers": "servers"},
-            {"url": f"https://discord.boats/api/bot/{bot_client.user.id}",
-             "token": f"{Boat}", "servers": "server_count"}]
-    while 1:
-        for i in urls:
-            headers = {
-                "Authorization": i['token']
-            }
-            data = {
-                i['servers']: len(bot_client.guilds)
-            }
-            if i['token'].startswith("SDC "):
-                data['shards'] = 1
-
-            post(url=i['url'], data=data, headers=headers)
-
-        await sleep(901)
 
 
 class Geno(cmd.Bot):
@@ -79,15 +55,14 @@ class Geno(cmd.Bot):
                                type=discord.ActivityType.listening)
         await self.change_presence(status=discord.Status.online, activity=act)
 
-        # await self.get_guild(648571219674923008).get_channel(648780121419022336).send("Ready")
         await self.DataBase(self).create()
         print(f"{self.user.name}, is ready")
 
         await self.utils.check_twitch()
-        await req(self)
+        await self.utils.req(self)
 
     async def on_command_error(self, ctx: cmd.Context, err):
-        # raise err
+        raise err
         if isinstance(err, cmd.CommandNotFound):
             return
 
@@ -98,21 +73,27 @@ class Geno(cmd.Bot):
         if isinstance(err, cmd.NoPrivateMessage):
             em.description = "Not a giuld"
 
-        await ctx.send(embed=em)
+        try:
+            await ctx.send(embed=em)
+        except:
+            pass
 
     @staticmethod
     async def on_command(ctx: cmd.Context):
         if isinstance(ctx.channel, discord.DMChannel):
             return
-        await ctx.message.delete()
+        try:
+            await ctx.message.delete()
+        except:
+            pass
 
     async def on_connect(self):
-        # return
+        return
         self.main.update_one({"_id": 0}, {"$set": {"uptime": datetime.now()}})
 
     async def get_prefix(self, message):
         prefix = self.prefix
-        # return prefix
+        return prefix
 
         if message.guild:
             prefix = self.servers.find_one({"_id": f"{message.guild.id}"})['prefix']

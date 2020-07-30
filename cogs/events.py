@@ -52,7 +52,7 @@ class Events(cmd.Cog):
         if f"{pay.emoji.id}" in cfg['reactions']:
             guild = self.bot.get_guild(int(pay.guild_id))
             msg = await guild.get_channel(pay.channel_id).fetch_message(pay.message_id)
-            role = guild.get_role(int(cfg[f"{pay.emoji.id}"]))
+            role = guild.get_role(int(cfg['reactions'][f"{pay.emoji.id}"]))
             await msg.remove_reaction(pay.emoji, pay.member)
             if role not in pay.member.roles:
                 return await pay.member.add_roles(role)
