@@ -44,7 +44,9 @@ class Twitch:
     @staticmethod
     async def stream_embed(login, res1, res2, channel):
         em = discord.Embed(title=f"{res1['title']}", url=f"https://twitch.tv/{login}",
-                           description=f"viewer count: `{res1['viewer_count']}`")
+                           description=f"viewer count: `{res1['viewer_count']}`",
+                           colour=discord.Colour(value=int('6441a5', 16)),
+                           timestamp=datetime.now())
         em.set_author(name=f"{res1['user_name']}", url=f"https://twitch.tv/{login}",
                       icon_url=f"{res2['profile_image_url']}")
         em.set_image(url=f"{res1['thumbnail_url'].format(width=1920, height=1080)}")
@@ -303,23 +305,22 @@ class Utils:
                 streamers = [i for i in self.streamers.find()]
 
                 for streamer in streamers:
-                    config = self.streamers.find_one({"_id": f"{streamer['_id']}"})
                     query = self.twitch.get_stream_query(streamer['_id'])
                     res1 = self.twitch.get_response(query).json()['data']
 
-                    if len(res1) < 1 or int(res1['id']) == int(config['stream_id']):
+                    if len(res1) < 1 or int(res1[0]['id']) == int(streamer['stream_id']):
                         continue
+                    res1 = res1[0]
+                    self.streamers.update_one({"_id": streamer['_id']}, {"$set": {"stream_id": res1['id']}})
 
-                    config['stream_id'] = f"{res1['id']}"
-                    self.config.update_one({"_id": f"{streamer['_id']}"}, {"$set": {"twitch": dict(config)}})
-
-                    query = self.twitch.get_user_query(streamer['login'])
+                    query = self.twitch.get_user_query(streamer['_id'])
                     res2 = self.twitch.get_response(query).json()['data'][0]
 
                     for server in streamer['servers']:
                         channel = self.bot.get_guild(int(server['id'])).get_channel(int(server['channel']))
                         await self.twitch.stream_embed(streamer['_id'], res1, res2, channel)
-            except:
+            except BaseException as err:
+                print(err)
                 return await sleep(300)
 
             await sleep(300)
@@ -550,6 +551,8 @@ class DataBase:
 
 class EmbedGenerator:
     def __init__(self, target: str, inp: dict = None, **kwargs):
+        if not inp:
+            inp = {}
         for name, value in kwargs.items():
             inp[str(name)] = value
 

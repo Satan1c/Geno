@@ -37,7 +37,7 @@ class Geno(cmd.Bot):
         self.Paginator = Paginator
         self.utils = Utils(self)
 
-        self.load_extension("jishaku")
+        # self.load_extension("jishaku")
         self.remove_command('help')
 
         for file in os.listdir('./cogs'):
@@ -62,7 +62,7 @@ class Geno(cmd.Bot):
         await self.utils.req(self)
 
     async def on_command_error(self, ctx: cmd.Context, err):
-        #raise err
+        # raise err
         if isinstance(err, cmd.CommandNotFound):
             return
 
@@ -75,7 +75,8 @@ class Geno(cmd.Bot):
 
         try:
             await ctx.send(embed=em)
-        except:
+        except BaseException as err:
+            print(err)
             pass
 
     @staticmethod
@@ -84,16 +85,17 @@ class Geno(cmd.Bot):
             return
         try:
             await ctx.message.delete()
-        except:
+        except BaseException as err:
+            print(err)
             pass
 
     async def on_connect(self):
-        #return
+        # return
         self.main.update_one({"_id": 0}, {"$set": {"uptime": datetime.now()}})
 
     async def get_prefix(self, message):
         prefix = self.prefix
-        #return prefix
+        # return prefix
 
         if message.guild:
             prefix = self.servers.find_one({"_id": f"{message.guild.id}"})['prefix']

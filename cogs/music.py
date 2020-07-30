@@ -21,8 +21,8 @@ class Music(cmd.Cog):
         self.utils = bot.utils
         self.models = bot.models
         
-        for i in range(1):
-            threading.Thread(target=system, args=("java -jar s/Lavalink.jar",)).start()
+        # for i in range(1):
+        #     threading.Thread(target=system, args=("java -jar s/Lavalink.jar",)).start()
 
         if not hasattr(bot, 'lavalink'):
             bot.lavalink = lavalink.Client(bot.user.id)

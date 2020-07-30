@@ -1,4 +1,3 @@
-
 # -*- coding: utf-8 -*-
 
 import discord
@@ -25,7 +24,8 @@ class Events(cmd.Cog):
         if member.id == self.bot.user.id and after.channel and member.voice and not member.voice.deaf:
             try:
                 await member.edit(deafen=True)
-            except:
+            except BaseException as err:
+                print(err)
                 pass
 
         if member.id == member.guild.me.id and not after.channel and cfg['now_playing']:
@@ -35,7 +35,7 @@ class Events(cmd.Cog):
 
     @cmd.Cog.listener()
     async def on_message(self, message: discord.Message):
-        if isinstance(message.channel, discord.DMChannel) or len(message.embeds) < 1:
+        if isinstance(message.channel, type(discord.DMChannel)) or len(message.embeds) < 1:
             return
 
         em = discord.Embed()
@@ -44,13 +44,13 @@ class Events(cmd.Cog):
 
     @cmd.Cog.listener()
     async def on_raw_reaction_add(self, pay: discord.RawReactionActionEvent):
-        if pay.member and pay.member.bot:
+        guild = self.bot.get_guild(int(pay.guild_id))
+        if pay.member and pay.member.bot or not isinstance(guild.get_channel(pay.channel_id), type(discord.DMChannel)):
             return
         cfg = self.config.find_one({"_id": f"{pay.guild_id}"})
-        if not 'reactions'in cfg:
+        if not cfg or 'reactions' not in cfg:
             return
         if f"{pay.emoji.id}" in cfg['reactions']:
-            guild = self.bot.get_guild(int(pay.guild_id))
             msg = await guild.get_channel(pay.channel_id).fetch_message(pay.message_id)
             role = guild.get_role(int(cfg['reactions'][f"{pay.emoji.id}"]))
             await msg.remove_reaction(pay.emoji, pay.member)
