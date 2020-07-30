@@ -99,7 +99,7 @@ class System(cmd.Cog):
         p = self.Paginator(ctx, embeds=embeds, begin=em)
         await p.start()
 
-    @cmd.command(name="Profile", aliases=['profile', 'prf'], usage="profile", description="""
+    @cmd.command(name="Profile", aliases=['profile'], usage="profile", description="""
     :-:
     """, hidden=True)
     @cmd.is_owner()
