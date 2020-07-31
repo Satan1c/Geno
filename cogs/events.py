@@ -35,7 +35,7 @@ class Events(cmd.Cog):
 
     @cmd.Cog.listener()
     async def on_message(self, message: discord.Message):
-        if not message.guild or len(message.embeds) < 1:
+        if not message.guild and len(message.embeds) < 1:
             return
 
         em = discord.Embed()
