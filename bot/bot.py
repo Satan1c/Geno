@@ -11,6 +11,7 @@ from discord.ext import commands as cmd
 from discord.gateway import IdentifyConfig
 from . import models
 from .utils import Utils, Paginator, DataBase, EmbedGenerator, Twitch, Checks
+from asyncio import TimeoutError
 
 IdentifyConfig.browser = 'Discord Android'
 
@@ -64,7 +65,7 @@ class Geno(cmd.Bot):
 
     async def on_command_error(self, ctx: cmd.Context, err):
         # raise err
-        if isinstance(err, cmd.CommandNotFound):
+        if isinstance(err, cmd.CommandNotFound) or isinstance(err, TimeoutError):
             return
 
         em = discord.Embed(title=f"{ctx.command.name} ERROR",
