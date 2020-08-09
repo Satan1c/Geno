@@ -65,7 +65,7 @@ class Geno(cmd.Bot):
 
     async def on_command_error(self, ctx: cmd.Context, err):
         # raise err
-        if isinstance(err, cmd.CommandNotFound) or isinstance(err, TimeoutError):
+        if isinstance(err, cmd.CommandNotFound) or (not ctx.guild and ctx.command.name == "Help"):
             return
 
         em = discord.Embed(title=f"{ctx.command.name} ERROR",
@@ -83,8 +83,7 @@ class Geno(cmd.Bot):
 
     @staticmethod
     async def on_command(ctx: cmd.Context):
-        print(f"{ctx.message.guild}")
-        if not ctx.message.guild:
+        if not ctx.guild:
             return
         try:
             await ctx.message.delete()
