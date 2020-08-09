@@ -10,7 +10,7 @@ import discord
 from discord.ext import commands as cmd
 from discord.gateway import IdentifyConfig
 from . import models
-from .utils import Utils, Paginator, DataBase, EmbedGenerator, Twitch
+from .utils import Utils, Paginator, DataBase, EmbedGenerator, Twitch, Checks
 
 IdentifyConfig.browser = 'Discord Android'
 
@@ -23,21 +23,22 @@ class Geno(cmd.Bot):
         self.token = config.TOKEN
         # self.prefix = "t-"
         self.prefix = "-"
-        self.version = "(v0.1.4a)"
+        self.version = "(v0.1.5a)"
         self.main = client.cfg.main
 
     def init(self):
         self.servers = client.servers.configs
         self.streamers = client.servers.streamers
         self.profiles = client.users.profiles
+        self.cmds = client.servers.commands
         self.models = models
         self.twitch = Twitch()
+        self.checks = Checks(self)
         self.EmbedGenerator = EmbedGenerator
         self.DataBase = DataBase
         self.Paginator = Paginator
         self.utils = Utils(self)
 
-        # self.load_extension("jishaku")
         self.remove_command('help')
 
         for file in os.listdir('./cogs'):
@@ -62,7 +63,7 @@ class Geno(cmd.Bot):
         await self.utils.req(self)
 
     async def on_command_error(self, ctx: cmd.Context, err):
-        #raise err
+        # raise err
         if isinstance(err, cmd.CommandNotFound):
             return
 
@@ -81,7 +82,7 @@ class Geno(cmd.Bot):
 
     @staticmethod
     async def on_command(ctx: cmd.Context):
-        if isinstance(ctx.channel, discord.DMChannel):
+        if not ctx.message.guild:
             return
         try:
             await ctx.message.delete()

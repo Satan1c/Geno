@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import re
 
 import discord
 from discord.ext import commands as cmd
@@ -35,15 +36,28 @@ class Events(cmd.Cog):
 
     @cmd.Cog.listener()
     async def on_message(self, message: discord.Message):
-        if not message.guild and len(message.embeds) < 1:
+        if re.sub(r'[^A-Za-z]', r'', message.content) == "Geno"\
+                or re.sub(r'[^0-9]', r'', message.content) == f"{self.bot.user.id}":
+            ctx = cmd.Context(bot=self.bot,
+                              message=message,
+                              guild=message.guild,
+                              send=message.channel.send,
+                              prefix="-" if not message.guild else self.config.find_one({"_id": f"{message.guild.id}"})[
+                                  'prefix'])
+            return await self.bot.get_command("Help").callback(ctx=ctx,
+                                                               self=self.bot.get_cog("System"), )
+
+        if message.author.id != self.bot.user.id or not message.guild:
             return
 
         em = discord.Embed()
-        if message.author.id == self.bot.user.id and isinstance(message.embeds[0].image.url, type(em.image.url)):
+        if not message.embeds or isinstance(message.embeds[0].image.url, type(em.image.url)):
             await message.delete(delay=120)
 
     @cmd.Cog.listener()
     async def on_raw_reaction_add(self, pay: discord.RawReactionActionEvent):
+        if not pay.guild_id:
+            return
         guild = self.bot.get_guild(int(pay.guild_id))
         if pay.member and pay.member.bot or not isinstance(guild.get_channel(pay.channel_id), type(discord.DMChannel)):
             return

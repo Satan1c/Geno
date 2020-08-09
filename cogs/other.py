@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import json
 import platform
 import re
 from datetime import datetime
@@ -7,15 +6,18 @@ from datetime import datetime
 import psutil
 
 import discord
+from bot.bot import bot as b
 from discord.ext import commands as cmd
 
 url_rx = re.compile(r'https?://(?:www\.)?.+')
+checks = b.checks
 
 
 class System(cmd.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.config = bot.servers
+        self.commands = bot.cmds
         self.streamers = bot.streamers
         self.profile = bot.profiles
         self.utils = bot.utils
@@ -23,22 +25,24 @@ class System(cmd.Cog):
         self.models = bot.models
         self.Paginator = bot.Paginator
         self.EmbedGenerator = bot.EmbedGenerator
-        self.arrowl = "<a:31:637653092749410304>"
-        self.arrowr = "<a:30:637653060726030337>"
+        self.arrowl = ""  # "<a:31:637653092749410304>"
+        self.arrowr = ""  # "<a:30:637653060726030337>"
         self.bot_invite = "https://discord.com/oauth2/authorize?client_id={id}&permissions={perms}&scope=bot"
         self.supp_link = "https://discord.gg/NSkg6N9"
         self.patreon_link = "https://patreon.com/satan1c"
         self.reactions = ('⬅', '⏹', '➡')
+        self.urls = ({"Bot invite:": self.bot_invite.format(id=bot.user.id, perms=536210647)},
+                     {"Support server:": self.supp_link},
+                     {"Patreon:": self.patreon_link},
+                     {"SD.C": "https://bots.server-discord.com/648570341974736926"},
+                     {"D.Boats": "https://discord.boats/bot/648570341974736926"},
+                     {"Top-Bots": "https://top-bots.xyz/bot/648570341974736926"})
 
     @cmd.command(name="Test", aliases=['test'], hidden=True)
     @cmd.is_owner()
-    async def _test(self, ctx: cmd.Context, message: str):
-        for i in ctx.guild.text_channels:
-            try:
-                msg = await i.fetch_message(int(re.sub(r"[^0-9]", r"", f"{message}")))
-                print(repr(msg))
-            except:
-                continue
+    @cmd.check(checks.is_off)
+    async def _test(self, ctx: cmd.Context):
+        print(ctx.command.signature)
 
     @cmd.command(name="Announcer", aliases=['announce'], hidden=True)
     @cmd.is_owner()
@@ -48,7 +52,8 @@ class System(cmd.Cog):
         for member in owners:
             await member.send(embed=discord.Embed.from_dict(dict(text)))
 
-    @cmd.command(name="Help", hidden=True, aliases=['h', 'help', 'commands', 'cmds'])
+    @cmd.command(name="Help", hidden=True, aliases=['h', 'help', 'commands', 'cmds', 'хелп', 'команды', 'кмд'])
+    @cmd.check(checks.is_off)
     async def _help(self, ctx: cmd.Context, *, command: str = None):
         reg = str(ctx.guild.region if ctx.guild else "en")
         if command:
@@ -99,28 +104,13 @@ class System(cmd.Cog):
         p = self.Paginator(ctx, embeds=embeds, begin=em)
         await p.start()
 
-    @cmd.command(name="Profile", aliases=['profile'], usage="profile", description="""
-    :-:
-    """, hidden=True)
-    @cmd.is_owner()
-    async def _profile(self, ctx: cmd.Context):
-        prf = self.profile.find_one({"sid": f"{ctx.guild.id}", "uid": f"{ctx.author.id}"})
-        em = discord.Embed(title=f"{self.arrowl} {ctx.author.display_name} profile {self.arrowr}",
-                           colour=discord.Colour.green(),
-                           timestamp=datetime.now())
-
-        em.set_footer(text=str(ctx.author),
-                      icon_url=ctx.author.avatar_url_as(format="png", static_format='png', size=256))
-        em.add_field(name="messages:", value=f"`{prf['messages']}`")
-
-        return await ctx.send(embed=em)
-
-    @cmd.command(name="Server", aliases=['server', 'srv', 'information', 'info'], usage="server", description="""
+    @cmd.command(name="Server", aliases=['server', 'srv', 'information', 'info', 'сервер', 'инфо', 'информация'], usage="server", description="""
     Shows short info about server
     :-:
     Показывает краткую информацию о сервере
     """)
     @cmd.guild_only()
+    @cmd.check(checks.is_off)
     async def _server(self, ctx: cmd.Context):
         srv = self.config.find_one({"_id": f"{ctx.guild.id}"})
         g = ctx.guild
@@ -140,25 +130,48 @@ class System(cmd.Cog):
 
         await ctx.send(embed=em)
 
-    @cmd.command(name="Bot", aliases=['bot', 'about'], usage="bot", description="""
+    @cmd.command(name="Bot", aliases=['bot', 'about', 'бот'], usage="bot", description="""
     Shows some info about me
     :-:
     Показывает некотороую информацию про меня
     """)
+    @cmd.check(checks.is_off)
     async def _bot(self, ctx: cmd.Context):
         system = platform.uname()
         cpu = f"`cores: {psutil.cpu_count(logical=True)}" \
               f"\nfrequency: {round(psutil.cpu_freq().current / 1000, 1)}ghz" \
               f"\nusage: {psutil.cpu_percent()}%`"
-        ram = f"`volume: {(psutil.virtual_memory().available // 1024) // 1000}mb /" \
-              f" {(psutil.virtual_memory().total // 1024) // 1000}mb\n" \
+        ram = f"`volume: {(psutil.virtual_memory().available // 1024) // 10 ** 6}gb /" \
+              f" {(psutil.virtual_memory().total // 1024) // 10 ** 6}gb\n" \
               f"percentage: {round(psutil.virtual_memory().available * 100 / psutil.virtual_memory().total, 1)}%`"
 
         em = self.EmbedGenerator(target="bot", ctx=ctx, system=system, cpu=cpu, ram=ram, platform=platform,
                                  data=self).get()
         await ctx.send(embed=em)
 
-    @cmd.command(name="Prefix", aliases=['prefix', 'prf', 'set_prefix', 'set_pref'], usage="prefix <prefix>", description="""
+    @cmd.command(name="Links", aliases=['urls', 'links', 'bot_urls', 'bot_links'], usage="links", description="""
+    Shows connected to bot links, like: bot invite, support server, monitors
+    :-:
+    Показывает ссылки связанные с ботом, по типу: приглашение бота, сервер поддержки, смониторинги
+    """)
+    @cmd.check(checks.is_off)
+    async def _bot_urls(self, ctx: cmd.Context):
+        em = discord.Embed(title=f"{ctx.me.name} {self.bot.version}  urls",
+                           colour=discord.Colour.green(),
+                           timestamp=datetime.now())
+        em.set_footer(text=str(ctx.author),
+                      icon_url=ctx.author.avatar_url_as(format="png", static_format='png', size=256))
+
+        titles = [k for i in self.urls for k, v in i.items()]
+        urls = [v for i in self.urls for k, v in i.items()]
+
+        for i in range(len(self.urls)):
+            em.add_field(name=titles[i], value=f"[Click]({urls[i]})")
+
+        await ctx.send(embed=em)
+
+    @cmd.command(name="Prefix", aliases=['prefix', 'prf', 'set_prefix', 'set_pref', 'префикс', 'преф'], usage="prefix <prefix>",
+                 description="""
     prefix - any prefix what you want
      examples: `g-`, `!`, `some_awesome_prefix`
      default: `-`
@@ -171,6 +184,7 @@ class System(cmd.Cog):
     
     Изменяет текущий префикс на сервере, на "prefix"
     """)
+    @cmd.check(checks.is_off)
     @cmd.has_guild_permissions(manage_messages=True)
     async def _prefix(self, ctx: cmd.Context, *, prefix: str = "-"):
         cfg = self.config.find_one({"_id": f"{ctx.guild.id}"})
@@ -186,7 +200,7 @@ class System(cmd.Cog):
                        .set_footer(text=str(ctx.author),
                                    icon_url=ctx.author.avatar_url_as(format="png", static_format='png', size=256)))
 
-    @cmd.command(name="Twitch", aliases=['twitch'], usage="twitch [channel | \"remove\"] <nickname>", description="""
+    @cmd.command(name="Twitch", aliases=['twitch', 'твитч'], usage="twitch [channel | \"remove\"] <nickname>", description="""
     channel - can be channel **mention** or **channel id**,
      example: <#648622079779799040>, `648622079779799040`
      default: register in current channel
@@ -213,8 +227,9 @@ class System(cmd.Cog):
     
     Регистрирует "channel", для автоматических оповещений, о трансляциях на twitch.tv канале "nick"
     """)
-    @cmd.bot_has_guild_permissions(manage_channels=True)
+    @cmd.check(checks.is_off)
     @cmd.has_guild_permissions(manage_channels=True)
+    @cmd.bot_has_guild_permissions(manage_channels=True)
     async def _twitch(self, ctx: cmd.Context, channel: str = None, *, nick: str = None):
         if channel == "remove":
             if not nick:
@@ -237,25 +252,7 @@ class System(cmd.Cog):
             self.streamers.update_one({"_id": nick}, {"$set": dict(cfg)})
             return await ctx.send(embed=em)
 
-        if len(ctx.message.channel_mentions) > 0:
-            channel = ctx.guild.get_channel(int(ctx.message.channel_mentions[0].id))
-        elif len(re.sub(r"[^0-9]", r"", f"{channel}")) == 18:
-            channel = ctx.guild.get_channel(int(re.sub(r"[^0-9]", r"", channel)))
-
-        if not nick and channel and channel not in ctx.guild.channels:
-            nick = channel
-            channel = ctx.channel
-        elif not channel and not nick:
-            channel = ctx.channel
-            nick = "satan1clive"
-        elif not channel and nick:
-            channel = ctx.channel
-        elif not nick:
-            nick = "satan1clive"
-        elif not channel:
-            channel = ctx.channel
-        if nick and url_rx.match(nick):
-            nick = nick.split("/")[-1]
+        nick, channel = await self.utils.twitch(ctx, nick, channel)
 
         query = self.twitch.get_user_query(nick)
         res2 = self.twitch.get_response(query).json()['data'][0]
@@ -291,8 +288,10 @@ class System(cmd.Cog):
                                                       timestamp=datetime.now())
                                   .set_image(url=f"{res2['profile_image_url']}"))
 
-    @cmd.command(name="Role Reactions", aliases=['rr', 'role_reactions', 'rolereactions'],
-                 usage="role_reactions <message id> <list: <emoji id> <role mention or id> >", description="""
+    @cmd.command(name="Role Reactions",
+                 aliases=['rr', 'role_reactions', 'rolereactions', 'рр', 'роли_по_реакциям', 'ролипореакцим', 'рлпрк'],
+                 usage="role_reactions <message id> <list: <emoji id> <role mention or id> >",
+                 description="""
     message id - must be integer number of message on what you wanna add reactions
      example: `648622822889095172`
      
@@ -321,49 +320,11 @@ class System(cmd.Cog):
      
     Добавляет "emojis" под "message", и отмечает "roles" как роли по реакциям
     """)
-    @cmd.bot_has_guild_permissions(manage_channels=True, manage_roles=True)
+    @cmd.check(checks.is_off)
     @cmd.has_guild_permissions(manage_channels=True, manage_roles=True)
+    @cmd.bot_has_guild_permissions(manage_channels=True, manage_roles=True)
     async def _reaction_roles(self, ctx: cmd.Context, message: str, *args):
-        if len(re.sub(r"[^0-9]", r"", f"{message}")) == 18:
-            for i in ctx.guild.text_channels:
-                try:
-                    message = await i.fetch_message(int(re.sub(r"[^0-9]", r"", f"{message}")))
-                except:
-                    continue
-
-        key = args[::2]
-        k = []
-        for i in key:
-            ids = re.sub(r"[^0-9]", r"", f"{i}")
-            if len(ids) == 18:
-                e = self.bot.get_emoji(int(ids))
-                if not e:
-                    k.append(i)
-                    continue
-                k.append(e)
-        key = k
-
-        value = args[1::2]
-        if len(ctx.message.role_mentions) > 0 and len(ctx.message.role_mentions) == len(value):
-            value = ctx.message.roles_mentions
-        else:
-            v = []
-            m = 0
-            for i in range(len(value)):
-                if len(re.sub(r"[^0-9]", r"", f"{value[i]}")) == 18:
-                    r = ctx.guild.get_role(int(re.sub(r"[^0-9]", r"", f"{value[i]}")))
-                    if not r:
-                        raise cmd.BadArgument("Role not found")
-                    v.append(r)
-                elif len(ctx.message.role_mentions) > 0:
-                    r = ctx.guild.get_role(ctx.message.role_mentions[m].id)
-                    if not r:
-                        raise cmd.BadArgument("Role not found")
-                    m += 1
-                    v.append(r)
-            else:
-                value = v
-            print(value)
+        key, value, message = await self.utils.reaction_roles(ctx, message, args)
 
         data = {}
         for i in range(len(key)):
@@ -373,6 +334,130 @@ class System(cmd.Cog):
         for i in key:
             print(i)
             await message.add_reaction(i)
+
+    @cmd.command(name="Disable", aliases=['disable', 'отключить'], usage="disable <category name | command alias>",
+                 description="""
+    Category name - must be full name of category
+     example: `Music`
+    
+    Command alias - must be one of command aliases
+     examples: `p`, `ban`, `srv`
+    
+    Disable all "category" commands or "command" on server
+    :-:
+    Category name - должен быть полным названием категории
+     пример: `Music`
+    
+    Command alias - должен быть одним из вариантов использования команды
+     примеры: `p`, `ban`, `srv`
+    
+    Отключает все команды в "category" или команду "command" на сервере
+    """)
+    @cmd.check(checks.is_off)
+    @cmd.guild_only()
+    @cmd.has_guild_permissions(manage_guild=True)
+    async def _disable_command_or_category(self, ctx: cmd.Context, *, target: str):
+        if not target:
+            raise cmd.BadArgument("Give name of category or command alias")
+        r = await checks.is_off(ctx)
+        print(r)
+        target = target.split(" ")
+        target = [i.lower() for i in target]
+
+        cfg = self.commands.find_one({"_id": f"{ctx.guild.id}"})
+
+        if not cfg:
+            data = self.models.Commands(ctx.guild).get_dict()
+            self.commands.insert_one(dict(data))
+            cfg = self.commands.find_one({"_id": f"{ctx.guild.id}"})
+
+        cogs = [i for i in self.bot.cogs if i.lower() in target]
+
+        cmds = [i.name for j in self.bot.cogs for i in self.bot.cogs[j].walk_commands()
+                if not i.hidden and j not in ["Jishaku", "Enable"] and len([v for v in target if v in i.aliases]) > 0]
+
+        if not cmds and not cogs:
+            raise cmd.BadArgument('Nothing found!')
+
+        if cogs:
+            if cogs[0] in cfg['cogs']:
+                return await ctx.send("This category already disabled")
+
+            cfg['cogs'].append(cogs[0])
+            res = f"Category: {cogs[0]}"
+        elif cmds:
+            if cmds[0] in cfg['commands']:
+                return await ctx.send("This command already disabled")
+
+            cfg['commands'].append(cmds[0])
+            res = f"Command: {cmds[0]}"
+
+        self.commands.update_one({"_id": f"{ctx.guild.id}"}, {"$set": dict(cfg)})
+        await ctx.send(embed=discord.Embed(title="Disable:",
+                                           description=res,
+                                           colour=discord.Colour.green(),
+                                           timestamp=datetime.now()))
+
+    @cmd.command(name="Enable", aliases=['enable', 'включить'], usage="enable <category name | command alias>",
+                 description="""
+    Category name - must be full name of category
+     example: `Music`
+    
+    Command alias - must be one of command aliases
+     examples: `p`, `ban`, `srv`
+    
+    Enable all "category" commands or "command" on server
+    :-:
+    Category name - должен быть полным названием категории
+     пример: `Music`
+    
+    Command alias - должен быть одним из вариантов использования команды
+     примеры: `p`, `ban`, `srv`
+    
+    Включает все команды в "category" или команду "command" на сервере
+    """)
+    @cmd.guild_only()
+    @cmd.has_guild_permissions(manage_guild=True)
+    async def _enable_command_or_category(self, ctx: cmd.Context, *, target: str):
+        if not target:
+            raise cmd.BadArgument("Give name of category or command alias")
+
+        target = target.split(" ")
+        target = [i.lower() for i in target]
+
+        cfg = self.commands.find_one({"_id": f"{ctx.guild.id}"})
+
+        if not cfg:
+            raise cmd.BadArgument("All commands or categories are enabled")
+
+        cogs = [i for i in self.bot.cogs if i.lower() in target]
+
+        cmds = [i.name for j in self.bot.cogs for i in self.bot.cogs[j].walk_commands()
+                if not i.hidden and j not in ["Jishaku", "Enable"] and len([v for v in target if v in i.aliases]) > 0]
+
+        if not cmds and not cogs:
+            raise cmd.BadArgument('Nothing found!')
+
+        if cogs:
+            if cogs[0] not in cfg['cogs']:
+                return await ctx.send("This category already enabled")
+
+            index = [i for i in range(len(cfg['cogs'])) if cfg['cogs'][i].lower() == cogs[0].lower()][0]
+            res = cfg['cogs'].pop(index)
+            res = f"Category: {res}"
+        elif cmds:
+            if cmds[0] not in cfg['commands']:
+                return await ctx.send("This command already enabled")
+
+            index = [i for i in range(len(cfg['commands'])) if cfg['commands'][i].lower() == cmds[0].lower()][0]
+            res = cfg['commands'].pop(index)
+            res = f"Command: {res}"
+
+        self.commands.update_one({"_id": f"{ctx.guild.id}"}, {"$set": dict(cfg)})
+        await ctx.send(embed=discord.Embed(title="Enable:",
+                                           description=res,
+                                           colour=discord.Colour.green(),
+                                           timestamp=datetime.now()))
 
 
 def setup(bot):

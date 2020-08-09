@@ -4,14 +4,17 @@ import re
 from datetime import datetime
 
 import discord
+from bot.bot import bot as b
 from discord.ext import commands as cmd
+
+checks = b.checks
 
 
 class Moderation(cmd.Cog):
     def __int__(self, bot):
         self.bot = bot
 
-    @cmd.command(name="Ban", aliases=['ban', 'b'], usage="ban `<user>` `[reason]`", description="""
+    @cmd.command(name="Ban", aliases=['ban', 'b', 'бан', 'б'], usage="ban `<user>` `[reason]`", description="""
     user - must be user **mention** or **user id**,
      example: <@!348444859360608256>, `348444859360608256`
      
@@ -30,6 +33,7 @@ class Moderation(cmd.Cog):
     
     Может забанить user на сервере, даже если его нет на нем
     """)
+    @cmd.check(checks.is_off)
     @cmd.bot_has_guild_permissions(ban_members=True)
     @cmd.has_guild_permissions(ban_members=True)
     async def _ban(self, ctx: cmd.Context, user, *, reason: str = "no reason"):
@@ -77,7 +81,7 @@ class Moderation(cmd.Cog):
 
         await ctx.send(embed=embed)
 
-    @cmd.command(name="Kick", aliases=['kick', 'k'], usage="kick `<user>` `[reason]`", description="""
+    @cmd.command(name="Kick", aliases=['kick', 'k', 'кик', 'к'], usage="kick `<user>` `[reason]`", description="""
     user - must be user **mention** or **user id**,
      example: <@!348444859360608256>, `348444859360608256`
      
@@ -96,6 +100,7 @@ class Moderation(cmd.Cog):
     
     Может выгнать user с сервера
     """)
+    @cmd.check(checks.is_off)
     @cmd.bot_has_guild_permissions(kick_members=True)
     @cmd.has_guild_permissions(kick_members=True)
     async def _kick(self, ctx: cmd.Context, user: discord.Member, *, reason: str = "no reason"):

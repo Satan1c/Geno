@@ -55,3 +55,17 @@ class Streamer:
             "stream_id": str(self.stream_id),
             "servers": list(self.servers)
         }
+
+
+class Commands:
+    def __init__(self, guild: Guild):
+        self._id = f"{guild.id}"
+        self.cogs = []
+        self.commands = []
+
+    def get_dict(self) -> dict:
+        return {
+            "_id": self._id,
+            "cogs": list(self.cogs),
+            "commands": list(self.commands)
+        }

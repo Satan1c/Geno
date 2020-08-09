@@ -8,7 +8,6 @@ youtube_dl
 google-api-python-client
 PyNaCl
 dnspython
-jishaku
 python-dateutil
 lavalink
 aiodns

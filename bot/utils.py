@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import json
 import os
+import re
 from asyncio import TimeoutError
 from asyncio import sleep
 from datetime import datetime
@@ -19,6 +20,7 @@ from discord import Embed, Colour
 from discord.ext import commands as cmd
 from discord.ext.commands import Context
 
+url_rx = re.compile(r'https?://(?:www\.)?.+')
 YTDL_OPTS = {
     "default_search": "ytsearch",
     "format": "bestaudio/best",
@@ -112,7 +114,7 @@ class Utils:
         return arr
 
     @staticmethod
-    async def req(bot_client):
+    async def req(bot_client: cmd.Bot):
         urls = [{"url": f"https://api.server-discord.com/v2/bots/{bot_client.user.id}/stats", "token": f"SDC {SDC}",
                  "servers": "servers"},
                 {"url": f"https://discord.boats/api/bot/{bot_client.user.id}",
@@ -134,8 +136,11 @@ class Utils:
 
     def uptime(self):
         start = self.main.find_one()['uptime']
-        t_diff = relativedelta(datetime.now(), start)
-        return '{d}d {h}h {m}m {s}s'.format(d=t_diff.days, h=t_diff.hours, m=t_diff.minutes, s=t_diff.seconds)
+        t = relativedelta(datetime.now(), start)
+        return '{d}d {h}h {m}m {s}s'.format(d=t.days if len(f"{t.days}") >= 2 else f"0{t.days}",
+                                            h=t.hours if len(f"{t.hours}") >= 2 else f"0{t.hours}",
+                                            m=t.minutes if len(f"{t.minutes}") >= 2 else f"0{t.minutes}",
+                                            s=t.seconds if len(f"{t.seconds}") >= 2 else f"0{t.seconds}")
 
     def parser(self, raw: int = 0, typ: str = "numbers", start: datetime = None, end: datetime = None) -> str:
         string = f"{raw}"
@@ -151,10 +156,12 @@ class Utils:
 
                 string = f"{n[0]}{end or ''} {self.dictionary[len(listed) - 1]} "
         if typ == "time":
-            time = relativedelta(microseconds=raw * (10 ** 6))
+            t = relativedelta(microseconds=raw * (10 ** 6))
             if start and end:
-                time = relativedelta(end, start)
-            string = '{h}h {m}m {s}s'.format(h=time.hours, m=time.minutes, s=time.seconds)
+                t = relativedelta(end, start)
+            string = '{h}:{m}:{s}'.format(h=t.hours if len(f"{t.hours}") >= 2 else f"0{t.hours}",
+                                          m=t.minutes if len(f"{t.minutes}") >= 2 else f"0{t.minutes}",
+                                          s=t.seconds if len(f"{t.seconds}") >= 2 else f"0{t.seconds}")
 
         return string
 
@@ -325,116 +332,190 @@ class Utils:
 
             await sleep(300)
 
-    # lavalink music -----------------------------------------------------------------------------------------------
+    async def queue(self, ctx: cmd.Context, player) -> list:
+        data = self.now_playing(player)
 
-    async def ensure_voice(self, ctx):
-        """ This check ensures that the bot and command author are in the same voicechannel. """
-        player = self.bot.lavalink.player_manager.create(ctx.guild.id, endpoint=str(ctx.guild.region))
-        should_connect = ctx.command.name in ('Play',)
+        em = discord.Embed(title="Seems like queue is empty",
+                           colour=discord.Colour.green(),
+                           timestamp=datetime.now())
+        em.set_author(name="Seems like nothing is plying now",
+                      icon_url="https://maestroselectronics.com/wp-content/uploads/2017/12/No_Image_Available.jpg")
 
-        if not ctx.author.voice or not ctx.author.voice.channel:
-            raise cmd.CommandInvokeError('Join a voicechannel first.')
+        em.set_thumbnail(url="https://maestroselectronics.com/wp-content/uploads/2017/12/No_Image_Available.jpg")
 
-        if not player.is_connected:
-            if not should_connect:
-                raise cmd.CommandInvokeError('Not connected.')
+        if len(player.queue):
+            embeds = []
+            desc = []
+            for i in range(len(player.queue)):
+                n = i + 1
+                j = player.queue[i]
+                mem = ctx.guild.get_member(int(j.requester))
+                desc.append(f"`{n}` Requested by: {str(mem or 'User not found')}[{mem.mention if mem else ''}]"
+                            f"\n[{j.title}](https://www.youtube.com/watch?v={j.identifier})")
 
-            permissions = ctx.author.voice.channel.permissions_for(ctx.me)
+                if n % 5 == 0:
+                    embeds.append(discord.Embed(title=f"{player.current.title}"
+                                                      f"\nQueue list:",
+                                                url=player.current.uri,
+                                                colour=discord.Colour.green(),
+                                                timestamp=datetime.now(),
+                                                description="\n".join(desc[len(embeds) * 5:]))
+                                  .set_thumbnail(url=data['img']['url'])
+                                  .set_author(name=data['csnipp']['title'],
+                                              url=f"https://youtube.com/channel/"
+                                                  f"{data['channel']['items'][0]['id']}",
+                                              icon_url=data['icon']['url'])
+                                  .set_footer(text=str(ctx.author),
+                                              icon_url=ctx.author.avatar_url_as(format="png",
+                                                                                static_format='png',
+                                                                                size=256)))
+            else:
+                if len(desc[len(embeds) * 5:]) > 0:
+                    try:
+                        embeds.append(discord.Embed(title=f"{player.current.title}"
+                                                          f"\nQueue list:",
+                                                    url=player.current.uri,
+                                                    colour=discord.Colour.green(),
+                                                    timestamp=datetime.now(),
+                                                    description="\n".join(desc[len(embeds) * 5:]))
+                                      .set_thumbnail(url=data['img']['url'])
+                                      .set_author(name=data['csnipp']['title'],
+                                                  url=f"https://youtube.com/channel/"
+                                                      f"{data['channel']['items'][0]['id']}",
+                                                  icon_url=data['icon']['url'])
+                                      .set_footer(text=str(ctx.author),
+                                                  icon_url=ctx.author.avatar_url_as(format="png",
+                                                                                    static_format='png',
+                                                                                    size=256)))
+                    except BaseException as err:
+                        print(err)
+                        pass
 
-            if not permissions.connect or not permissions.speak:  # Check user limit too?
-                raise cmd.CommandInvokeError('I need the `CONNECT` and `SPEAK` permissions.')
+            if len(embeds):
+                return embeds
 
-            player.store('channel', ctx.channel.id)
-            await self.connect_to(ctx.guild.id, str(ctx.author.voice.channel.id))
+        if data:
+            em.set_thumbnail(url=data['img']['url'])
+            em.set_author(name=data['csnipp']['title'],
+                          url=f"https://youtube.com/channel/{data['channel']['items'][0]['id']}",
+                          icon_url=data['icon']['url'])
+            em.title = player.current.title
+            em.url = player.current.uri
+            em.set_footer(text=str(ctx.author),
+                          icon_url=ctx.author.avatar_url_as(format="png", static_format='png', size=256))
+
+        return [em]
+
+    @staticmethod
+    async def volume(value=None, raw: int = 0, ctx: cmd.Context = None):
+        em = discord.Embed(title="Volume change", description="From: `{raw}%`\nTo: `{end}%`",
+                           colour=discord.Colour.green(), timestamp=datetime.now())
+        em.set_footer(text=str(ctx.author),
+                      icon_url=ctx.author.avatar_url_as(format="png", static_format='png', size=256))
+
+        if not value:
+            em.title = "Volume"
+            em.description = f"`{int(raw)}%`"
+            await ctx.send(embed=em)
+            return None, None
+
+        try:
+            value = int(value)
+        except BaseException as err:
+            print(err)
+            r = re.sub(r'[^.0-9]', r'', value)
+            value = round(float(r)) if r else None
+
+        if not value:
+            em.title = "Volume"
+            em.description = f"`{int(raw)}%`"
+            await ctx.send(embed=em)
+            return None, None
+
+        if value < 1:
+            value = 1
+            await ctx.send(embed=discord.Embed(description=f"Volume value can't be less than {value}%"))
+        elif value > 250:
+            value = 250
+            await ctx.send(embed=discord.Embed(description=f"Volume value can't be more than {value}"))
+        if value == raw:
+            await ctx.send(embed=discord.Embed(description="New volume value can't equals to old"))
+            return None, None
+
+        return em, value
+
+    async def reaction_roles(self, ctx: cmd.Context, message: str, args: tuple) -> [list, list, discord.Message]:
+        if len(re.sub(r"[^0-9]", r"", f"{message}")) == 18:
+            for i in ctx.guild.text_channels:
+                try:
+                    message = await i.fetch_message(int(re.sub(r"[^0-9]", r"", f"{message}")))
+                except BaseException as err:
+                    print(err)
+                    continue
+
+        key = args[::2]
+        k = []
+        for i in key:
+            ids = re.sub(r"[^0-9]", r"", f"{i}")
+            if len(ids) == 18:
+                e = self.bot.get_emoji(int(ids))
+                if not e:
+                    k.append(i)
+                    continue
+                k.append(e)
+        key = k
+
+        value = args[1::2]
+        if len(ctx.message.role_mentions) > 0 and len(ctx.message.role_mentions) == len(value):
+            value = ctx.message.roles_mentions
         else:
-            if int(player.channel_id) != ctx.author.voice.channel.id:
-                raise cmd.CommandInvokeError('You need to be in my voicechannel.')
+            v = []
+            m = 0
+            for i in range(len(value)):
+                if len(re.sub(r"[^0-9]", r"", f"{value[i]}")) == 18:
+                    r = ctx.guild.get_role(int(re.sub(r"[^0-9]", r"", f"{value[i]}")))
+                    if not r:
+                        raise cmd.BadArgument("Role not found")
+                    v.append(r)
+                elif len(ctx.message.role_mentions) > 0:
+                    r = ctx.guild.get_role(ctx.message.role_mentions[m].id)
+                    if not r:
+                        raise cmd.BadArgument("Role not found")
+                    m += 1
+                    v.append(r)
+            else:
+                value = v
 
-    async def track_hook(self, event):
-        if isinstance(event, lavalink.events.QueueEndEvent):
-            guild_id = int(event.player.guild_id)
-            cfg = self.config.find_one({"_id": guild_id})['music']
+        return key, value, message
 
-            cfg['queue'] = []
-            cfg['now_playing'] = ""
+    @staticmethod
+    async def twitch(ctx: cmd.Context, nick: str, channel: str) -> [str, discord.TextChannel]:
+        if len(ctx.message.channel_mentions) > 0:
+            channel = ctx.guild.get_channel(int(ctx.message.channel_mentions[0].id))
+        elif len(re.sub(r"[^0-9]", r"", f"{channel}")) == 18:
+            channel = ctx.guild.get_channel(int(re.sub(r"[^0-9]", r"", channel)))
 
-            self.config.update_one({"_id": f"{guild_id}"}, {"$set": {"music": dict(cfg)}})
-            
-            await sleep(60)
-            
-            cfg = self.config.find_one({"_id": guild_id})['music']
-            guild = self.bot.get_guild(int(guild_id))
-            
-            if cfg['now_playing'] and event.player.is_connected and len(guild.get_channel(int(player.channel_id)).members) <= 1:
-                player.queue.clear()
-                await player.stop()
-                await self.connect_to(ctx.guild.id)
-                await guild.get_channel(cfg['last']['channel']).send("End of playback, auto disconnect")
+        if not nick and channel and channel not in ctx.guild.channels:
+            nick = channel
+            channel = ctx.channel
+        elif not channel and not nick:
+            channel = ctx.channel
+            nick = "satan1clive"
+        elif not channel and nick:
+            channel = ctx.channel
+        elif not nick:
+            nick = "satan1clive"
+        elif not channel:
+            channel = ctx.channel
+        if nick and url_rx.match(nick):
+            nick = nick.split("/")[-1]
 
-        elif isinstance(event, lavalink.TrackStartEvent):
-            player = event.player
-            cfg = self.config.find_one({"_id": f"{event.player.guild_id}"})['music']
-            data = self.now_playing(player=player)
-
-            if cfg['now_playing'] == "":
-                cfg['now_playing'] = {}
-            cfg['now_playing']['start'] = datetime.now()
-            cfg['now_playing']['req'] = str(data['req'].id)
-            cfg['now_playing']['title'] = data['title']
-            cfg['now_playing']['tags'] = data['tags'],
-            cfg['now_playing']['video_url'] = player.current.uri
-            cfg['now_playing']['thumbnail'] = data['img']['url']
-            cfg['now_playing']['name'] = data['csnipp']['title']
-            cfg['now_playing']['icon'] = data['icon']['url']
-            cfg['now_playing']['url'] = f"https://youtube.com/channel/{data['channel']['items'][0]['id']}"
-
-            self.config.update_one({"_id": f"{player.guild_id}"}, {"$set": {"music": dict(cfg)}})
-
-            em = discord.Embed(title=cfg['now_playing']['title'],
-                               description=f"Duration: `{lavalink.format_time(int(player.current.duration))}`"
-                                           f"\nTags: `{cfg['now_playing']['tags'][0]}`",
-                               url=cfg['now_playing']['video_url'],
-                               timestamp=datetime.now(),
-                               colour=discord.Colour.green())
-            em.set_image(url=cfg['now_playing']['thumbnail'])
-            em.set_author(name=cfg['now_playing']['name'], url=cfg['now_playing']['url'],
-                          icon_url=cfg['now_playing']['icon'])
-            em.set_footer(text=f"Requested by: {str(data['req'])}",
-                          icon_url=data['req'].avatar_url_as(format='png', static_format='png', size=256))
-
-            message = await self.bot.get_guild(int(player.guild_id)).get_channel(int(cfg['last']['channel'])).send(
-                embed=em)
-
-            cfg['last'] = {"message": f"{message.id}", "channel": f"{message.channel.id}"}
-            self.config.update_one({"_id": f"{player.guild_id}"}, {"$set": {"music": dict(cfg)}})
-
-        elif isinstance(event, lavalink.TrackEndEvent):
-            cfg = self.config.find_one({"_id": f"{event.player.guild_id}"})['music']
-            guild = self.bot.get_guild(int(event.player.guild_id))
-            
-            message = await guild.get_channel(int(cfg['last']['channel'])).fetch_message(int(cfg['last']['message']))
-            await message.delete()
-            
-            if len(guild.get_channel(int(player.channel_id)).members) <= 1:
-                player.queue.clear()
-                await player.stop()
-                await self.connect_to(ctx.guild.id)
-                
-                cfg['queue'] = []
-                cfg['now_playing'] = ""
-                self.config.update_one({"_id": str(event.player.guild_id)}, {"$set": {"music": dict(cfg)}})
-                
-                return await guild.get_channel(cfg['last']['channel']).send("Empty voice channel, auto disconnect")
-
-    async def connect_to(self, guild_id: int, channel_id: str = None):
-        """ Connects to the given voicechannel ID. A channel_id of `None` means disconnect. """
-        ws = self.bot._connection._get_websocket(guild_id)
-        await ws.voice_state(str(guild_id), channel_id)
+        return nick, channel
 
 
 class Paginator:
     def __init__(self, ctx: Context, begin: Embed = None, reactions: Union[tuple, list] = None, timeout: int = 120,
-                 embeds: Union[tuple, list] = None, music: dict = None, cfg=None):
+                 embeds: Union[tuple, list] = None):
         self.reactions = reactions or ('⬅', '⏹', '➡')
         self.pages = []
         self.current = 0
@@ -443,8 +524,6 @@ class Paginator:
         self.begin = begin
         self.add_page(embeds)
         self.controller = None
-        self.music = music
-        self.cfg = cfg
 
     async def _close_session(self):
         await self.controller.delete()
@@ -490,8 +569,9 @@ class Paginator:
             try:
                 def check(r, u) -> bool:
                     return u.id == self.ctx.author.id \
-                                         and r.emoji in self.reactions \
-                                         and r.message.id == self.controller.id
+                           and r.emoji in self.reactions \
+                           and r.message.id == self.controller.id
+
                 response = await self.ctx.bot.wait_for('reaction_add', timeout=self.timeout,
                                                        check=check)
             except TimeoutError:
@@ -616,10 +696,6 @@ class EmbedGenerator:
             em.add_field(name="Discord.Py version:",
                          value=f"`{discord.version_info[0]}.{discord.version_info[1]}.{discord.version_info[2]}`")
             em.add_field(name='\u200b', value="\u200b")
-            em.add_field(name="Bot invite:",
-                         value=f"[Click]({data.bot_invite.format(id=data.bot.user.id, perms=536210647)})")
-            em.add_field(name="Support server:", value=f"[Click]({data.supp_link})")
-            em.add_field(name="Patreon:", value=f"[Click]({data.patreon_link})")
 
             em.set_footer(text=str(ctx.author),
                           icon_url=ctx.author.avatar_url_as(format="png", static_format='png', size=256))
@@ -628,3 +704,25 @@ class EmbedGenerator:
 
     def get(self) -> Embed:
         return self.embed
+
+
+class Checks:
+    def __init__(self, bot):
+        self.cmds = bot.cmds
+        self.bot = bot
+
+    async def is_off(self, ctx: cmd.Context) -> bool:
+        if ctx.author.id == self.bot.owner_id:
+            return True
+
+        if not ctx.guild:
+            return True
+
+        cfg = self.cmds.find_one({"_id": f"{ctx.guild.id}"})
+        if not cfg:
+            return True
+
+        if ctx.command.name in cfg['commands'] or ctx.command.cog_name in cfg['cogs']:
+            raise cmd.BadArgument("Module or command, is disabled on server")
+
+        return True
