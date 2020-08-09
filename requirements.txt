@@ -13,3 +13,4 @@ lavalink
 aiodns
 cchardet
 requests
+websockets
