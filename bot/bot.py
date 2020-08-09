@@ -82,6 +82,7 @@ class Geno(cmd.Bot):
 
     @staticmethod
     async def on_command(ctx: cmd.Context):
+        print(f"{ctx.message.guild}")
         if not ctx.message.guild:
             return
         try:

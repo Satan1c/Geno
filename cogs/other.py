@@ -64,7 +64,7 @@ class System(cmd.Cog):
 
             command = cmds[0]
             desc = command.description
-            m = await ctx.send(embed=discord.Embed(title=f"{command.name} help:",
+            await ctx.send(embed=discord.Embed(title=f"{command.name} help:",
                                                    description=f"""
 <> - {"required params" if reg != "russia" else "обязательные параметры"}, [] - {"other params" if reg != "russia" else "другие параметры"}
 {"Command usage:" if reg != "russia" else "Использование команды:"} {command.usage}
@@ -73,7 +73,7 @@ class System(cmd.Cog):
 {desc.split(":-:")[0 if reg != "russia" else 1]}
 """,
                                                    colour=discord.Colour.green()))
-            return await m.delete(delay=120)
+            return
 
         prefix = "-" if not ctx.guild else self.config.find_one({"_id": f"{ctx.guild.id}"})['prefix']
         em = discord.Embed(colour=discord.Colour.green(),
