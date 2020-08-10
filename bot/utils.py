@@ -308,32 +308,6 @@ class Utils:
         }
         return data
 
-    async def check_twitch(self):
-        while 1:
-            try:
-                streamers = [i for i in self.streamers.find()]
-
-                for streamer in streamers:
-                    query = self.twitch.get_stream_query(streamer['_id'])
-                    res1 = self.twitch.get_response(query).json()['data']
-
-                    if len(res1) < 1 or int(res1[0]['id']) == int(streamer['stream_id']):
-                        continue
-                    res1 = res1[0]
-                    self.streamers.update_one({"_id": streamer['_id']}, {"$set": {"stream_id": res1['id']}})
-
-                    query = self.twitch.get_user_query(streamer['_id'])
-                    res2 = self.twitch.get_response(query).json()['data'][0]
-
-                    for server in streamer['servers']:
-                        channel = self.bot.get_guild(int(server['id'])).get_channel(int(server['channel']))
-                        await self.twitch.stream_embed(streamer['_id'], res1, res2, channel)
-            except BaseException as err:
-                print(err)
-                return await sleep(300)
-
-            await sleep(300)
-
     async def queue(self, ctx: cmd.Context, player) -> list:
         data = self.now_playing(player)
 
@@ -615,20 +589,20 @@ class DataBase:
     async def _create_servers(self):
         arr = [int(i['_id']) for i in self.servers.find()]
 
-        create = [i for i in self.bot.guilds if i.id not in arr]
-        for i in create:
-            self.servers.insert_one(self.models.Server(i).get_dict())
-            print(f"created: {i.id}")
+        create = [self.models.Server(i).get_dict() for i in self.bot.guilds if i.id not in arr]
+        if len(create):
+            print("...servers creation")
+            self.servers.insert_many(create)
 
     async def _create_users(self):
         arr = [f"{i['sid']} {i['uid']}" for i in self.profiles.find()]
 
-        raw = [i.members for i in self.bot.guilds]
-        create = [i for x in raw for i in x if f"{i.guild.id} {i.id}" not in arr]
-        for i in create:
-            mem = self.models.User(i).get_dict()
-            self.profiles.insert_one(mem)
-            print(f"created: {mem['sid']} | {mem['uid']}")
+        raw = [[x for x in i.members if not x.bot] for i in self.bot.guilds]
+        create = [self.models.User(i).get_dict() for x in raw for i in x if f"{i.guild.id} {i.id}" not in arr]
+
+        if len(create):
+            print("...users creation")
+            self.profiles.insert_many(create)
 
     async def create_server(self, guild: discord.Guild):
         i = self.models.Server(guild).get_dict()
@@ -641,6 +615,8 @@ class DataBase:
             await self.create_user(i)
 
     async def create_user(self, member: discord.Member):
+        if member.bot:
+            return
         i = self.models.User(member).get_dict()
         usr = self.servers.find_one({"sid": f"{i['sid']}", "uid": f"{i['uid']}"})
 
