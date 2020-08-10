@@ -2,7 +2,7 @@ SDC = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY0ODU3MDM0MTk3NDczNjkyNiIs
 Boat = "EJ665CuJlCMEBImkQ3sinuJAfO06Z3zXLagNj1uzvyxEWkZkl8umxV3Oo9BGl3I7EArTTsnbAhGz1x75xU23TEbaeIsRcuP2atjOA0Ov6HTULjktaUKmiJHyW9twVFdj79EzQikTN6iAz8HN4Eoc7p4YVD0"
 BOTICORD = "https://boticord.top/api/stats?servers={servers}&shards={shards}&users={users}"
 
-TOKEN = "NjQ4NTcwMzQxOTc0NzM2OTI2.XwLvPQ.2r9nZktVxcw4FBoLiu_pVd1at-s"
+TOKEN = "NjQ4NTcwMzQxOTc0NzM2OTI2.XdwKMw.vnTwJNSOzT9jhKdtgQgX9sK8Hn4"
 MONGO = "mongodb+srv://Geno:Atlas23Game@genodb-wrqdw.mongodb.net/test?retryWrites=true&w=majority"
 
 # TOKEN = "NzMxNTE1ODI3NjcyNzExMTk4.XxfkMA.C-Zj5SFlJ78SralveRlxcJZoWrc"

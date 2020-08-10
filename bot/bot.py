@@ -28,20 +28,40 @@ class Geno(cmd.Bot):
         self.main = client.cfg.main
         self.servers = client.servers.configs
 
+    async def on_disconnect(self):
+        print("Disconnect")
+
+    def init(self):
+        self.twitch = Twitch()
+        self.Paginator = Paginator
+        self.DataBase = DataBase
+        self.EmbedGenerator = EmbedGenerator
+        self.models = models
+        self.cmds = client.servers.commands
+        self.profiles = client.users.profiles
+        self.streamers = client.servers.streamers
+        self.checks = Checks(self)
+        self.utils = Utils(self)
+
+        self.remove_command('help')
+
+        for file in os.listdir('./cogs'):
+            if file[-3:] == '.py':
+                try:
+                    self.load_extension(f'cogs.{file[0:-3]}')
+                    print(f'[+] cogs.{file[0:-3]}')
+                except BaseException as err:
+                    print(f'[!] cogs.{file[0:-3]} error: `{err}`')
+        print('-' * 30)
+
     async def on_ready(self):
-        await self.init()
+        self.init()
         act = discord.Activity(name=f"-help | {self.version}",
                                type=discord.ActivityType.listening)
         await self.change_presence(status=discord.Status.online, activity=act)
 
         await self.DataBase(self).create()
         print(f"{self.user.name}, is ready")
-
-        for i in range(1):
-            t = Thread(target=self.utils.req)
-            t.start()
-
-        await self.utils.check_twitch()
 
     async def on_command_error(self, ctx: cmd.Context, err):
         # raise err
@@ -87,28 +107,7 @@ class Geno(cmd.Bot):
     def run(self):
         super().run(self.token)
 
-    async def init(self):
-        self.streamers = client.servers.streamers
-        self.profiles = client.users.profiles
-        self.cmds = client.servers.commands
-        self.models = models
-        self.twitch = Twitch()
-        self.checks = Checks(self)
-        self.EmbedGenerator = EmbedGenerator
-        self.DataBase = DataBase
-        self.Paginator = Paginator
-        self.utils = Utils(self)
 
-        self.remove_command('help')
-
-        for file in os.listdir('./cogs'):
-            if file[-3:] == '.py':
-                try:
-                    self.load_extension(f'cogs.{file[0:-3]}')
-                    print(f'[+] cogs.{file[0:-3]}')
-                except BaseException as err:
-                    print(f'[!] cogs.{file[0:-3]} error: `{err}`')
-        print('-' * 30)
 
 
 bot = Geno()
