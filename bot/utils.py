@@ -119,14 +119,20 @@ class Utils:
                                 "servers": len(self.bot.guilds)},
                           headers={"Authorization": f"SDC {SDC}"})
 
+            print("SDC")
+
             requests.post(url=f"https://discord.boats/api/bot/{self.bot.user.id}",
                           data={"servers": len(self.bot.guilds)},
                           headers={"Authorization": Boat})
+
+            print("Boats")
 
             requests.get(url=BOTICORD.format(servers=len(self.bot.guilds),
                                              users=len(self.bot.users),
                                              shards=self.bot.shard_count),
                          headers={"Authorization": "74992d73-5f95-441a-abb9-67bd4b27b883"})
+
+            print("Boticord")
 
             sleep(901)
 
