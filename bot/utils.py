@@ -3,7 +3,7 @@ import json
 import os
 import re
 from asyncio import TimeoutError
-from asyncio import sleep
+from time import sleep
 from datetime import datetime
 from math import floor
 from typing import Union
@@ -14,7 +14,7 @@ from dateutil.relativedelta import relativedelta
 from googleapiclient import discovery
 
 import discord
-from config import SDC, Boat
+from config import SDC, Boat, BOTICORD
 from discord import Embed, Colour
 from discord.ext import commands as cmd
 from discord.ext.commands import Context
@@ -112,34 +112,31 @@ class Utils:
             num_of_iterations += 1
         return arr
 
-    @staticmethod
-    async def req(bot_client: cmd.Bot):
-        urls = [{"url": f"https://api.server-discord.com/v2/bots/{bot_client.user.id}/stats", "token": f"SDC {SDC}",
-                 "servers": "servers"},
-                {"url": f"https://discord.boats/api/bot/{bot_client.user.id}",
-                 "token": f"{Boat}", "servers": "server_count"}]
+    def req(self):
         while 1:
-            for i in urls:
-                headers = {
-                    "Authorization": i['token']
-                }
-                data = {
-                    i['servers']: len(bot_client.guilds)
-                }
-                if i['token'].startswith("SDC "):
-                    data['shards'] = 1
+            requests.post(url=f"https://api.server-discord.com/v2/bots/{self.bot.user.id}/stats",
+                          data={"shards": self.bot.shard_count,
+                                "servers": len(self.bot.guilds)},
+                          headers={"Authorization": f"SDC {SDC}"})
 
-                requests.post(url=i['url'], data=data, headers=headers)
+            requests.post(url=f"https://discord.boats/api/bot/{self.bot.user.id}",
+                          data={"servers": len(self.bot.guilds)},
+                          headers={"Authorization": Boat})
 
-            await sleep(901)
+            requests.get(url=BOTICORD.format(servers=len(self.bot.guilds),
+                                             users=len(self.bot.users),
+                                             shards=self.bot.shard_count),
+                         headers={"Authorization": "74992d73-5f95-441a-abb9-67bd4b27b883"})
+
+            sleep(901)
 
     def uptime(self):
         start = self.main.find_one()['uptime']
         t = relativedelta(datetime.now(), start)
-        return '{d}d {h}h {m}m {s}s'.format(d=t.days if len(f"{t.days}") >= 2 else f"0{t.days}",
-                                            h=t.hours if len(f"{t.hours}") >= 2 else f"0{t.hours}",
-                                            m=t.minutes if len(f"{t.minutes}") >= 2 else f"0{t.minutes}",
-                                            s=t.seconds if len(f"{t.seconds}") >= 2 else f"0{t.seconds}")
+        return '{d}d {h}h {m}m {s}s'.format(d=t.days,
+                                            h=t.hours,
+                                            m=t.minutes,
+                                            s=t.seconds)
 
     def parser(self, raw: int = 0, typ: str = "numbers", start: datetime = None, end: datetime = None) -> str:
         string = f"{raw}"
@@ -587,10 +584,6 @@ class Paginator:
                 await self.controller.edit(embed=self.pages[self.current])
 
             if response[0].emoji == self.reactions[1]:
-                # em = self.controller.embeds[0]
-                # if em.title == "Queue list:":
-                #     self.music['queue'] = []
-                #     self.cfg.update_one({"_id": f"{self.ctx.guild.id}"}, {"$set": {"music": dict(self.music)}})
                 break
 
             if response[0].emoji == self.reactions[2]:

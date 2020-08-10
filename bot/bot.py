@@ -11,7 +11,7 @@ from discord.ext import commands as cmd
 from discord.gateway import IdentifyConfig
 from . import models
 from .utils import Utils, Paginator, DataBase, EmbedGenerator, Twitch, Checks
-from asyncio import TimeoutError
+from threading import Thread
 
 IdentifyConfig.browser = 'Discord Android'
 
@@ -26,33 +26,10 @@ class Geno(cmd.Bot):
         self.prefix = "-"
         self.version = "(v0.1.5a)"
         self.main = client.cfg.main
-
-    def init(self):
         self.servers = client.servers.configs
-        self.streamers = client.servers.streamers
-        self.profiles = client.users.profiles
-        self.cmds = client.servers.commands
-        self.models = models
-        self.twitch = Twitch()
-        self.checks = Checks(self)
-        self.EmbedGenerator = EmbedGenerator
-        self.DataBase = DataBase
-        self.Paginator = Paginator
-        self.utils = Utils(self)
-
-        self.remove_command('help')
-
-        for file in os.listdir('./cogs'):
-            if file[-3:] == '.py':
-                try:
-                    self.load_extension(f'cogs.{file[0:-3]}')
-                    print(f'[+] cogs.{file[0:-3]}')
-                except BaseException as err:
-                    print(f'[!] cogs.{file[0:-3]} error: `{err}`')
-        print('-' * 30)
 
     async def on_ready(self):
-        self.init()
+        await self.init()
         act = discord.Activity(name=f"-help | {self.version}",
                                type=discord.ActivityType.listening)
         await self.change_presence(status=discord.Status.online, activity=act)
@@ -60,8 +37,11 @@ class Geno(cmd.Bot):
         await self.DataBase(self).create()
         print(f"{self.user.name}, is ready")
 
+        for i in range(1):
+            t = Thread(target=self.utils.req)
+            t.start()
+
         await self.utils.check_twitch()
-        await self.utils.req(self)
 
     async def on_command_error(self, ctx: cmd.Context, err):
         # raise err
@@ -106,6 +86,29 @@ class Geno(cmd.Bot):
 
     def run(self):
         super().run(self.token)
+
+    async def init(self):
+        self.streamers = client.servers.streamers
+        self.profiles = client.users.profiles
+        self.cmds = client.servers.commands
+        self.models = models
+        self.twitch = Twitch()
+        self.checks = Checks(self)
+        self.EmbedGenerator = EmbedGenerator
+        self.DataBase = DataBase
+        self.Paginator = Paginator
+        self.utils = Utils(self)
+
+        self.remove_command('help')
+
+        for file in os.listdir('./cogs'):
+            if file[-3:] == '.py':
+                try:
+                    self.load_extension(f'cogs.{file[0:-3]}')
+                    print(f'[+] cogs.{file[0:-3]}')
+                except BaseException as err:
+                    print(f'[!] cogs.{file[0:-3]} error: `{err}`')
+        print('-' * 30)
 
 
 bot = Geno()
