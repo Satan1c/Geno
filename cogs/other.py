@@ -43,13 +43,8 @@ class System(cmd.Cog):
     @cmd.check(checks.is_off)
     async def _test(self, ctx: cmd.Context):
         updt = [i for i in self.config.find({}) if i['prefix'] == "-"]
-        update = []
         for i in updt:
-            d = dict(i)
-            d['prefix'] = "g-"
-            update.append(d)
-
-        self.config.update_many(update)
+            self.config.update_one({"_id": i['_id']}, {"$set": { "prefix": "g-" }})
 
     @cmd.command(name="Announcer", aliases=['announce'], hidden=True)
     @cmd.is_owner()
