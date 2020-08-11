@@ -177,14 +177,14 @@ class System(cmd.Cog):
                  usage="prefix <prefix>",
                  description="""
     prefix - any prefix what you want
-     examples: `g-`, `!`, `some_awesome_prefix`
-     default: `-`
+     examples: `-g`, `!`, `some_awesome_prefix`
+     default: `g-`
     
     Changing current server prefix, to "prefix"
     :-:
     prefix - любой префикс, который вам надо
-     примеры: `g-`, `!`, `some_awesome_prefix`
-     по умолчанию: `-`
+     примеры: `-g`, `!`, `some_awesome_prefix`
+     по умолчанию: `g-`
     
     Изменяет текущий префикс на сервере, на "prefix"
     """)
