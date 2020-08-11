@@ -42,7 +42,14 @@ class System(cmd.Cog):
     @cmd.is_owner()
     @cmd.check(checks.is_off)
     async def _test(self, ctx: cmd.Context):
-        print(ctx.command.signature)
+        updt = [i for i in self.config.find({}) if i['prefix'] == "-"]
+        update = []
+        for i in updt:
+            d = dict(i)
+            d['prefix'] = "g-"
+            update.append(d)
+
+        self.config.update_many(update)
 
     @cmd.command(name="Announcer", aliases=['announce'], hidden=True)
     @cmd.is_owner()
@@ -65,17 +72,17 @@ class System(cmd.Cog):
             command = cmds[0]
             desc = command.description
             await ctx.send(embed=discord.Embed(title=f"{command.name} help:",
-                                                   description=f"""
+                                               description=f"""
 <> - {"required params" if reg != "russia" else "обязательные параметры"}, [] - {"other params" if reg != "russia" else "другие параметры"}
 {"Command usage:" if reg != "russia" else "Использование команды:"} {command.usage}
 {"Command aliases:" if reg != "russia" else "Иные виды использования:"} `{", ".join(command.aliases)}`
 
 {desc.split(":-:")[0 if reg != "russia" else 1]}
 """,
-                                                   colour=discord.Colour.green()))
+                                               colour=discord.Colour.green()))
             return
 
-        prefix = "-" if not ctx.guild else self.config.find_one({"_id": f"{ctx.guild.id}"})['prefix']
+        prefix = self.bot.prefix if not ctx.guild else self.config.find_one({"_id": f"{ctx.guild.id}"})['prefix']
         em = discord.Embed(colour=discord.Colour.green(),
                            title=f'{self.arrowl} Commands list {self.arrowr}',
                            description=f"""prefix: `{prefix}`
@@ -104,7 +111,8 @@ class System(cmd.Cog):
         p = self.Paginator(ctx, embeds=embeds, begin=em)
         await p.start()
 
-    @cmd.command(name="Server", aliases=['server', 'srv', 'information', 'info', 'сервер', 'инфо', 'информация'], usage="server", description="""
+    @cmd.command(name="Server", aliases=['server', 'srv', 'information', 'info', 'сервер', 'инфо', 'информация'],
+                 usage="server", description="""
     Shows short info about server
     :-:
     Показывает краткую информацию о сервере
@@ -170,7 +178,8 @@ class System(cmd.Cog):
 
         await ctx.send(embed=em)
 
-    @cmd.command(name="Prefix", aliases=['prefix', 'prf', 'set_prefix', 'set_pref', 'префикс', 'преф'], usage="prefix <prefix>",
+    @cmd.command(name="Prefix", aliases=['prefix', 'prf', 'set_prefix', 'set_pref', 'префикс', 'преф'],
+                 usage="prefix <prefix>",
                  description="""
     prefix - any prefix what you want
      examples: `g-`, `!`, `some_awesome_prefix`
@@ -200,7 +209,8 @@ class System(cmd.Cog):
                        .set_footer(text=str(ctx.author),
                                    icon_url=ctx.author.avatar_url_as(format="png", static_format='png', size=256)))
 
-    @cmd.command(name="Twitch", aliases=['twitch', 'твитч'], usage="twitch [channel | \"remove\"] <nickname>", description="""
+    @cmd.command(name="Twitch", aliases=['twitch', 'твитч'], usage="twitch [channel | \"remove\"] <nickname>",
+                 description="""
     channel - can be channel **mention** or **channel id**,
      example: <#648622079779799040>, `648622079779799040`
      default: register in current channel

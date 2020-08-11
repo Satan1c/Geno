@@ -23,7 +23,7 @@ class Geno(cmd.Bot):
         super().__init__(command_prefix=self.get_prefix, owner_id=348444859360608256)
         self.token = config.TOKEN
         # self.prefix = "t-"
-        self.prefix = "-"
+        self.prefix = "g-"
         self.version = "(v0.1.5a)"
         self.main = client.cfg.main
         self.servers = client.servers.configs
@@ -56,7 +56,7 @@ class Geno(cmd.Bot):
 
     async def on_ready(self):
         self.init()
-        act = discord.Activity(name=f"-help | {self.version}",
+        act = discord.Activity(name=f"{self.prefix}help | {self.version}",
                                type=discord.ActivityType.listening)
         await self.change_presence(status=discord.Status.online, activity=act)
 
