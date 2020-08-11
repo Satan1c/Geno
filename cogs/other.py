@@ -190,7 +190,7 @@ class System(cmd.Cog):
     """)
     @cmd.check(checks.is_off)
     @cmd.has_guild_permissions(manage_messages=True)
-    async def _prefix(self, ctx: cmd.Context, *, prefix: str = "-"):
+    async def _prefix(self, ctx: cmd.Context, *, prefix: str = "g-"):
         cfg = self.config.find_one({"_id": f"{ctx.guild.id}"})
         raw = cfg['prefix']
         if str(raw) == str(prefix):

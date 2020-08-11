@@ -6,7 +6,7 @@ from discord import Guild, Member
 class Server:
     def __init__(self, guild: Guild):
         self._id = f"{guild.id}"
-        self.prefix = "-"
+        self.prefix = "g-"
         self.music = {
             "skip_vote": False,
             "volume": 0.5,
