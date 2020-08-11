@@ -11,7 +11,7 @@ checks = b.checks
 
 
 class Moderation(cmd.Cog):
-    def __int__(self, bot):
+    def __init__(self, bot):
         self.bot = bot
 
     @cmd.command(name="Ban", aliases=['ban', 'b', 'бан', 'б'], usage="ban `<user>` `[reason]`", description="""
