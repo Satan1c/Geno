@@ -687,21 +687,17 @@ class Checks:
 
     async def is_off(self, ctx: cmd.Context) -> bool:
         if ctx.author.id == self.bot.owner_id:
-            print("owner")
             return True
 
         if not ctx.guild:
-            print("no guild")
             return True
 
         cfg = self.cmds.find_one({"_id": f"{ctx.guild.id}"})
         if not cfg:
-            print("not off")
             return True
 
         if ctx.command.name in cfg['commands'] or ctx.command.cog_name in cfg['cogs']:
-            print("off")
+            
             raise cmd.BadArgument("Module or command, is disabled on server")
-
-        print("all")
+        
         return True
