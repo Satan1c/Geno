@@ -274,7 +274,7 @@ class Utils:
         icon = csnipp['thumbnails'][
             'maxres' if 'maxres' in icon else 'standard' if 'standard' in icon else 'high' if 'high' in icon else
             'medium' if 'medium' in icon else 'default']
-        
+
         return {
             "img": img,
             "icon": icon,

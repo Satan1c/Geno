@@ -21,8 +21,8 @@ class Geno(cmd.Bot):
     def __init__(self):
         super().__init__(command_prefix=self.get_prefix, owner_id=348444859360608256)
         self.token = config.TOKEN
-        self.prefix = "t-"
-        # self.prefix = "g-"
+        # self.prefix = "t-"
+        self.prefix = "g-"
         self.version = "(v0.2.0a)"
         self.main = client.cfg.main
         self.servers = client.servers.configs
@@ -64,7 +64,7 @@ class Geno(cmd.Bot):
         print(f"{self.user.name}, is ready")
 
     async def on_command_error(self, ctx: cmd.Context, err):
-        raise err
+        # raise err
         if isinstance(err, cmd.CommandNotFound) or (not ctx.guild and ctx.command.name == "Help"):
             return
 
@@ -92,12 +92,12 @@ class Geno(cmd.Bot):
             pass
 
     async def on_connect(self):
-        return
+        # return
         self.main.update_one({"_id": 0}, {"$set": {"uptime": datetime.now()}})
 
     async def get_prefix(self, message):
         prefix = self.prefix
-        return prefix
+        # return prefix
 
         if message.guild:
             prefix = self.servers.find_one({"_id": f"{message.guild.id}"})['prefix']
