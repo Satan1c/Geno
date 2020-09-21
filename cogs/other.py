@@ -133,7 +133,7 @@ class Other(cmd.Cog):
                   f"\nusage: {psutil.cpu_percent()}%`"
 
             mem = proc.memory_full_info()
-            ram = f"`usage volume: {round((mem.vms // 1024) / 1024, 1)}mb /"  # \
+            ram = f"`usage volume: {round((mem.vms // 1024) / 1024, 1)}mb`"  # \
             # f" {round((mem.uss // 1024) /1024, 1)}mb\n" \
             # f"percentage: {proc.memory_percent('vms')}%`"
 

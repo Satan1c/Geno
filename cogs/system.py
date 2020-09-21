@@ -363,29 +363,34 @@ class System(cmd.Cog):
      example: `{ \"embeds\": [ { \"title\": \"Some title\", \"description\": \"Some description\", \"author\": {\"name\": \"Some author name\"}, \"footer\": {\"text\": \"Some footer text\"} } ] }`
     
     Alias - name of saved webhook pattern, if u have some
+    
+    Send the webhook that was given by `url` and `json data` or pattern `alias`
     :-:
-    https://geno.page.link/tobR
+    URL - должен быть полноформатной ссылкой на вебхук любого текстового-канала
+    
+    JSON data - JSON формат, выможете создать его на этом [сайте](https://geno.page.link/tobR)
+     пример: `{ \"embeds\": [ { \"title\": \"Some title\", \"description\": \"Some description\", \"author\": {\"name\": \"Some author name\"}, \"footer\": {\"text\": \"Some footer text\"} } ] }`
+    
+    Alias - имя под которым был сохранен паттерн вебхука
+    
+    Отправляет вебхук который задан `url` и `json data` или `alias` паттерна
     """)
     @cmd.check(checks.is_off)
     @cmd.bot_has_guild_permissions(manage_channels=True)
     async def _send_webhook(self, ctx: cmd.Context, url: str = None, *, data: str = None):
-        if not url or not data:
-            raise cmd.BadArgument(f"To send webhook pattern give"
-                                  f" {'json data or pattern alias' if url else 'url or alias'}")
-
         if url_rx.match(url):
             webhook = discord.Webhook.from_url(url=url, adapter=discord.RequestsWebhookAdapter())
+            data = json.loads(data)
 
         else:
             data = self.webhooks.find_one({"_id": f"{ctx.guild.id}"})
             if not data or url not in data['webhooks']:
                 raise cmd.BadArgument(f"No saved pattern `{url}` was found")
             else:
-                data = data['webhooks'][url]['data']
+                data = data['webhooks'][url]
 
             webhook = discord.Webhook.from_url(url=data['url'], adapter=discord.RequestsWebhookAdapter())
 
-        data = json.loads(data)
         if "embeds" in data and len(data['embeds']) > 0:
             ems = []
             for i in data['embeds']:
@@ -400,15 +405,29 @@ class System(cmd.Cog):
 
         del data
 
-    @cmd.command(name="Save Pattern", aliases=['savept', 'save_pattern'], usage="save_pattern <alias> <url> <settings>",
+    @cmd.command(name="Save Pattern", aliases=['savept', 'save_pattern'], usage="save_pattern <alias> <url> <json>",
                  description="""
-    Alias - an alias of saved or new webhook pattern
+    Alias - an alias of new pattern to save it
+    
+    URL - must be full formatted url address to some text-channel webhook
+    
+    JSON data - JSON format, u can take it on this [site](https://geno.page.link/tobR)
+     example: `{ \"embeds\": [ { \"title\": \"Some title\", \"description\": \"Some description\", \"author\": {\"name\": \"Some author name\"}, \"footer\": {\"text\": \"Some footer text\"} } ] }`
+    
+    Creates an unique pattern by given `alias` with `url` and `json` for server
     :-:
-    https://geno.page.link/tobR
+    Alias - имя нового пвттерна для его сохранения
+    
+    URL - должен быть полноформатной ссылкой на вебхук любого текстового-канала
+    
+    JSON data - JSON формат, выможете создать его на этом [сайте](https://geno.page.link/tobR)
+     пример: `{ \"embeds\": [ { \"title\": \"Some title\", \"description\": \"Some description\", \"author\": {\"name\": \"Some author name\"}, \"footer\": {\"text\": \"Some footer text\"} } ] }`
+    
+    Создает уникальный паттерн по указаному `alias` с `url` и `json` для сервера
     """)
     @cmd.check(checks.is_off)
     @cmd.bot_has_guild_permissions(manage_channels=True)
-    async def _save_pattern(self, ctx: cmd.Context, alias: str = "test", url: str = None, *, data: str):
+    async def _save_pattern(self, ctx: cmd.Context, alias: str, url: str, *, data: str):
         if not alias or not data or not url:
             raise cmd.BadArgument(
                 f"To create webhook pattern give {'json data' if not data else 'alias' if not alias else 'url'}")
@@ -457,24 +476,16 @@ class System(cmd.Cog):
                     }
                 })
         elif not res:
-            data = {
+            self.webhooks.insert_one({
                 "_id": f"{ctx.guild.id}",
                 "webhooks": {
-                    {
-                        alias: {
-                            "url": url,
-                            "content": data['content'] if "content" in data else None,
-                            "username": data['username'] if "username" in data else webhook.name,
-                            "avatar_url": data['avatar_url'] if "avatar_url" in data else webhook.avatar_url,
-                            "embeds": data['embeds'] if "embeds" in data else None
-                            }
+                    alias: {
+                        "url": url,
+                        "content": data['content'] if "content" in data else None,
+                        "username": data['username'] if "username" in data else webhook.name,
+                        "avatar_url": data['avatar_url'] if "avatar_url" in data else f"{webhook.avatar_url}",
+                        "embeds": data['embeds'] if "embeds" in data else None
                         }
-                    }
-                }
-
-            self.webhooks.insert_one({
-                "$set": {
-                    data
                     }
                 })
 
@@ -482,13 +493,19 @@ class System(cmd.Cog):
 
     @cmd.command(name="Delete Pattern", aliases=['delpt', 'delete_pattern'], usage="delete_pattern <alias>",
                  description="""
+    Alias - name of saved pattern to delete
+    
+    Delete `alias` pattern from server 
     :-:
+    Alias - мя сохраненного паттерна который будет удален
+    
+    Удаляет `alias` паттерн с сервера
     """)
     @cmd.check(checks.is_off)
     @cmd.bot_has_guild_permissions(manage_channels=True)
     async def _delete_pattern(self, ctx: cmd.Context, alias: str):
         if not alias:
-            raise cmd.BadArgument("To delete webhook pattern give alias")
+            raise cmd.BadArgument("To delete pattern give alias")
 
         data = self.webhooks.find_one({"_id": f"{ctx.guild.id}"})
 
