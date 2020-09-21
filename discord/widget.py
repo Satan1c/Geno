@@ -24,12 +24,14 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
 
-from .utils import snowflake_time, _get_as_snowflake, resolve_invite
-from .user import BaseUser
-from .activity import create_activity
-from .invite import Invite
-from .enums import Status, try_enum
 from collections import namedtuple
+
+from .activity import create_activity
+from .enums import Status, try_enum
+from .invite import Invite
+from .user import BaseUser
+from .utils import snowflake_time, _get_as_snowflake, resolve_invite
+
 
 class WidgetChannel(namedtuple('WidgetChannel', 'id name position')):
     """Represents a "partial" widget channel.
@@ -75,6 +77,7 @@ class WidgetChannel(namedtuple('WidgetChannel', 'id name position')):
     def created_at(self):
         """:class:`datetime.datetime`: Returns the channel's creation time in UTC."""
         return snowflake_time(self.id)
+
 
 class WidgetMember(BaseUser):
     """Represents a "partial" member of the widget's guild.
@@ -149,6 +152,7 @@ class WidgetMember(BaseUser):
     def display_name(self):
         """:class:`str`: Returns the member's display name."""
         return self.nick if self.nick else self.name
+
 
 class Widget:
     """Represents a :class:`Guild` widget.

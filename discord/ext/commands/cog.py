@@ -25,13 +25,14 @@ DEALINGS IN THE SOFTWARE.
 """
 
 import inspect
-import copy
+
 from ._types import _BaseCommand
 
 __all__ = (
     'CogMeta',
     'Cog',
-)
+    )
+
 
 class CogMeta(type):
     """A metaclass for defining a cog.
@@ -124,7 +125,7 @@ class CogMeta(type):
                             raise TypeError(no_bot_cog.format(base, elem))
                         listeners[elem] = value
 
-        new_cls.__cog_commands__ = list(commands.values()) # this will be copied in Cog.__new__
+        new_cls.__cog_commands__ = list(commands.values())  # this will be copied in Cog.__new__
 
         listeners_as_list = []
         for listener in listeners.values():
@@ -143,9 +144,11 @@ class CogMeta(type):
     def qualified_name(cls):
         return cls.__cog_name__
 
+
 def _cog_special_method(func):
     func.__cog_special_method__ = None
     return func
+
 
 class Cog(metaclass=CogMeta):
     """The base class that all cogs must inherit from.
@@ -171,7 +174,7 @@ class Cog(metaclass=CogMeta):
         lookup = {
             cmd.qualified_name: cmd
             for cmd in self.__cog_commands__
-        }
+            }
 
         # Update the Command instances dynamically as well
         for command in self.__cog_commands__:
@@ -278,6 +281,7 @@ class Cog(metaclass=CogMeta):
             # to pick it up but the metaclass unfurls the function and
             # thus the assignments need to be on the actual function
             return func
+
         return decorator
 
     @_cog_special_method

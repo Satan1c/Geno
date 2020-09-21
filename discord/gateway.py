@@ -25,16 +25,16 @@ DEALINGS IN THE SOFTWARE.
 """
 
 import asyncio
-from collections import namedtuple, deque
 import concurrent.futures
 import json
 import logging
 import struct
 import sys
-import time
 import threading
+import time
 import traceback
 import zlib
+from collections import namedtuple, deque
 
 import websockets
 
@@ -52,7 +52,8 @@ __all__ = (
     'DiscordVoiceWebSocket',
     'ResumeWebSocket',
     'IdentifyConfig',
-)
+    )
+
 
 class IdentifyConfig:
     os = sys.platform
@@ -64,12 +65,16 @@ class IdentifyConfig:
     def __repr__(self):
         return f"<IdentifyConfig os={self.os} browser={self.browser} device={self.device}>"
 
+
 class ResumeWebSocket(Exception):
     """Signals to initialise via RESUME opcode instead of IDENTIFY."""
+
     def __init__(self, shard_id):
         self.shard_id = shard_id
 
+
 EventListener = namedtuple('EventListener', 'predicate event result future')
+
 
 class KeepAliveHandler(threading.Thread):
     def __init__(self, *args, **kwargs):
@@ -125,7 +130,8 @@ class KeepAliveHandler(threading.Thread):
                             msg = self.block_msg
                         else:
                             stack = traceback.format_stack(frame)
-                            msg = '%s\nLoop thread traceback (most recent call last):\n%s' % (self.block_msg, ''.join(stack))
+                            msg = '%s\nLoop thread traceback (most recent call last):\n%s' % (
+                            self.block_msg, ''.join(stack))
                         log.warning(msg, total)
 
             except Exception:
@@ -137,7 +143,7 @@ class KeepAliveHandler(threading.Thread):
         return {
             'op': self.ws.HEARTBEAT,
             'd': self.ws.sequence
-        }
+            }
 
     def stop(self):
         self._stop_ev.set()
@@ -148,6 +154,7 @@ class KeepAliveHandler(threading.Thread):
         self.latency = ack_time - self._last_send
         if self.latency > 10:
             log.warning(self.behind_msg, self.latency)
+
 
 class VoiceKeepAliveHandler(KeepAliveHandler):
     def __init__(self, *args, **kwargs):
@@ -161,13 +168,14 @@ class VoiceKeepAliveHandler(KeepAliveHandler):
         return {
             'op': self.ws.HEARTBEAT,
             'd': int(time.time() * 1000)
-        }
+            }
 
     def ack(self):
         ack_time = time.perf_counter()
         self._last_ack = ack_time
         self.latency = ack_time - self._last_send
         self.recent_ack_latencies.append(self.latency)
+
 
 class DiscordWebSocket(websockets.client.WebSocketClientProtocol):
     """Implements a WebSocket for Discord's gateway v6.
@@ -212,19 +220,19 @@ class DiscordWebSocket(websockets.client.WebSocketClientProtocol):
         The authentication token for discord.
     """
 
-    DISPATCH           = 0
-    HEARTBEAT          = 1
-    IDENTIFY           = 2
-    PRESENCE           = 3
-    VOICE_STATE        = 4
-    VOICE_PING         = 5
-    RESUME             = 6
-    RECONNECT          = 7
-    REQUEST_MEMBERS    = 8
+    DISPATCH = 0
+    HEARTBEAT = 1
+    IDENTIFY = 2
+    PRESENCE = 3
+    VOICE_STATE = 4
+    VOICE_PING = 5
+    RESUME = 6
+    RECONNECT = 7
+    REQUEST_MEMBERS = 8
     INVALIDATE_SESSION = 9
-    HELLO              = 10
-    HEARTBEAT_ACK      = 11
-    GUILD_SYNC         = 12
+    HELLO = 10
+    HEARTBEAT_ACK = 11
+    GUILD_SYNC = 12
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -322,13 +330,13 @@ class DiscordWebSocket(websockets.client.WebSocketClientProtocol):
                     '$device': IdentifyConfig.device,
                     '$referrer': IdentifyConfig.referrer,
                     '$referring_domain': IdentifyConfig.referring_domain
-                },
+                    },
                 'compress': True,
                 'large_threshold': 250,
                 'guild_subscriptions': self._connection.guild_subscriptions,
                 'v': 3
+                }
             }
-        }
 
         if not self._connection.is_bot:
             payload['d']['synced_guilds'] = []
@@ -343,7 +351,7 @@ class DiscordWebSocket(websockets.client.WebSocketClientProtocol):
                 'game': state._activity,
                 'since': 0,
                 'afk': False
-            }
+                }
 
         await self.send_as_json(payload)
         log.info('Shard ID %s has sent the IDENTIFY payload.', self.shard_id)
@@ -356,8 +364,8 @@ class DiscordWebSocket(websockets.client.WebSocketClientProtocol):
                 'seq': self.sequence,
                 'session_id': self.session_id,
                 'token': self.token
+                }
             }
-        }
 
         await self.send_as_json(payload)
         log.info('Shard ID %s has sent the RESUME payload.', self.shard_id)
@@ -532,8 +540,8 @@ class DiscordWebSocket(websockets.client.WebSocketClientProtocol):
                 'afk': afk,
                 'since': since,
                 'status': status
+                }
             }
-        }
 
         sent = utils.to_json(payload)
         log.debug('Sending "%s" to change status', sent)
@@ -543,7 +551,7 @@ class DiscordWebSocket(websockets.client.WebSocketClientProtocol):
         payload = {
             'op': self.GUILD_SYNC,
             'd': list(guild_ids)
-        }
+            }
         await self.send_as_json(payload)
 
     async def request_chunks(self, guild_id, query=None, *, limit, user_ids=None, nonce=None):
@@ -552,8 +560,8 @@ class DiscordWebSocket(websockets.client.WebSocketClientProtocol):
             'd': {
                 'guild_id': guild_id,
                 'limit': limit
+                }
             }
-        }
 
         if nonce:
             payload['d']['nonce'] = nonce
@@ -563,7 +571,6 @@ class DiscordWebSocket(websockets.client.WebSocketClientProtocol):
 
         if query is not None:
             payload['d']['query'] = query
-
 
         await self.send_as_json(payload)
 
@@ -575,8 +582,8 @@ class DiscordWebSocket(websockets.client.WebSocketClientProtocol):
                 'channel_id': channel_id,
                 'self_mute': self_mute,
                 'self_deaf': self_deaf
+                }
             }
-        }
 
         log.debug('Updating our voice state to %s.', payload)
         await self.send_as_json(payload)
@@ -592,6 +599,7 @@ class DiscordWebSocket(websockets.client.WebSocketClientProtocol):
             self._keep_alive.stop()
 
         await super().close_connection(*args, **kwargs)
+
 
 class DiscordVoiceWebSocket(websockets.client.WebSocketClientProtocol):
     """Implements the websocket protocol for handling voice connections.
@@ -624,18 +632,18 @@ class DiscordVoiceWebSocket(websockets.client.WebSocketClientProtocol):
         Receive only.  Indicates a user has disconnected from voice.
     """
 
-    IDENTIFY            = 0
-    SELECT_PROTOCOL     = 1
-    READY               = 2
-    HEARTBEAT           = 3
+    IDENTIFY = 0
+    SELECT_PROTOCOL = 1
+    READY = 2
+    HEARTBEAT = 3
     SESSION_DESCRIPTION = 4
-    SPEAKING            = 5
-    HEARTBEAT_ACK       = 6
-    RESUME              = 7
-    HELLO               = 8
-    INVALIDATE_SESSION  = 9
-    CLIENT_CONNECT      = 12
-    CLIENT_DISCONNECT   = 13
+    SPEAKING = 5
+    HEARTBEAT_ACK = 6
+    RESUME = 7
+    HELLO = 8
+    INVALIDATE_SESSION = 9
+    CLIENT_CONNECT = 12
+    CLIENT_DISCONNECT = 13
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -654,8 +662,8 @@ class DiscordVoiceWebSocket(websockets.client.WebSocketClientProtocol):
                 'token': state.token,
                 'server_id': str(state.server_id),
                 'session_id': state.session_id
+                }
             }
-        }
         await self.send_as_json(payload)
 
     async def identify(self):
@@ -667,8 +675,8 @@ class DiscordVoiceWebSocket(websockets.client.WebSocketClientProtocol):
                 'user_id': str(state.user.id),
                 'session_id': state.session_id,
                 'token': state.token
+                }
             }
-        }
         await self.send_as_json(payload)
 
     @classmethod
@@ -697,9 +705,9 @@ class DiscordVoiceWebSocket(websockets.client.WebSocketClientProtocol):
                     'address': ip,
                     'port': port,
                     'mode': mode
+                    }
                 }
             }
-        }
 
         await self.send_as_json(payload)
 
@@ -708,8 +716,8 @@ class DiscordVoiceWebSocket(websockets.client.WebSocketClientProtocol):
             'op': self.CLIENT_CONNECT,
             'd': {
                 'audio_ssrc': self._connection.ssrc
+                }
             }
-        }
 
         await self.send_as_json(payload)
 
@@ -719,8 +727,8 @@ class DiscordVoiceWebSocket(websockets.client.WebSocketClientProtocol):
             'd': {
                 'speaking': int(state),
                 'delay': 0
+                }
             }
-        }
 
         await self.send_as_json(payload)
 

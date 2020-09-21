@@ -25,43 +25,44 @@ DEALINGS IN THE SOFTWARE.
 """
 
 import asyncio
-from collections import deque, namedtuple, OrderedDict
 import copy
 import datetime
+import gc
+import inspect
 import itertools
 import logging
 import math
-import weakref
-import inspect
-import gc
-
 import os
+import weakref
+from collections import deque, namedtuple, OrderedDict
 
-from .guild import Guild
-from .activity import BaseActivity
-from .user import User, ClientUser
-from .emoji import Emoji
-from .mentions import AllowedMentions
-from .partial_emoji import PartialEmoji
-from .message import Message
-from .relationship import Relationship
-from .channel import *
-from .raw_models import *
-from .member import Member
-from .role import Role
-from .enums import ChannelType, try_enum, Status, Enum
 from . import utils
-from .embeds import Embed
-from .object import Object
+from .activity import BaseActivity
+from .channel import *
+from .emoji import Emoji
+from .enums import ChannelType, try_enum, Status, Enum
+from .guild import Guild
 from .invite import Invite
+from .member import Member
+from .mentions import AllowedMentions
+from .message import Message
+from .object import Object
+from .partial_emoji import PartialEmoji
+from .raw_models import *
+from .relationship import Relationship
+from .role import Role
+from .user import User, ClientUser
+
 
 class ListenerType(Enum):
     chunk = 0
     query_members = 1
 
+
 Listener = namedtuple('Listener', ('type', 'future', 'predicate'))
 log = logging.getLogger(__name__)
 ReadyState = namedtuple('ReadyState', ('launch', 'guilds'))
+
 
 class ConnectionState:
     def __init__(self, *, dispatch, handlers, syncer, http, loop, **options):
@@ -303,7 +304,7 @@ class ConnectionState:
         return channel or Object(id=channel_id), guild
 
     async def chunker(self, guild_id, query='', limit=0, *, nonce=None):
-        ws = self._get_websocket(guild_id) # This is ignored upstream
+        ws = self._get_websocket(guild_id)  # This is ignored upstream
         await ws.request_chunks(guild_id, query=query, limit=limit, nonce=nonce)
 
     async def request_offline_members(self, guilds):
@@ -350,7 +351,8 @@ class ConnectionState:
 
             return members
         except asyncio.TimeoutError:
-            log.warning('Timed out waiting for chunks with query %r and limit %d for guild_id %d', query, limit, guild_id)
+            log.warning('Timed out waiting for chunks with query %r and limit %d for guild_id %d', query, limit,
+                        guild_id)
             raise
 
     async def _delay_ready(self):
@@ -383,7 +385,7 @@ class ConnectionState:
             try:
                 del self._ready_state
             except AttributeError:
-                pass # already been deleted somehow
+                pass  # already been deleted somehow
 
             # call GUILD_SYNC after we're done chunking
             if not self.is_bot:
@@ -520,7 +522,7 @@ class ConnectionState:
             emoji = self._upgrade_partial_emoji(emoji)
             try:
                 reaction = message._remove_reaction(data, emoji, raw.user_id)
-            except (AttributeError, ValueError): # eventual consistency lol
+            except (AttributeError, ValueError):  # eventual consistency lol
                 pass
             else:
                 user = self._get_reaction_user(message.channel, raw.user_id)
@@ -538,7 +540,7 @@ class ConnectionState:
         if message is not None:
             try:
                 reaction = message._clear_emoji(emoji)
-            except (AttributeError, ValueError): # eventual consistency lol
+            except (AttributeError, ValueError):  # eventual consistency lol
                 pass
             else:
                 if reaction:
@@ -1042,6 +1044,7 @@ class ConnectionState:
         self._listeners.append(listener)
         return future
 
+
 class AutoShardedConnectionState(ConnectionState):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -1102,7 +1105,7 @@ class AutoShardedConnectionState(ConnectionState):
         try:
             del self._ready_state
         except AttributeError:
-            pass # already been deleted somehow
+            pass  # already been deleted somehow
 
         # regular users cannot shard so we won't worry about it here.
 

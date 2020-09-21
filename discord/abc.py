@@ -25,25 +25,28 @@ DEALINGS IN THE SOFTWARE.
 """
 
 import abc
-import copy
 import asyncio
+import copy
 
-from .iterators import HistoryIterator
+from . import utils
 from .context_managers import Typing
 from .enums import ChannelType
-from .errors import InvalidArgument, ClientException, HTTPException
+from .errors import InvalidArgument, ClientException
+from .file import File
+from .invite import Invite
+from .iterators import HistoryIterator
 from .permissions import PermissionOverwrite, Permissions
 from .role import Role
-from .invite import Invite
-from .file import File
 from .voice_client import VoiceClient
-from . import utils
+
 
 class _Undefined:
     def __repr__(self):
         return 'see-below'
 
+
 _undefined = _Undefined()
+
 
 class Snowflake(metaclass=abc.ABCMeta):
     """An ABC that details the common operations on a Discord model.
@@ -79,6 +82,7 @@ class Snowflake(metaclass=abc.ABCMeta):
                     return NotImplemented
             return True
         return NotImplemented
+
 
 class User(metaclass=abc.ABCMeta):
     """An ABC that details the common operations on a Discord user.
@@ -132,6 +136,7 @@ class User(metaclass=abc.ABCMeta):
             return True
         return NotImplemented
 
+
 class PrivateChannel(metaclass=abc.ABCMeta):
     """An ABC that details the common operations on a private Discord channel.
 
@@ -162,6 +167,7 @@ class PrivateChannel(metaclass=abc.ABCMeta):
             return NotImplemented
         return NotImplemented
 
+
 class _Overwrites:
     __slots__ = ('id', 'allow', 'deny', 'type')
 
@@ -177,7 +183,8 @@ class _Overwrites:
             'allow': self.allow,
             'deny': self.deny,
             'type': self.type,
-        }
+            }
+
 
 class GuildChannel:
     """An ABC that details the common operations on a Discord guild channel.
@@ -285,7 +292,7 @@ class GuildChannel:
                     'allow': allow.value,
                     'deny': deny.value,
                     'id': target.id
-                }
+                    }
 
                 if isinstance(target, Role):
                     payload['type'] = 'role'
@@ -665,7 +672,7 @@ class GuildChannel:
     async def _clone_impl(self, base_attrs, *, name=None, reason=None):
         base_attrs['permission_overwrites'] = [
             x._asdict() for x in self._overwrites
-        ]
+            ]
         base_attrs['parent_id'] = self.category_id
         base_attrs['name'] = name or self.name
         guild_id = self.guild.id
@@ -773,6 +780,7 @@ class GuildChannel:
 
         return result
 
+
 class Messageable(metaclass=abc.ABCMeta):
     """An ABC that details the common operations on a model that can send messages.
 
@@ -793,8 +801,8 @@ class Messageable(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     async def send(self, content=None, *, tts=False, embed=None, file=None,
-                                          files=None, delete_after=None, nonce=None,
-                                          allowed_mentions=None):
+                   files=None, delete_after=None, nonce=None,
+                   allowed_mentions=None):
         """|coro|
 
         Sends a message to the destination with the content given.
@@ -892,7 +900,7 @@ class Messageable(metaclass=abc.ABCMeta):
                     f.close()
         else:
             data = await state.http.send_message(channel.id, content, tts=tts, embed=embed,
-                                                                      nonce=nonce, allowed_mentions=allowed_mentions)
+                                                 nonce=nonce, allowed_mentions=allowed_mentions)
 
         ret = state.create_message(channel=channel, data=data)
         if delete_after is not None:
@@ -1109,6 +1117,6 @@ class Connectable(metaclass=abc.ABCMeta):
             except Exception:
                 # we don't care if disconnect failed because connection failed
                 pass
-            raise # re-raise
+            raise  # re-raise
 
         return voice

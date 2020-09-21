@@ -24,21 +24,21 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
 
-import threading
-import traceback
-import subprocess
-import audioop
 import asyncio
-import logging
-import shlex
-import time
+import audioop
 import json
-import sys
+import logging
 import re
+import shlex
+import subprocess
+import sys
+import threading
+import time
+import traceback
 
 from .errors import ClientException
-from .opus import Encoder as OpusEncoder
 from .oggparse import OggStream
+from .opus import Encoder as OpusEncoder
 
 log = logging.getLogger(__name__)
 
@@ -49,7 +49,8 @@ __all__ = (
     'FFmpegPCMAudio',
     'FFmpegOpusAudio',
     'PCMVolumeTransformer',
-)
+    )
+
 
 class AudioSource:
     """Represents an audio stream.
@@ -97,6 +98,7 @@ class AudioSource:
     def __del__(self):
         self.cleanup()
 
+
 class PCMAudio(AudioSource):
     """Represents raw 16-bit 48KHz stereo PCM audio source.
 
@@ -105,6 +107,7 @@ class PCMAudio(AudioSource):
     stream: :term:`py:file object`
         A file-like object that reads byte data representing raw PCM.
     """
+
     def __init__(self, stream):
         self.stream = stream
 
@@ -113,6 +116,7 @@ class PCMAudio(AudioSource):
         if len(ret) != OpusEncoder.FRAME_SIZE:
             return b''
         return ret
+
 
 class FFmpegAudio(AudioSource):
     """Represents an FFmpeg (or AVConv) based AudioSource.
@@ -165,6 +169,7 @@ class FFmpegAudio(AudioSource):
             log.info('ffmpeg process %s successfully terminated with return code of %s.', proc.pid, proc.returncode)
 
         self._process = self._stdout = None
+
 
 class FFmpegPCMAudio(FFmpegAudio):
     """An audio source from FFmpeg (or AVConv).
@@ -227,6 +232,7 @@ class FFmpegPCMAudio(FFmpegAudio):
 
     def is_opus(self):
         return False
+
 
 class FFmpegOpusAudio(FFmpegAudio):
     """An audio source from FFmpeg (or AVConv).
@@ -426,7 +432,7 @@ class FFmpegOpusAudio(FFmpegAudio):
             fallback = cls._probe_codec_fallback
         else:
             raise TypeError("Expected str or callable for parameter 'probe', " \
-                            "not '{0.__class__.__name__}'" .format(method))
+                            "not '{0.__class__.__name__}'".format(method))
 
         codec = bitrate = None
         loop = asyncio.get_event_loop()
@@ -462,13 +468,13 @@ class FFmpegOpusAudio(FFmpegAudio):
 
             codec = streamdata.get('codec_name')
             bitrate = int(streamdata.get('bit_rate', 0))
-            bitrate = max(round(bitrate/1000, 0), 512)
+            bitrate = max(round(bitrate / 1000, 0), 512)
 
         return codec, bitrate
 
     @staticmethod
     def _probe_codec_fallback(source, executable='ffmpeg'):
-        args = [executable, '-hide_banner', '-i',  source]
+        args = [executable, '-hide_banner', '-i', source]
         proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         out, _ = proc.communicate(timeout=20)
         output = out.decode('utf8')
@@ -489,6 +495,7 @@ class FFmpegOpusAudio(FFmpegAudio):
 
     def is_opus(self):
         return True
+
 
 class PCMVolumeTransformer(AudioSource):
     """Transforms a previous :class:`AudioSource` to have volume controls.
@@ -538,6 +545,7 @@ class PCMVolumeTransformer(AudioSource):
         ret = self.original.read()
         return audioop.mul(ret, 2, min(self._volume, 2.0))
 
+
 class AudioPlayer(threading.Thread):
     DELAY = OpusEncoder.FRAME_LENGTH / 1000.0
 
@@ -550,7 +558,7 @@ class AudioPlayer(threading.Thread):
 
         self._end = threading.Event()
         self._resumed = threading.Event()
-        self._resumed.set() # we are not paused
+        self._resumed.set()  # we are not paused
         self._current_error = None
         self._connected = client._connected
         self._lock = threading.Lock()

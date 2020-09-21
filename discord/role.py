@@ -24,11 +24,12 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
 
-from .permissions import Permissions
-from .errors import InvalidArgument
 from .colour import Colour
+from .errors import InvalidArgument
 from .mixins import Hashable
+from .permissions import Permissions
 from .utils import snowflake_time
+
 
 class Role(Hashable):
     """Represents a Discord role in a :class:`Guild`.
@@ -260,7 +261,7 @@ class Role(Hashable):
             colour = fields['colour']
         except KeyError:
             colour = fields.get('color', self.colour)
-        
+
         if isinstance(colour, int):
             colour = Colour(value=colour)
 
@@ -270,7 +271,7 @@ class Role(Hashable):
             'color': colour.value,
             'hoist': fields.get('hoist', self.hoist),
             'mentionable': fields.get('mentionable', self.mentionable)
-        }
+            }
 
         data = await self._state.http.edit_role(self.guild.id, self.id, reason=reason, **payload)
         self._update(data)

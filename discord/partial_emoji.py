@@ -24,12 +24,13 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
 
-from .asset import Asset
 from . import utils
+from .asset import Asset
 
 
 class _EmojiTag:
     __slots__ = ()
+
 
 class PartialEmoji(_EmojiTag):
     """Represents a "partial" emoji.
@@ -83,10 +84,10 @@ class PartialEmoji(_EmojiTag):
             animated=data.get('animated', False),
             id=utils._get_as_snowflake(data, 'id'),
             name=data.get('name'),
-        )
+            )
 
     def to_dict(self):
-        o = { 'name': self.name }
+        o = {'name': self.name}
         if self.id:
             o['id'] = self.id
         if self.animated:

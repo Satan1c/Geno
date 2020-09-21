@@ -26,25 +26,26 @@ DEALINGS IN THE SOFTWARE.
 
 import asyncio
 import json
-import time
 import re
+import time
 from urllib.parse import quote as _uriquote
 
 import aiohttp
 
 from . import utils
-from .errors import InvalidArgument, HTTPException, Forbidden, NotFound
-from .enums import try_enum, WebhookType
-from .user import BaseUser, User
 from .asset import Asset
+from .enums import try_enum, WebhookType
+from .errors import InvalidArgument, HTTPException, Forbidden, NotFound
 from .mixins import Hashable
+from .user import BaseUser, User
 
 __all__ = (
     'WebhookAdapter',
     'AsyncWebhookAdapter',
     'RequestsWebhookAdapter',
     'Webhook',
-)
+    )
+
 
 class WebhookAdapter:
     """Base class for all webhook adapters.
@@ -121,14 +122,14 @@ class WebhookAdapter:
             multipart = {
                 'file': (file.filename, file.fp, 'application/octet-stream'),
                 'payload_json': utils.to_json(payload)
-            }
+                }
             data = None
             cleanup = file.close
             files_to_pass = [file]
         elif files is not None:
             multipart = {
                 'payload_json': utils.to_json(payload)
-            }
+                }
             for i, file in enumerate(files):
                 multipart['file%i' % i] = (file.filename, file.fp, 'application/octet-stream')
             data = None
@@ -158,6 +159,7 @@ class WebhookAdapter:
         # if request raises up there then this should never be `None`
         return self.handle_execution_response(maybe_coro, wait=wait)
 
+
 class AsyncWebhookAdapter(WebhookAdapter):
     """A webhook adapter suited for use with aiohttp.
 
@@ -182,7 +184,7 @@ class AsyncWebhookAdapter(WebhookAdapter):
         if payload:
             headers['Content-Type'] = 'application/json'
             data = utils.to_json(payload)
-        
+
         if reason:
             headers['X-Audit-Log-Reason'] = _uriquote(reason, safe='/ ')
 
@@ -241,6 +243,7 @@ class AsyncWebhookAdapter(WebhookAdapter):
         from .message import Message
         return Message(data=data, state=self.webhook._state, channel=self.webhook.channel)
 
+
 class RequestsWebhookAdapter(WebhookAdapter):
     """A webhook adapter suited for use with ``requests``.
 
@@ -271,7 +274,7 @@ class RequestsWebhookAdapter(WebhookAdapter):
         if payload:
             headers['Content-Type'] = 'application/json'
             data = utils.to_json(payload)
-    
+
         if reason:
             headers['X-Audit-Log-Reason'] = _uriquote(reason, safe='/ ')
 
@@ -332,11 +335,13 @@ class RequestsWebhookAdapter(WebhookAdapter):
         from .message import Message
         return Message(data=response, state=self.webhook._state, channel=self.webhook.channel)
 
+
 class _FriendlyHttpAttributeErrorHelper:
     __slots__ = ()
 
     def __getattr__(self, attr):
         raise AttributeError('PartialWebhookState does not support http methods.')
+
 
 class _PartialWebhookState:
     __slots__ = ('loop',)
@@ -366,6 +371,7 @@ class _PartialWebhookState:
 
     def __getattr__(self, attr):
         raise AttributeError('PartialWebhookState does not support {0!r}.'.format(attr))
+
 
 class Webhook(Hashable):
     """Represents a Discord webhook.
@@ -510,7 +516,7 @@ class Webhook(Hashable):
             'id': id,
             'type': 1,
             'token': token
-        }
+            }
 
         return cls(data, adapter=adapter)
 
@@ -560,8 +566,8 @@ class Webhook(Hashable):
                 'discriminator': user.discriminator,
                 'id': user.id,
                 'avatar': user.avatar
+                }
             }
-        }
 
         session = channel._state.http._HTTPClient__session
         return cls(feed, adapter=AsyncWebhookAdapter(session=session))
@@ -734,7 +740,7 @@ class Webhook(Hashable):
         return self._adapter.edit_webhook(reason=reason, **payload)
 
     def send(self, content=None, *, wait=False, username=None, avatar_url=None, tts=False,
-                                    file=None, files=None, embed=None, embeds=None, allowed_mentions=None):
+             file=None, files=None, embed=None, embeds=None, allowed_mentions=None):
         """|maybecoro|
 
         Sends a message using the webhook.

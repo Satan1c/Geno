@@ -24,13 +24,14 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
 
-from .utils import parse_time, _get_as_snowflake
 from .enums import VoiceRegion
 from .guild import Guild
+from .utils import parse_time, _get_as_snowflake
 
 __all__ = (
     'Template'
 )
+
 
 class _FriendlyHttpAttributeErrorHelper:
     __slots__ = ()
@@ -38,15 +39,16 @@ class _FriendlyHttpAttributeErrorHelper:
     def __getattr__(self, attr):
         raise AttributeError('PartialTemplateState does not support http methods.')
 
+
 class _PartialTemplateState:
     def __init__(self, *, state):
         self.__state = state
         self.http = _FriendlyHttpAttributeErrorHelper()
-    
+
     @property
     def is_bot(self):
         return self.__state.is_bot
-    
+
     @property
     def shard_count(self):
         return self.__state.shard_count
@@ -54,14 +56,14 @@ class _PartialTemplateState:
     @property
     def user(self):
         return self.__state.user
-    
+
     @property
     def self_id(self):
         return self.__state.user.id
-    
+
     def store_emoji(self, guild, packet):
         return None
-    
+
     def _get_voice_client(self, id):
         return None
 
@@ -73,6 +75,7 @@ class _PartialTemplateState:
 
     def __getattr__(self, attr):
         raise AttributeError('PartialTemplateState does not support {0!r}.'.format(attr))
+
 
 class Template:
     """Represents a Discord template.
@@ -104,7 +107,7 @@ class Template:
 
         self.code = data['code']
         self.uses = data['usage_count']
-        self.name =  data['name']
+        self.name = data['name']
         self.description = data['description']
         creator_data = data.get('creator')
         self.creator = None if creator_data is None else self._state.store_user(creator_data)

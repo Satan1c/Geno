@@ -25,14 +25,15 @@ DEALINGS IN THE SOFTWARE.
 """
 
 from . import utils
-from .user import BaseUser
 from .asset import Asset
 from .enums import TeamMembershipState, try_enum
+from .user import BaseUser
 
 __all__ = (
     'Team',
     'TeamMember',
-)
+    )
+
 
 class Team:
     """Represents an application team for a bot provided by Discord.
@@ -75,6 +76,7 @@ class Team:
     def owner(self):
         """Optional[:class:`TeamMember`]: The team's owner."""
         return utils.get(self.members, id=self.owner_id)
+
 
 class TeamMember(BaseUser):
     """Represents a team member in a team.

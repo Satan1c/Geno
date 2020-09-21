@@ -29,19 +29,23 @@ from .flags import BaseFlags, flag_value, fill_with_flags
 __all__ = (
     'Permissions',
     'PermissionOverwrite',
-)
+    )
+
 
 # A permission alias works like a regular flag but is marked
 # So the PermissionOverwrite knows to work with it
 class permission_alias(flag_value):
     pass
 
+
 def make_permission_alias(alias):
     def decorator(func):
         ret = permission_alias(func)
         ret.alias = alias
         return ret
+
     return decorator
+
 
 @fill_with_flags()
 class Permissions(BaseFlags):
@@ -183,7 +187,6 @@ class Permissions(BaseFlags):
         """A factory method that creates a :class:`Permissions` with all
         "Voice" permissions from the official Discord UI set to ``True``."""
         return cls(0b00000011111100000000001100000000)
-
 
     def update(self, **kwargs):
         r"""Bulk updates this permission object.
@@ -415,6 +418,7 @@ class Permissions(BaseFlags):
 
     # after these 32 bits, there's 21 more unused ones technically
 
+
 def augment_from_permissions(cls):
     cls.VALID_NAMES = set(Permissions.VALID_FLAGS)
     aliases = set()
@@ -432,6 +436,7 @@ def augment_from_permissions(cls):
         # god bless Python
         def getter(self, x=key):
             return self._values.get(x)
+
         def setter(self, value, x=key):
             self._set(x, value)
 
@@ -440,6 +445,7 @@ def augment_from_permissions(cls):
 
     cls.PURE_FLAGS = cls.VALID_NAMES - aliases
     return cls
+
 
 @augment_from_permissions
 class PermissionOverwrite:

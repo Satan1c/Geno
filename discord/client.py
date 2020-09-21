@@ -25,7 +25,6 @@ DEALINGS IN THE SOFTWARE.
 """
 
 import asyncio
-from collections import namedtuple
 import logging
 import signal
 import sys
@@ -34,31 +33,30 @@ import traceback
 import aiohttp
 import websockets
 
-from .user import User, Profile
-from .asset import Asset
-from .invite import Invite
-from .template import Template
-from .widget import Widget
-from .guild import Guild
+from . import utils
+from .activity import BaseActivity, create_activity
+from .appinfo import AppInfo
+from .backoff import ExponentialBackoff
 from .channel import _channel_factory
 from .enums import ChannelType
-from .member import Member
-from .mentions import AllowedMentions
-from .errors import *
 from .enums import Status, VoiceRegion
+from .errors import *
 from .gateway import *
-from .activity import BaseActivity, create_activity
-from .voice_client import VoiceClient
+from .guild import Guild
 from .http import HTTPClient
-from .state import ConnectionState
-from . import utils
-from .object import Object
-from .backoff import ExponentialBackoff
-from .webhook import Webhook
+from .invite import Invite
 from .iterators import GuildIterator
-from .appinfo import AppInfo
+from .mentions import AllowedMentions
+from .object import Object
+from .state import ConnectionState
+from .template import Template
+from .user import User, Profile
+from .voice_client import VoiceClient
+from .webhook import Webhook
+from .widget import Widget
 
 log = logging.getLogger(__name__)
+
 
 def _cancel_tasks(loop):
     try:
@@ -87,7 +85,8 @@ def _cancel_tasks(loop):
                 'message': 'Unhandled exception during Client.run shutdown.',
                 'exception': task.exception(),
                 'task': task
-            })
+                })
+
 
 def _cleanup_loop(loop):
     try:
@@ -97,6 +96,7 @@ def _cleanup_loop(loop):
     finally:
         log.info('Closing the event loop.')
         loop.close()
+
 
 class _ClientEventTask(asyncio.Task):
     def __init__(self, original_coro, event_name, coro, *, loop):
@@ -109,10 +109,11 @@ class _ClientEventTask(asyncio.Task):
             ('state', self._state.lower()),
             ('event', self.__event_name),
             ('coro', repr(self.__original_coro)),
-        ]
+            ]
         if self._exception is not None:
             info.append(('exception', repr(self._exception)))
         return '<ClientEventTask {}>'.format(' '.join('%s=%s' % t for t in info))
+
 
 class Client:
     r"""Represents a client connection that connects to Discord.
@@ -207,6 +208,7 @@ class Client:
     loop: :class:`asyncio.AbstractEventLoop`
         The event loop that the client uses for HTTP requests and websocket operations.
     """
+
     def __init__(self, *, loop=None, **options):
         self.ws = None
         self.loop = asyncio.get_event_loop() if loop is None else loop
@@ -222,7 +224,7 @@ class Client:
 
         self._handlers = {
             'ready': self._handle_ready
-        }
+            }
 
         self._connection = ConnectionState(dispatch=self.dispatch, handlers=self._handlers,
                                            syncer=self._syncer, http=self.http, loop=self.loop, **options)
@@ -865,6 +867,7 @@ class Client:
         if check is None:
             def _check(*args):
                 return True
+
             check = _check
 
         ev = event.lower()

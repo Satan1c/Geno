@@ -40,24 +40,26 @@ DEALINGS IN THE SOFTWARE.
 """
 
 import asyncio
-import socket
 import logging
+import socket
 import struct
 import threading
 
 from . import opus
 from .backoff import ExponentialBackoff
-from .gateway import *
 from .errors import ClientException, ConnectionClosed
+from .gateway import *
 from .player import AudioPlayer, AudioSource
 
 try:
     import nacl.secret
+
     has_nacl = True
 except ImportError:
     has_nacl = False
 
 log = logging.getLogger(__name__)
+
 
 class VoiceClient:
     """Represents a Discord voice connection.
@@ -85,6 +87,7 @@ class VoiceClient:
     loop: :class:`asyncio.AbstractEventLoop`
         The event loop that the voice client is running on.
     """
+
     def __init__(self, state, timeout, channel):
         if not has_nacl:
             raise RuntimeError("PyNaCl library needed in order to use voice")
@@ -117,7 +120,7 @@ class VoiceClient:
         'xsalsa20_poly1305_lite',
         'xsalsa20_poly1305_suffix',
         'xsalsa20_poly1305',
-    )
+        )
 
     @property
     def guild(self):

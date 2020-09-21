@@ -25,14 +25,16 @@ DEALINGS IN THE SOFTWARE.
 """
 
 import argparse
+import platform
 import sys
 from pathlib import Path
 
-import discord
-import pkg_resources
 import aiohttp
+import pkg_resources
 import websockets
-import platform
+
+import discord
+
 
 def show_version():
     entries = []
@@ -51,9 +53,11 @@ def show_version():
     entries.append('- system info: {0.system} {0.release} {0.version}'.format(uname))
     print('\n'.join(entries))
 
+
 def core(parser, args):
     if args.version:
         show_version()
+
 
 bot_template = """#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
@@ -158,7 +162,6 @@ cog_extras = '''
 
 '''
 
-
 # certain file names and directory names are forbidden
 # see: https://msdn.microsoft.com/en-us/library/windows/desktop/aa365247%28v=vs.85%29.aspx
 # although some of this doesn't apply to Linux, we might as well be consistent
@@ -172,12 +175,13 @@ _base_table = {
     '|': '-',
     '?': '-',
     '*': '-',
-}
+    }
 
 # NUL (0) and 1-31 are disallowed
 _base_table.update((chr(i), None) for i in range(32))
 
 translation_table = str.maketrans(_base_table)
+
 
 def to_path(parser, name, *, replace_spaces=False):
     if isinstance(name, Path):
@@ -193,6 +197,7 @@ def to_path(parser, name, *, replace_spaces=False):
     if replace_spaces:
         name = name.replace(' ', '-')
     return Path(name)
+
 
 def newbot(parser, args):
     new_directory = to_path(parser, args.directory) / to_path(parser, args.name)
@@ -235,6 +240,7 @@ def newbot(parser, args):
 
     print('successfully made bot at', new_directory)
 
+
 def newcog(parser, args):
     cog_dir = to_path(parser, args.directory)
     try:
@@ -267,6 +273,7 @@ def newcog(parser, args):
     else:
         print('successfully made cog at', directory)
 
+
 def add_newbot_args(subparser):
     parser = subparser.add_parser('newbot', help='creates a command bot project quickly')
     parser.set_defaults(func=newbot)
@@ -277,16 +284,19 @@ def add_newbot_args(subparser):
     parser.add_argument('--sharded', help='whether to use AutoShardedBot', action='store_true')
     parser.add_argument('--no-git', help='do not create a .gitignore file', action='store_true', dest='no_git')
 
+
 def add_newcog_args(subparser):
     parser = subparser.add_parser('newcog', help='creates a new cog template quickly')
     parser.set_defaults(func=newcog)
 
     parser.add_argument('name', help='the cog name')
-    parser.add_argument('directory', help='the directory to place it in (default: cogs)', nargs='?', default=Path('cogs'))
+    parser.add_argument('directory', help='the directory to place it in (default: cogs)', nargs='?',
+                        default=Path('cogs'))
     parser.add_argument('--class-name', help='the class name of the cog (default: <name>)', dest='class_name')
     parser.add_argument('--display-name', help='the cog name (default: <name>)')
     parser.add_argument('--hide-commands', help='whether to hide all commands in the cog', action='store_true')
     parser.add_argument('--full', help='add all special methods as well', action='store_true')
+
 
 def parse_args():
     parser = argparse.ArgumentParser(prog='discord', description='Tools for helping with discord.py')
@@ -298,8 +308,10 @@ def parse_args():
     add_newcog_args(subparser)
     return parser, parser.parse_args()
 
+
 def main():
     parser, args = parse_args()
     args.func(parser, args)
+
 
 main()

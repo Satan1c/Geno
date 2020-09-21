@@ -24,8 +24,8 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
 
-import discord.abc
 import discord.utils
+
 
 class Context(discord.abc.Messageable):
     r"""Represents the context in which a command is being invoked under.
@@ -170,7 +170,7 @@ class Context(discord.abc.Messageable):
             to_call = cmd.root_parent or cmd
             view.index = len(self.prefix)
             view.previous = 0
-            view.get_word() # advance to get the root command
+            view.get_word()  # advance to get the root command
         else:
             to_call = cmd
 

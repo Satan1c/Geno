@@ -27,12 +27,13 @@ DEALINGS IN THE SOFTWARE.
 from collections import namedtuple
 
 import discord.abc
-from .flags import PublicUserFlags
-from .utils import snowflake_time, _bytes_to_base64_data, parse_time
+from .asset import Asset
+from .colour import Colour
 from .enums import DefaultAvatar, RelationshipType, UserFlags, HypeSquadHouse, PremiumType, try_enum
 from .errors import ClientException
-from .colour import Colour
-from .asset import Asset
+from .flags import PublicUserFlags
+from .utils import snowflake_time, _bytes_to_base64_data, parse_time
+
 
 class Profile(namedtuple('Profile', 'flags user mutual_guilds connected_accounts premium_since')):
     __slots__ = ()
@@ -80,7 +81,9 @@ class Profile(namedtuple('Profile', 'flags user mutual_guilds connected_accounts
     def system(self):
         return self._has_flag(UserFlags.system)
 
+
 _BaseUser = discord.abc.User
+
 
 class BaseUser(_BaseUser):
     __slots__ = ('name', 'id', 'discriminator', 'avatar', 'bot', 'system', '_public_flags', '_state')
@@ -112,7 +115,7 @@ class BaseUser(_BaseUser):
 
     @classmethod
     def _copy(cls, user):
-        self = cls.__new__(cls) # bypass __init__
+        self = cls.__new__(cls)  # bypass __init__
 
         self.name = user.name
         self.id = user.id
@@ -130,7 +133,7 @@ class BaseUser(_BaseUser):
             'avatar': self.avatar,
             'discriminator': self.discriminator,
             'bot': self.bot,
-        }
+            }
 
     @property
     def public_flags(self):
@@ -272,6 +275,7 @@ class BaseUser(_BaseUser):
                 return True
 
         return False
+
 
 class ClientUser(BaseUser):
     """Represents your Discord user.
@@ -464,7 +468,7 @@ class ClientUser(BaseUser):
             'password': password,
             'username': fields.get('username', self.name),
             'avatar': avatar
-        }
+            }
 
         if not_bot_account:
             args['email'] = fields.get('email', self.email)
@@ -620,7 +624,7 @@ class ClientUser(BaseUser):
         friend_flags = kwargs.pop('friend_source_flags', None)
         if friend_flags:
             dicts = [{}, {'mutual_guilds': True}, {'mutual_friends': True},
-            {'mutual_guilds': True, 'mutual_friends': True}, {'all': True}]
+                     {'mutual_guilds': True, 'mutual_friends': True}, {'all': True}]
             payload.update({'friend_source_flags': dicts[friend_flags.value]})
 
         guild_positions = kwargs.pop('guild_positions', None)
@@ -645,6 +649,7 @@ class ClientUser(BaseUser):
 
         data = await self._state.http.edit_settings(**payload)
         return data
+
 
 class User(BaseUser, discord.abc.Messageable):
     """Represents a Discord user.

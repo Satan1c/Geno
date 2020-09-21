@@ -28,14 +28,14 @@ import itertools
 from operator import attrgetter
 
 import discord.abc
-
 from . import utils
-from .user import BaseUser, User
 from .activity import create_activity
-from .permissions import Permissions
-from .enums import Status, try_enum, UserFlags, HypeSquadHouse
 from .colour import Colour
+from .enums import Status, try_enum
 from .object import Object
+from .permissions import Permissions
+from .user import BaseUser, User
+
 
 class VoiceState:
     """Represents a Discord user's voice state.
@@ -82,7 +82,9 @@ class VoiceState:
         self.channel = channel
 
     def __repr__(self):
-        return '<VoiceState self_mute={0.self_mute} self_deaf={0.self_deaf} self_stream={0.self_stream} channel={0.channel!r}>'.format(self)
+        return '<VoiceState self_mute={0.self_mute} self_deaf={0.self_deaf} self_stream={0.self_stream} channel={0.channel!r}>'.format(
+            self)
+
 
 def flatten_user(cls):
     for attr, value in itertools.chain(BaseUser.__dict__.items(), User.__dict__.items()):
@@ -117,7 +119,9 @@ def flatten_user(cls):
 
     return cls
 
+
 _BaseUser = discord.abc.User
+
 
 @flatten_user
 class Member(discord.abc.Messageable, _BaseUser):
@@ -173,7 +177,7 @@ class Member(discord.abc.Messageable, _BaseUser):
         self._update_roles(data)
         self._client_status = {
             None: 'offline'
-        }
+            }
         self.activities = tuple(map(create_activity, data.get('activities', [])))
         self.nick = data.get('nick', None)
 
@@ -200,7 +204,7 @@ class Member(discord.abc.Messageable, _BaseUser):
         return cls(data=data, guild=message.guild, state=message._state)
 
     @classmethod
-    def _try_upgrade(cls, *,  data, guild, state):
+    def _try_upgrade(cls, *, data, guild, state):
         # A User object with a 'member' key
         try:
             member_data = data.pop('member')
@@ -217,13 +221,13 @@ class Member(discord.abc.Messageable, _BaseUser):
         to_return._client_status = {
             key: value
             for key, value in data.get('client_status', {}).items()
-        }
+            }
         to_return._client_status[None] = data['status']
         return to_return, clone
 
     @classmethod
     def _copy(cls, member):
-        self = cls.__new__(cls) # to bypass __init__
+        self = cls.__new__(cls)  # to bypass __init__
 
         self._roles = utils.SnowflakeList(member._roles, is_sorted=True)
         self.joined_at = member.joined_at
@@ -262,7 +266,7 @@ class Member(discord.abc.Messageable, _BaseUser):
         self._client_status = {
             key: value
             for key, value in data.get('client_status', {}).items()
-        }
+            }
         self._client_status[None] = data['status']
 
         if len(user) > 1:
@@ -315,7 +319,7 @@ class Member(discord.abc.Messageable, _BaseUser):
         There is an alias for this named :attr:`color`.
         """
 
-        roles = self.roles[1:] # remove @everyone
+        roles = self.roles[1:]  # remove @everyone
 
         # highest order of the colour is the one that gets rendered.
         # if the highest is the default colour then the next one with a colour
@@ -433,7 +437,7 @@ class Member(discord.abc.Messageable, _BaseUser):
         guild = self.guild
         if len(self._roles) == 0:
             return guild.default_role
-        
+
         return max(guild.get_role(rid) or guild.default_role for rid in self._roles)
 
     @property
@@ -669,7 +673,7 @@ class Member(discord.abc.Messageable, _BaseUser):
         """
 
         if not atomic:
-            new_roles = [Object(id=r.id) for r in self.roles[1:]] # remove @everyone
+            new_roles = [Object(id=r.id) for r in self.roles[1:]]  # remove @everyone
             for role in roles:
                 try:
                     new_roles.remove(Object(id=role.id))

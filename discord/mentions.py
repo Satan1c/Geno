@@ -24,6 +24,7 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
 
+
 class _FakeBool:
     def __repr__(self):
         return 'True'
@@ -34,7 +35,9 @@ class _FakeBool:
     def __bool__(self):
         return True
 
+
 default = _FakeBool()
+
 
 class AllowedMentions:
     """A class that represents what mentions are allowed in a message.

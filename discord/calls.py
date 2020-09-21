@@ -30,6 +30,7 @@ from . import utils
 from .enums import VoiceRegion, try_enum
 from .member import VoiceState
 
+
 class CallMessage:
     """Represents a group call message from Discord.
 
@@ -77,6 +78,7 @@ class CallMessage:
             return datetime.datetime.utcnow() - self.message.created_at
         else:
             return self.ended_timestamp - self.message.created_at
+
 
 class GroupCall:
     """Represents the actual group call from Discord.

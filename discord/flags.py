@@ -30,7 +30,8 @@ __all__ = (
     'SystemChannelFlags',
     'MessageFlags',
     'PublicUserFlags'
-)
+    )
+
 
 class flag_value:
     def __init__(self, func):
@@ -48,13 +49,14 @@ class flag_value:
     def __repr__(self):
         return '<flag_value flag={.flag!r}>'.format(self)
 
+
 def fill_with_flags(*, inverted=False):
     def decorator(cls):
         cls.VALID_FLAGS = {
             name: value.flag
             for name, value in cls.__dict__.items()
             if isinstance(value, flag_value)
-        }
+            }
 
         if inverted:
             max_bits = max(cls.VALID_FLAGS.values()).bit_length()
@@ -63,7 +65,9 @@ def fill_with_flags(*, inverted=False):
             cls.DEFAULT_VALUE = 0
 
         return cls
+
     return decorator
+
 
 # n.b. flags must inherit from this and use the decorator above
 class BaseFlags:
@@ -109,6 +113,7 @@ class BaseFlags:
             self.value &= ~o
         else:
             raise TypeError('Value to set for %s must be a bool.' % self.__class__.__name__)
+
 
 @fill_with_flags(inverted=True)
 class SystemChannelFlags(BaseFlags):
@@ -233,6 +238,7 @@ class MessageFlags(BaseFlags):
         An urgent message is one sent by Discord Trust and Safety.
         """
         return 16
+
 
 @fill_with_flags()
 class PublicUserFlags(BaseFlags):

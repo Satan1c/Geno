@@ -24,13 +24,12 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
 
-import itertools
 import copy
 import functools
-import inspect
+import itertools
 import re
-import discord.utils
 
+import discord.utils
 from .core import Group, Command
 from .errors import CommandError
 
@@ -39,7 +38,8 @@ __all__ = (
     'HelpCommand',
     'DefaultHelpCommand',
     'MinimalHelpCommand',
-)
+    )
+
 
 # help -> shows info of bot on top/bottom and lists subcommands
 # help command -> shows detailed info of command
@@ -80,6 +80,7 @@ class Paginator:
     max_size: :class:`int`
         The maximum amount of codepoints allowed in a page.
     """
+
     def __init__(self, prefix='```', suffix='```', max_size=2000):
         self.prefix = prefix
         self.suffix = suffix
@@ -90,7 +91,7 @@ class Paginator:
         """Clears the paginator to have no pages."""
         if self.prefix is not None:
             self._current_page = [self.prefix]
-            self._count = len(self.prefix) + 1 # prefix + newline
+            self._count = len(self.prefix) + 1  # prefix + newline
         else:
             self._current_page = []
             self._count = 0
@@ -144,7 +145,7 @@ class Paginator:
 
         if self.prefix is not None:
             self._current_page = [self.prefix]
-            self._count = len(self.prefix) + 1 # prefix + newline
+            self._count = len(self.prefix) + 1  # prefix + newline
         else:
             self._current_page = []
             self._count = 0
@@ -165,9 +166,11 @@ class Paginator:
         fmt = '<Paginator prefix: {0.prefix} suffix: {0.suffix} max_size: {0.max_size} count: {0._count}>'
         return fmt.format(self)
 
+
 def _not_overriden(f):
     f.__help_command_not_overriden__ = True
     return f
+
 
 class _HelpCommandImpl(Command):
     def __init__(self, inject, *args, **kwargs):
@@ -244,6 +247,7 @@ class _HelpCommandImpl(Command):
         cog.walk_commands = cog.walk_commands.__wrapped__
         self.cog = None
 
+
 class HelpCommand:
     r"""The base implementation for help command formatting.
 
@@ -279,7 +283,7 @@ class HelpCommand:
         '@here': '@\u200bhere',
         r'<@!?[0-9]{17,22}>': '@deleted-user',
         r'<@&[0-9]{17,22}>': '@deleted-role'
-    }
+        }
 
     MENTION_PATTERN = re.compile('|'.join(MENTION_TRANSFORMS.keys()))
 
@@ -298,7 +302,7 @@ class HelpCommand:
         self.__original_kwargs__ = {
             k: deepcopy(v)
             for k, v in kwargs.items()
-        }
+            }
         self.__original_args__ = deepcopy(args)
         return self
 
@@ -332,7 +336,7 @@ class HelpCommand:
         mapping = {
             cog: cog.get_commands()
             for cog in bot.cogs.values()
-        }
+            }
         mapping[None] = [c for c in bot.all_commands.values() if c.cog is None]
         return mapping
 
@@ -551,7 +555,7 @@ class HelpCommand:
         as_lengths = (
             discord.utils._string_width(c.name)
             for c in commands
-        )
+            )
         return max(as_lengths, default=0)
 
     def get_destination(self):
@@ -816,6 +820,7 @@ class HelpCommand:
         else:
             return await self.send_command_help(cmd)
 
+
 class DefaultHelpCommand(HelpCommand):
     """The implementation of the default help command.
 
@@ -966,6 +971,7 @@ class DefaultHelpCommand(HelpCommand):
             self.paginator.add_line(bot.description, empty=True)
 
         no_category = '\u200b{0.no_category}:'.format(self)
+
         def get_category(command, *, no_category=no_category):
             cog = command.cog
             return cog.qualified_name + ':' if cog is not None else no_category
@@ -1018,6 +1024,7 @@ class DefaultHelpCommand(HelpCommand):
             self.paginator.add_line(note)
 
         await self.send_pages()
+
 
 class MinimalHelpCommand(HelpCommand):
     """An implementation of a help command with minimal output.
@@ -1082,7 +1089,8 @@ class MinimalHelpCommand(HelpCommand):
         """
         command_name = self.invoked_with
         return "Use `{0}{1} [command]` for more info on a command.\n" \
-               "You can also use `{0}{1} [category]` for more info on a category.".format(self.clean_prefix, command_name)
+               "You can also use `{0}{1} [category]` for more info on a category.".format(self.clean_prefix,
+                                                                                          command_name)
 
     def get_command_signature(self, command):
         return '%s%s %s' % (self.clean_prefix, command.qualified_name, command.signature)
@@ -1200,6 +1208,7 @@ class MinimalHelpCommand(HelpCommand):
             self.paginator.add_line(note, empty=True)
 
         no_category = '\u200b{0.no_category}'.format(self)
+
         def get_category(command, *, no_category=no_category):
             cog = command.cog
             return cog.qualified_name if cog is not None else no_category

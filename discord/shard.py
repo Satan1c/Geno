@@ -30,14 +30,15 @@ import logging
 
 import websockets
 
-from .state import AutoShardedConnectionState
-from .client import Client
-from .gateway import *
-from .errors import ClientException, InvalidArgument
 from . import utils
+from .client import Client
 from .enums import Status
+from .errors import ClientException, InvalidArgument
+from .gateway import *
+from .state import AutoShardedConnectionState
 
 log = logging.getLogger(__name__)
+
 
 class Shard:
     def __init__(self, ws, client):
@@ -46,7 +47,7 @@ class Shard:
         self._dispatch = client.dispatch
         self.loop = self._client.loop
         self._current = self.loop.create_future()
-        self._current.set_result(None) # we just need an already done future
+        self._current.set_result(None)  # we just need an already done future
         self._pending = asyncio.Event()
         self._pending_task = None
 
@@ -89,6 +90,7 @@ class Shard:
 
         return self._current
 
+
 class AutoShardedClient(Client):
     """A client similar to :class:`Client` except it handles the complications
     of sharding for the user into a more manageable and transparent single
@@ -115,6 +117,7 @@ class AutoShardedClient(Client):
     shard_ids: Optional[List[:class:`int`]]
         An optional list of shard_ids to launch the shards with.
     """
+
     def __init__(self, *args, loop=None, **kwargs):
         kwargs.pop('shard_id', None)
         self.shard_ids = kwargs.pop('shard_ids', None)

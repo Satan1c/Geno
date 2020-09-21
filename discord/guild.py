@@ -28,26 +28,24 @@ import copy
 from collections import namedtuple
 
 from . import utils
-from .role import Role
-from .member import Member, VoiceState
-from .activity import create_activity
-from .emoji import Emoji
-from .errors import InvalidData
-from .permissions import PermissionOverwrite
-from .colour import Colour
-from .errors import InvalidArgument, ClientException
-from .channel import *
-from .enums import VoiceRegion, Status, ChannelType, try_enum, VerificationLevel, ContentFilter, NotificationLevel
-from .mixins import Hashable
-from .user import User
-from .invite import Invite
-from .iterators import AuditLogIterator, MemberIterator
-from .webhook import Webhook
-from .widget import Widget
 from .asset import Asset
+from .channel import *
+from .colour import Colour
+from .emoji import Emoji
+from .enums import VoiceRegion, ChannelType, try_enum, VerificationLevel, ContentFilter, NotificationLevel
+from .errors import InvalidArgument, ClientException
+from .errors import InvalidData
 from .flags import SystemChannelFlags
 from .integrations import Integration
-
+from .invite import Invite
+from .iterators import AuditLogIterator, MemberIterator
+from .member import Member, VoiceState
+from .mixins import Hashable
+from .permissions import PermissionOverwrite
+from .role import Role
+from .user import User
+from .webhook import Webhook
+from .widget import Widget
 
 BanEntry = namedtuple('BanEntry', 'reason user')
 _GuildLimit = namedtuple('_GuildLimit', 'emoji bitrate filesize')
@@ -175,7 +173,7 @@ class Guild(Hashable):
         1: _GuildLimit(emoji=100, bitrate=128e3, filesize=8388608),
         2: _GuildLimit(emoji=150, bitrate=256e3, filesize=52428800),
         3: _GuildLimit(emoji=250, bitrate=384e3, filesize=104857600),
-    }
+        }
 
     def __init__(self, *, data, state):
         self._channels = {}
@@ -205,7 +203,7 @@ class Guild(Hashable):
     def __repr__(self):
         attrs = (
             'id', 'name', 'shard_id', 'chunked'
-        )
+            )
         resolved = ['%s=%r' % (attr, getattr(self, attr)) for attr in attrs]
         resolved.append('member_count=%r' % getattr(self, '_member_count', None))
         return '<Guild %s>' % ' '.join(resolved)
@@ -278,7 +276,7 @@ class Guild(Hashable):
         self.unavailable = guild.get('unavailable', False)
         self.id = int(guild['id'])
         self._roles = {}
-        state = self._state # speed up attribute access
+        state = self._state  # speed up attribute access
         for r in guild.get('roles', []):
             role = Role(guild=self, data=r, state=state)
             self._roles[role.id] = role
@@ -693,7 +691,8 @@ class Guild(Hashable):
         :class:`Asset`
             The resulting CDN asset.
         """
-        return Asset._from_guild_image(self._state, self.id, self.discovery_splash, 'discovery-splashes', format=format, size=size)
+        return Asset._from_guild_image(self._state, self.id, self.discovery_splash, 'discovery-splashes', format=format,
+                                       size=size)
 
     @property
     def member_count(self):
@@ -790,7 +789,7 @@ class Guild(Hashable):
                 'allow': allow.value,
                 'deny': deny.value,
                 'id': target.id
-            }
+                }
 
             if isinstance(target, Role):
                 payload['type'] = 'role'
@@ -1308,7 +1307,7 @@ class Guild(Hashable):
         return BanEntry(
             user=User(state=self._state, data=data['user']),
             reason=data['reason']
-        )
+            )
 
     async def bans(self):
         """|coro|
@@ -1397,7 +1396,8 @@ class Guild(Hashable):
         if roles:
             roles = [str(role.id) for role in roles]
 
-        data = await self._state.http.prune_members(self.id, days, compute_prune_count=compute_prune_count, roles=roles, reason=reason)
+        data = await self._state.http.prune_members(self.id, days, compute_prune_count=compute_prune_count, roles=roles,
+                                                    reason=reason)
         return data['pruned']
 
     async def webhooks(self):
@@ -1771,11 +1771,10 @@ class Guild(Hashable):
 
         role_positions = []
         for role, position in positions.items():
-
             payload = {
                 'id': role.id,
                 'position': position
-            }
+                }
 
             role_positions.append(payload)
 

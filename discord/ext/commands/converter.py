@@ -24,12 +24,11 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
 
-import re
 import inspect
+import re
 import typing
 
 import discord
-
 from .errors import BadArgument, NoPrivateMessage
 
 __all__ = (
@@ -49,7 +48,8 @@ __all__ = (
     'IDConverter',
     'clean_content',
     'Greedy',
-)
+    )
+
 
 def _get_from_guilds(bot, getter, argument):
     result = None
@@ -59,7 +59,9 @@ def _get_from_guilds(bot, getter, argument):
             return result
     return result
 
+
 _utils_get = discord.utils.get
+
 
 class Converter:
     """The base class of custom converters that require the :class:`.Context`
@@ -97,6 +99,7 @@ class Converter:
         """
         raise NotImplementedError('Derived classes need to implement this.')
 
+
 class IDConverter(Converter):
     def __init__(self):
         self._id_regex = re.compile(r'([0-9]{15,21})$')
@@ -104,6 +107,7 @@ class IDConverter(Converter):
 
     def _get_id_match(self, argument):
         return self._id_regex.match(argument)
+
 
 class MemberConverter(IDConverter):
     """Converts to a :class:`~discord.Member`.
@@ -143,6 +147,7 @@ class MemberConverter(IDConverter):
 
         return result
 
+
 class UserConverter(IDConverter):
     """Converts to a :class:`~discord.User`.
 
@@ -155,6 +160,7 @@ class UserConverter(IDConverter):
     3. Lookup by name#discrim
     4. Lookup by name
     """
+
     async def convert(self, ctx, argument):
         match = self._get_id_match(argument) or re.match(r'<@!?([0-9]+)>$', argument)
         result = None
@@ -188,6 +194,7 @@ class UserConverter(IDConverter):
 
         return result
 
+
 class MessageConverter(Converter):
     """Converts to a :class:`discord.Message`.
 
@@ -206,7 +213,7 @@ class MessageConverter(Converter):
             r'^https?://(?:(ptb|canary)\.)?discord(?:app)?\.com/channels/'
             r'(?:([0-9]{15,21})|(@me))'
             r'/(?P<channel_id>[0-9]{15,21})/(?P<message_id>[0-9]{15,21})/?$'
-        )
+            )
         match = id_regex.match(argument) or link_regex.match(argument)
         if not match:
             raise BadArgument('Message "{msg}" not found.'.format(msg=argument))
@@ -225,6 +232,7 @@ class MessageConverter(Converter):
         except discord.Forbidden:
             raise BadArgument("Can't read messages in {channel}".format(channel=channel.mention))
 
+
 class TextChannelConverter(IDConverter):
     """Converts to a :class:`~discord.TextChannel`.
 
@@ -237,6 +245,7 @@ class TextChannelConverter(IDConverter):
     2. Lookup by mention.
     3. Lookup by name
     """
+
     async def convert(self, ctx, argument):
         bot = ctx.bot
 
@@ -251,6 +260,7 @@ class TextChannelConverter(IDConverter):
             else:
                 def check(c):
                     return isinstance(c, discord.TextChannel) and c.name == argument
+
                 result = discord.utils.find(check, bot.get_all_channels())
         else:
             channel_id = int(match.group(1))
@@ -264,6 +274,7 @@ class TextChannelConverter(IDConverter):
 
         return result
 
+
 class VoiceChannelConverter(IDConverter):
     """Converts to a :class:`~discord.VoiceChannel`.
 
@@ -276,6 +287,7 @@ class VoiceChannelConverter(IDConverter):
     2. Lookup by mention.
     3. Lookup by name
     """
+
     async def convert(self, ctx, argument):
         bot = ctx.bot
         match = self._get_id_match(argument) or re.match(r'<#([0-9]+)>$', argument)
@@ -289,6 +301,7 @@ class VoiceChannelConverter(IDConverter):
             else:
                 def check(c):
                     return isinstance(c, discord.VoiceChannel) and c.name == argument
+
                 result = discord.utils.find(check, bot.get_all_channels())
         else:
             channel_id = int(match.group(1))
@@ -302,6 +315,7 @@ class VoiceChannelConverter(IDConverter):
 
         return result
 
+
 class CategoryChannelConverter(IDConverter):
     """Converts to a :class:`~discord.CategoryChannel`.
 
@@ -314,6 +328,7 @@ class CategoryChannelConverter(IDConverter):
     2. Lookup by mention.
     3. Lookup by name
     """
+
     async def convert(self, ctx, argument):
         bot = ctx.bot
 
@@ -328,6 +343,7 @@ class CategoryChannelConverter(IDConverter):
             else:
                 def check(c):
                     return isinstance(c, discord.CategoryChannel) and c.name == argument
+
                 result = discord.utils.find(check, bot.get_all_channels())
         else:
             channel_id = int(match.group(1))
@@ -341,6 +357,7 @@ class CategoryChannelConverter(IDConverter):
 
         return result
 
+
 class ColourConverter(Converter):
     """Converts to a :class:`~discord.Colour`.
 
@@ -353,6 +370,7 @@ class ColourConverter(Converter):
 
         - The ``_`` in the name can be optionally replaced with spaces.
     """
+
     async def convert(self, ctx, argument):
         arg = argument.replace('0x', '').lower()
 
@@ -370,6 +388,7 @@ class ColourConverter(Converter):
                 raise BadArgument('Colour "{}" is invalid.'.format(arg))
             return method()
 
+
 class RoleConverter(IDConverter):
     """Converts to a :class:`~discord.Role`.
 
@@ -382,6 +401,7 @@ class RoleConverter(IDConverter):
     2. Lookup by mention.
     3. Lookup by name
     """
+
     async def convert(self, ctx, argument):
         guild = ctx.guild
         if not guild:
@@ -397,22 +417,27 @@ class RoleConverter(IDConverter):
             raise BadArgument('Role "{}" not found.'.format(argument))
         return result
 
+
 class GameConverter(Converter):
     """Converts to :class:`~discord.Game`."""
+
     async def convert(self, ctx, argument):
         return discord.Game(name=argument)
+
 
 class InviteConverter(Converter):
     """Converts to a :class:`~discord.Invite`.
 
     This is done via an HTTP request using :meth:`.Bot.fetch_invite`.
     """
+
     async def convert(self, ctx, argument):
         try:
             invite = await ctx.bot.fetch_invite(argument)
             return invite
         except Exception as exc:
             raise BadArgument('Invite is invalid or expired') from exc
+
 
 class EmojiConverter(IDConverter):
     """Converts to a :class:`~discord.Emoji`.
@@ -426,6 +451,7 @@ class EmojiConverter(IDConverter):
     2. Lookup by extracting ID from the emoji.
     3. Lookup by name
     """
+
     async def convert(self, ctx, argument):
         match = self._get_id_match(argument) or re.match(r'<a?:[a-zA-Z0-9\_]+:([0-9]+)>$', argument)
         result = None
@@ -454,11 +480,13 @@ class EmojiConverter(IDConverter):
 
         return result
 
+
 class PartialEmojiConverter(Converter):
     """Converts to a :class:`~discord.PartialEmoji`.
 
     This is done by extracting the animated flag, name and ID from the emoji.
     """
+
     async def convert(self, ctx, argument):
         match = re.match(r'<(a?):([a-zA-Z0-9\_]+):([0-9]+)>$', argument)
 
@@ -471,6 +499,7 @@ class PartialEmojiConverter(Converter):
                                                    id=emoji_id)
 
         raise BadArgument('Couldn\'t convert "{}" to PartialEmoji.'.format(argument))
+
 
 class clean_content(Converter):
     """Converts the argument to mention scrubbed version of
@@ -487,6 +516,7 @@ class clean_content(Converter):
     escape_markdown: :class:`bool`
         Whether to also escape special markdown characters.
     """
+
     def __init__(self, *, fix_channel_mentions=False, use_nicknames=True, escape_markdown=False):
         self.fix_channel_mentions = fix_channel_mentions
         self.use_nicknames = use_nicknames
@@ -512,16 +542,15 @@ class clean_content(Converter):
                 m = _get(id)
                 return '@' + m.name if m else '@deleted-user'
 
-
         transformations.update(
             ('<@%s>' % member_id, resolve_member(member_id))
             for member_id in message.raw_mentions
-        )
+            )
 
         transformations.update(
             ('<@!%s>' % member_id, resolve_member(member_id))
             for member_id in message.raw_mentions
-        )
+            )
 
         if ctx.guild:
             def resolve_role(_id, *, _find=ctx.guild.get_role):
@@ -531,7 +560,7 @@ class clean_content(Converter):
             transformations.update(
                 ('<@&%s>' % role_id, resolve_role(role_id))
                 for role_id in message.raw_role_mentions
-            )
+                )
 
         def repl(obj):
             return transformations.get(obj.group(0), '')
@@ -544,6 +573,7 @@ class clean_content(Converter):
 
         # Completely ensure no mentions escape:
         return discord.utils.escape_mentions(result)
+
 
 class _Greedy:
     __slots__ = ('converter',)
@@ -568,5 +598,6 @@ class _Greedy:
             raise TypeError('Greedy[%r] is invalid.' % converter)
 
         return self.__class__(converter=converter)
+
 
 Greedy = _Greedy()

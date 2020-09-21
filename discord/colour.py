@@ -26,6 +26,7 @@ DEALINGS IN THE SOFTWARE.
 
 import colorsys
 
+
 class Colour:
     """Represents a Discord role colour. This class is similar
     to a (red, green, blue) :class:`tuple`.
@@ -226,5 +227,6 @@ class Colour:
     def greyple(cls):
         """A factory method that returns a :class:`Colour` with a value of ``0x99aab5``."""
         return cls(0x99aab5)
+
 
 Color = Colour

@@ -26,22 +26,22 @@ DEALINGS IN THE SOFTWARE.
 
 import asyncio
 import datetime
-import re
 import io
+import re
 
 from . import utils
-from .reaction import Reaction
-from .emoji import Emoji
-from .partial_emoji import PartialEmoji
 from .calls import CallMessage
+from .embeds import Embed
+from .emoji import Emoji
 from .enums import MessageType, try_enum
 from .errors import InvalidArgument, ClientException, HTTPException
-from .embeds import Embed
-from .member import Member
-from .flags import MessageFlags
 from .file import File
-from .utils import escape_mentions
+from .flags import MessageFlags
 from .guild import Guild
+from .member import Member
+from .partial_emoji import PartialEmoji
+from .reaction import Reaction
+from .utils import escape_mentions
 
 
 class Attachment:
@@ -208,17 +208,19 @@ class Attachment:
         data = await self.read(use_cached=use_cached)
         return File(io.BytesIO(data), filename=self.filename, spoiler=spoiler)
 
+
 def flatten_handlers(cls):
     prefix = len('_handle_')
     cls._HANDLERS = {
         key[prefix:]: value
         for key, value in cls.__dict__.items()
         if key.startswith('_handle_')
-    }
+        }
     cls._CACHED_SLOTS = [
         attr for attr in cls.__slots__ if attr.startswith('_cs_')
-    ]
+        ]
     return cls
+
 
 @flatten_handlers
 class Message:
@@ -345,7 +347,8 @@ class Message:
                 continue
 
     def __repr__(self):
-        return '<Message id={0.id} channel={0.channel!r} type={0.type!r} author={0.author!r} flags={0.flags!r}>'.format(self)
+        return '<Message id={0.id} channel={0.channel!r} type={0.type!r} author={0.author!r} flags={0.flags!r}>'.format(
+            self)
 
     def _try_patch(self, data, key, transform=None):
         try:
@@ -580,18 +583,18 @@ class Message:
         transformations = {
             re.escape('<#%s>' % channel.id): '#' + channel.name
             for channel in self.channel_mentions
-        }
+            }
 
         mention_transforms = {
             re.escape('<@%s>' % member.id): '@' + member.display_name
             for member in self.mentions
-        }
+            }
 
         # add the <@!user_id> cases as well..
         second_mention_transforms = {
             re.escape('<@!%s>' % member.id): '@' + member.display_name
             for member in self.mentions
-        }
+            }
 
         transformations.update(mention_transforms)
         transformations.update(second_mention_transforms)
@@ -600,7 +603,7 @@ class Message:
             role_transforms = {
                 re.escape('<@&%s>' % role.id): '@' + role.name
                 for role in self.role_mentions
-            }
+                }
             transformations.update(role_transforms)
 
         def repl(obj):
@@ -676,7 +679,7 @@ class Message:
                 "Glad you're here, {0}.",
                 "Good to see you, {0}.",
                 "Yay you made it, {0}!",
-            ]
+                ]
 
             # manually reconstruct the epoch with millisecond precision, because
             # datetime.datetime.timestamp() doesn't return the exact posix
@@ -813,9 +816,9 @@ class Message:
         except KeyError:
             pass
         else:
-             flags = MessageFlags._from_value(self.flags.value)
-             flags.suppress_embeds = suppress
-             fields['flags'] = flags.value
+            flags = MessageFlags._from_value(self.flags.value)
+            flags.suppress_embeds = suppress
+            fields['flags'] = flags.value
 
         delete_after = fields.pop('delete_after', None)
 

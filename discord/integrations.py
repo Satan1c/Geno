@@ -26,10 +26,12 @@ DEALINGS IN THE SOFTWARE.
 
 import datetime
 from collections import namedtuple
-from .utils import _get_as_snowflake, get, parse_time
-from .user import User
-from .errors import InvalidArgument
+
 from .enums import try_enum, ExpireBehaviour
+from .errors import InvalidArgument
+from .user import User
+from .utils import _get_as_snowflake, get, parse_time
+
 
 class IntegrationAccount(namedtuple('IntegrationAccount', 'id name')):
     """Represents an integration account.
@@ -48,6 +50,7 @@ class IntegrationAccount(namedtuple('IntegrationAccount', 'id name')):
 
     def __repr__(self):
         return '<IntegrationAccount id={0.id} name={0.name!r}>'.format(self)
+
 
 class Integration:
     """Represents a guild integration.
@@ -152,7 +155,7 @@ class Integration:
         payload = {
             'expire_behavior': expire_behaviour.value,
             'expire_grace_period': expire_grace_period,
-        }
+            }
 
         enable_emoticons = fields.get('enable_emoticons')
 

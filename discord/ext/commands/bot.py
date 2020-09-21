@@ -26,21 +26,20 @@ DEALINGS IN THE SOFTWARE.
 
 import asyncio
 import collections
-import inspect
 import importlib.util
+import inspect
 import sys
 import traceback
-import re
 import types
 
 import discord
-
-from .core import GroupMixin, Command
-from .view import StringView
-from .context import Context
 from . import errors
-from .help import HelpCommand, DefaultHelpCommand
 from .cog import Cog
+from .context import Context
+from .core import GroupMixin
+from .help import HelpCommand, DefaultHelpCommand
+from .view import StringView
+
 
 def when_mentioned(bot, msg):
     """A callable that implements a command prefix equivalent to being mentioned.
@@ -48,6 +47,7 @@ def when_mentioned(bot, msg):
     These are meant to be passed into the :attr:`.Bot.command_prefix` attribute.
     """
     return [bot.user.mention + ' ', '<@!%s> ' % bot.user.id]
+
 
 def when_mentioned_or(*prefixes):
     """A callable that implements when mentioned or other prefixes provided.
@@ -78,6 +78,7 @@ def when_mentioned_or(*prefixes):
     ----------
     :func:`.when_mentioned`
     """
+
     def inner(bot, msg):
         r = list(prefixes)
         r = when_mentioned(bot, msg) + r
@@ -85,14 +86,18 @@ def when_mentioned_or(*prefixes):
 
     return inner
 
+
 def _is_submodule(parent, child):
     return parent == child or child.startswith(parent + ".")
+
 
 class _DefaultRepr:
     def __repr__(self):
         return '<default-help-command>'
 
+
 _default = _DefaultRepr()
+
 
 class BotBase(GroupMixin):
     def __init__(self, command_prefix, help_command=_default, description=None, **options):
@@ -724,7 +729,7 @@ class BotBase(GroupMixin):
             name: module
             for name, module in sys.modules.items()
             if _is_submodule(lib.__name__, name)
-        }
+            }
 
         try:
             # Unload and then load the module...
@@ -936,6 +941,7 @@ class BotBase(GroupMixin):
     async def on_message(self, message):
         await self.process_commands(message)
 
+
 class Bot(BotBase, discord.Client):
     """Represents a discord bot.
 
@@ -1005,6 +1011,7 @@ class Bot(BotBase, discord.Client):
         .. versionadded:: 1.3
     """
     pass
+
 
 class AutoShardedBot(BotBase, discord.AutoShardedClient):
     """This is similar to :class:`.Bot` except that it is inherited from

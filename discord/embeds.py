@@ -29,6 +29,7 @@ import datetime
 from . import utils
 from .colour import Colour
 
+
 class _EmptyEmbed:
     def __bool__(self):
         return False
@@ -39,7 +40,9 @@ class _EmptyEmbed:
     def __len__(self):
         return 0
 
+
 EmptyEmbed = _EmptyEmbed()
+
 
 class EmbedProxy:
     def __init__(self, layer):
@@ -49,10 +52,12 @@ class EmbedProxy:
         return len(self.__dict__)
 
     def __repr__(self):
-        return 'EmbedProxy(%s)' % ', '.join(('%s=%r' % (k, v) for k, v in self.__dict__.items() if not k.startswith('_')))
+        return 'EmbedProxy(%s)' % ', '.join(
+            ('%s=%r' % (k, v) for k, v in self.__dict__.items() if not k.startswith('_')))
 
     def __getattr__(self, attr):
         return EmptyEmbed
+
 
 class Embed:
     """Represents a Discord embed.
@@ -207,7 +212,8 @@ class Embed:
         elif isinstance(value, int):
             self._colour = Colour(value=value)
         else:
-            raise TypeError('Expected discord.Colour, int, or Embed.Empty but received %s instead.' % value.__class__.__name__)
+            raise TypeError(
+                'Expected discord.Colour, int, or Embed.Empty but received %s instead.' % value.__class__.__name__)
 
     color = colour
 
@@ -290,7 +296,7 @@ class Embed:
         else:
             self._image = {
                 'url': str(url)
-            }
+                }
 
         return self
 
@@ -329,7 +335,7 @@ class Embed:
         else:
             self._thumbnail = {
                 'url': str(url)
-            }
+                }
 
         return self
 
@@ -385,7 +391,7 @@ class Embed:
 
         self._author = {
             'name': str(name)
-        }
+            }
 
         if url is not EmptyEmbed:
             self._author['url'] = str(url)
@@ -440,7 +446,7 @@ class Embed:
             'inline': inline,
             'name': str(name),
             'value': str(value)
-        }
+            }
 
         try:
             self._fields.append(field)
@@ -473,7 +479,7 @@ class Embed:
             'inline': inline,
             'name': str(name),
             'value': str(value)
-        }
+            }
 
         try:
             self._fields.insert(index, field)
@@ -553,7 +559,7 @@ class Embed:
             key[1:]: getattr(self, key)
             for key in self.__slots__
             if key[0] == '_' and hasattr(self, key)
-        }
+            }
 
         # deal with basic convenience wrappers
 
