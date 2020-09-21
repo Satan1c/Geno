@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
+
 import json
 import os
 import re
 from asyncio import TimeoutError
-from time import sleep
 from datetime import datetime
 from math import floor
 from typing import Union
@@ -14,7 +14,6 @@ from dateutil.relativedelta import relativedelta
 from googleapiclient import discovery
 
 import discord
-from config import SDC, Boat, BOTICORD
 from discord import Embed, Colour
 from discord.ext import commands as cmd
 from discord.ext.commands import Context
@@ -27,7 +26,7 @@ YTDL_OPTS = {
     "no_warnings": True,
     "extract_flat": "in_queue",
     "ignoreerrors": True,
-}
+    }
 
 
 class Twitch:
@@ -38,8 +37,10 @@ class Twitch:
 
     def get_response(self, query):
         res = requests.get(f"{self.url}{query}",
-                           headers={"Client-ID": self.client_id, 'Authorization': f'Bearer {self.token}',
-                                    "Accept": "application/vnd.v5+json"})
+                           headers={
+                               "Client-ID": self.client_id, 'Authorization': f'Bearer {self.token}',
+                               "Accept": "application/vnd.v5+json"
+                               })
         return res
 
     @staticmethod
@@ -112,30 +113,6 @@ class Utils:
             num_of_iterations += 1
         return arr
 
-    def req(self):
-        while 1:
-            requests.post(url=f"https://api.server-discord.com/v2/bots/{self.bot.user.id}/stats",
-                          data={"shards": self.bot.shard_count,
-                                "servers": len(self.bot.guilds)},
-                          headers={"Authorization": f"SDC {SDC}"})
-
-            print("SDC")
-
-            requests.post(url=f"https://discord.boats/api/bot/{self.bot.user.id}",
-                          data={"servers": len(self.bot.guilds)},
-                          headers={"Authorization": Boat})
-
-            print("Boats")
-
-            requests.get(url=BOTICORD.format(servers=len(self.bot.guilds),
-                                             users=len(self.bot.users),
-                                             shards=self.bot.shard_count),
-                         headers={"Authorization": "74992d73-5f95-441a-abb9-67bd4b27b883"})
-
-            print("Boticord")
-
-            sleep(901)
-
     def uptime(self):
         start = self.main.find_one()['uptime']
         t = relativedelta(datetime.now(), start)
@@ -195,7 +172,7 @@ class Utils:
             part="snippet,contentDetails,statistics",
             id=req,
             maxResults=1
-        )
+            )
         response = request.execute()
 
         return response
@@ -212,7 +189,7 @@ class Utils:
             request = youtube.channels().list(part="snippet,contentDetails,statistics", id=f"{req}", maxResults=1)
             response = request.execute()
 
-            if response['pageInfo']['totalResults'] < 1:
+            if response['pageInfo']['resultsPerPage'] < 1:
 
                 if recurr:
                     raise cmd.BadArgument("Channel not found")
@@ -224,7 +201,7 @@ class Utils:
         request = youtube.channels().list(part="snippet,contentDetails,statistics", forUsername=f"{req}", maxResults=1)
         response = request.execute()
 
-        if response['pageInfo']['totalResults'] < 1:
+        if response['pageInfo']['resultsPerPage'] < 1:
 
             if recurr:
                 raise cmd.BadArgument("Channel not found")
@@ -234,7 +211,6 @@ class Utils:
         return response
 
     def uploader(self, track: dict = None, typ: str = "yt") -> dict:
-        data = {}
         if typ == "yt":
             thumb = self.search_video(track['info']['identifier'])
             snippet = thumb['items'][0]['snippet']
@@ -252,31 +228,32 @@ class Utils:
                 'maxres' if 'maxres' in icon else 'standard' if 'standard' in icon
                 else 'high' if 'high' in icon else 'medium' if 'medium' in icon else 'default']
 
-            data = {
-                "name": channel_snippet['title'],
-                "url": f"https://youtube.com/channel/{ico['items'][0]['id']}",
-                "icon": icon['url'] if ico
-                else "https://maestroselectronics.com/wp-content/uploads/2017/12/No_Image_Available.jpg",
-                "thumbnail": img['url'] if img
-                else "https://maestroselectronics.com/wp-content/uploads/2017/12/No_Image_Available.jpg",
-                "tags": ", ".join(snippet['tags']) if "tags" in snippet else "No tags",
-                "title": snippet['title'],
-                "duration": self.parser(int(track['info']['length']) // 1000, typ="time"),
-                "video_url": track['info']['uri']
-            }
         elif typ == "sc":
             r = track['info']['uri'][8:].split("/")
-            data = {
-                "name": track['info']['author'],
-                "url": f"https://{r[0]}/{r[1]}",
-                "icon": "https://maestroselectronics.com/wp-content/uploads/2017/12/No_Image_Available.jpg",
-                "thumbnail": "https://maestroselectronics.com/wp-content/uploads/2017/12/No_Image_Available.jpg",
-                "tags": "No tags",
-                "title": track['info']['title'],
-                "duration": self.parser(int(track['info']['length']) // 1000, typ="time"),
-                "video_url": track['info']['uri']
+
+        return {
+            "name": channel_snippet['title'],
+            "url": f"https://youtube.com/channel/{ico['items'][0]['id']}",
+            "icon": icon[
+                'url'] if ico else "https://maestroselectronics.com/wp-content/uploads/2017/12/No_Image_Available.jpg",
+            "thumbnail": img[
+                'url'] if img else "https://maestroselectronics.com/wp-content/uploads/2017/12/No_Image_Available.jpg",
+            "tags": ", ".join(snippet['tags']) if "tags" in snippet else "No tags",
+            "title": snippet['title'],
+            "duration": self.parser(int(track['info']['length']) // 1000, typ="time"),
+            "video_url": track['info']['uri']
+
+            } if typ == "yt" else {
+
+            "name": track['info']['author'],
+            "url": f"https://{r[0]}/{r[1]}",
+            "icon": "https://maestroselectronics.com/wp-content/uploads/2017/12/No_Image_Available.jpg",
+            "thumbnail": "https://maestroselectronics.com/wp-content/uploads/2017/12/No_Image_Available.jpg",
+            "tags": "No tags",
+            "title": track['info']['title'],
+            "duration": self.parser(int(track['info']['length']) // 1000, typ="time"),
+            "video_url": track['info']['uri']
             }
-        return data
 
     def now_playing(self, player) -> dict:
         if not player.current:
@@ -297,7 +274,8 @@ class Utils:
         icon = csnipp['thumbnails'][
             'maxres' if 'maxres' in icon else 'standard' if 'standard' in icon else 'high' if 'high' in icon else
             'medium' if 'medium' in icon else 'default']
-        data = {
+        
+        return {
             "img": img,
             "icon": icon,
             "req": req,
@@ -305,8 +283,7 @@ class Utils:
             "channel": channel,
             "csnipp": csnipp,
             "tags": ", ".join(snipp['tags']) if 'tags' in snipp else "No Tags",
-        }
-        return data
+            }
 
     async def queue(self, ctx: cmd.Context, player) -> list:
         data = self.now_playing(player)
@@ -654,7 +631,7 @@ class EmbedGenerator:
             ctx = inp['ctx']
             data = inp['data']
 
-            em = discord.Embed(title=f"{data.arrowl} {ctx.me.name} {data.bot.version} info {data.arrowr}",
+            em = discord.Embed(title=f"{ctx.me.name} {data.bot.version} info",
                                colour=discord.Colour.green(),
                                timestamp=datetime.now())
             em.add_field(name="OS:", value=f"`{system[0]} {system[2]}`")
@@ -697,7 +674,6 @@ class Checks:
             return True
 
         if ctx.command.name in cfg['commands'] or ctx.command.cog_name in cfg['cogs']:
-            
             raise cmd.BadArgument("Module or command, is disabled on server")
-        
+
         return True

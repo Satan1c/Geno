@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+
 import asyncio
 import re
 import threading
@@ -251,6 +252,10 @@ class Music(cmd.Cog):
                           icon_url=ctx.author.avatar_url_as(format="png", static_format='png', size=256))
             await ctx.send(embed=em)
 
+            del data
+
+        del cfg, results
+
     @cmd.command(name="Leave",
                  aliases=['dc', 'leave', 'l', 'disconnect', 'stop', 'стоп', 'отключится', 'откл', 'д'], usage="stop",
                  description="""
@@ -314,6 +319,8 @@ class Music(cmd.Cog):
         em.description = em.description.format(raw=int(raw), end=int(end))
 
         await ctx.send(embed=em)
+
+        del cfg
 
     @cmd.command(name="Queue", aliases=['q', 'queue', 'очередь', 'о'], usage="queue", description="""
     Returns ito chat back list of music list
@@ -393,6 +400,8 @@ class Music(cmd.Cog):
 
         await ctx.send(embed=em)
 
+        del data
+
     @cmd.command(name="Pause", aliases=['pause', 'пауза'], usage="pause", description="""
     Pausing music playback
     :-:
@@ -431,7 +440,8 @@ class Music(cmd.Cog):
         if player.is_playing and player.paused:
             await player.set_pause(False)
 
-    @cmd.command(name="Join", aliases=['join', 'j', 'присоединится', 'джоин', 'дж'], description="""
+    @cmd.command(name="Join", aliases=['join', 'j', 'присоединится', 'джоин', 'дж'], usage="join",
+                 description="""
     Joins to your voice-channel
     :-:
     одключается к вашему голосовому каналу
