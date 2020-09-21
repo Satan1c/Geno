@@ -17,14 +17,14 @@ class Server:
             "queue": [],
             "playlist": [],
             "last": {}
-        }
+            }
 
     def get_dict(self) -> dict:
         return {
             "_id": self._id,
             "prefix": self.prefix,
             "music": self.music
-        }
+            }
 
 
 class User:
@@ -40,7 +40,7 @@ class User:
             "uid": self.id,
             "messages": 0,
             "mute_time": self.mute_time
-        }
+            }
 
 
 class Streamer:
@@ -54,7 +54,7 @@ class Streamer:
             "_id": str(self._id),
             "stream_id": str(self.stream_id),
             "servers": list(self.servers)
-        }
+            }
 
 
 class Commands:
@@ -68,4 +68,4 @@ class Commands:
             "_id": self._id,
             "cogs": list(self.cogs),
             "commands": list(self.commands)
-        }
+            }
