@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+import asyncio
 import os
 from datetime import datetime
 
@@ -11,6 +11,7 @@ from discord.ext import commands as cmd
 from discord.gateway import IdentifyConfig
 from . import models
 from .utils import Utils, Paginator, DataBase, EmbedGenerator, Twitch, Checks
+import threading
 
 IdentifyConfig.browser = 'Discord Android'
 
@@ -60,7 +61,7 @@ class Geno(cmd.Bot):
                                type=discord.ActivityType.listening)
         await self.change_presence(status=discord.Status.online, activity=act)
 
-        await self.DataBase(self).create()
+        #await self.DataBase(self).create()
         print(f"{self.user.name}, is ready")
 
     async def on_command_error(self, ctx: cmd.Context, err):

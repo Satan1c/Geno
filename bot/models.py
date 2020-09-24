@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from typing import List
 
 from discord import Guild, Member
 
@@ -41,6 +42,22 @@ class User:
             "messages": 0,
             "mute_time": self.mute_time
             }
+
+    @classmethod
+    def bulk_create(cls, members: list) -> list:
+        print("bulk")
+        res = []
+        print("res")
+        for i in members:
+            print(i.name)
+            res.append({
+                "sid": i.guild.id,
+                "uid": i.id,
+                "messages": 0,
+                "mute_time": None
+                })
+        print("res 2")
+        return res
 
 
 class Streamer:

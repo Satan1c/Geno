@@ -571,7 +571,9 @@ class DataBase:
             print("...servers creation")
             self.servers.insert_many(create)
 
-    async def _create_users(self):
+        del create, arr
+
+    async def __create_users(self):
         arr = [f"{i['sid']} {i['uid']}" for i in self.profiles.find()]
 
         raw = [[x for x in i.members if not x.bot] for i in self.bot.guilds]
@@ -581,6 +583,27 @@ class DataBase:
             print("...users creation")
             self.profiles.insert_many(create)
 
+        del create, raw, arr
+
+    async def _create_users(self):
+        print("us cr")
+        arr = [f"{i['sid']} {i['uid']}" for i in self.profiles.find()]
+        print("arr")
+        raw = [[f"{member.guild.id} {member.id}", member] for guild in self.bot.guilds for member in guild.members if not member.bot]
+        print("raw")
+        if len(arr) == len(raw):
+            return
+        create = [i[1] for i in raw if i[0] not in arr]
+        print("create")
+        create = self.models.User.bulk_create(create)
+        print(create)
+
+        if len(create):
+            print("...users creation")
+            self.profiles.insert_many(create)
+
+        del create, arr
+
     async def create_server(self, guild: discord.Guild):
         i = self.models.Server(guild).get_dict()
         srv = self.servers.find_one({"_id": f"{i['_id']}"})
@@ -588,8 +611,11 @@ class DataBase:
         if not srv:
             self.servers.insert_one(i)
             print(f"created: {i['_id']}")
+
         for i in guild.members:
             await self.create_user(i)
+
+        del srv, i
 
     async def create_user(self, member: discord.Member):
         if member.bot:
@@ -600,6 +626,8 @@ class DataBase:
         if not usr:
             self.profiles.insert_one(i)
             print(f"created: {i['sid']} | {i['uid']}")
+
+        del i, usr
 
 
 class EmbedGenerator:

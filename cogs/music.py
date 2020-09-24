@@ -98,6 +98,8 @@ class Music(cmd.Cog):
                     await self.connect_to(guild_id)
                     await guild.get_channel(cfg['last']['channel']).send("End of playback, auto disconnect")
 
+                del cfg
+
             elif isinstance(event, lavalink.TrackStartEvent):
                 player = event.player
                 if not player:
@@ -138,6 +140,8 @@ class Music(cmd.Cog):
                 cfg['last'] = {"message": f"{message.id}", "channel": f"{message.channel.id}"}
                 self.config.update_one({"_id": f"{player.guild_id}"}, {"$set": {"music": dict(cfg)}})
 
+                del cfg, data
+
             elif isinstance(event, lavalink.TrackEndEvent):
                 player = event.player
                 if not player:
@@ -157,9 +161,14 @@ class Music(cmd.Cog):
 
                     cfg['queue'] = []
                     cfg['now_playing'] = ""
+                    ch = cfg['last']['channel']
                     self.config.update_one({"_id": str(player.guild_id)}, {"$set": {"music": dict(cfg)}})
 
-                    return await guild.get_channel(cfg['last']['channel']).send("Empty voice channel, auto disconnect")
+                    del cfg
+
+                    await guild.get_channel(ch).send("Empty voice channel, auto disconnect")
+
+                del cfg
         except BaseException as err:
             print(err)
 
