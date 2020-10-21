@@ -271,7 +271,7 @@ class Role(Hashable):
             'color': colour.value,
             'hoist': fields.get('hoist', self.hoist),
             'mentionable': fields.get('mentionable', self.mentionable)
-            }
+        }
 
         data = await self._state.http.edit_role(self.guild.id, self.id, reason=reason, **payload)
         self._update(data)

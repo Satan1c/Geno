@@ -173,7 +173,7 @@ class Guild(Hashable):
         1: _GuildLimit(emoji=100, bitrate=128e3, filesize=8388608),
         2: _GuildLimit(emoji=150, bitrate=256e3, filesize=52428800),
         3: _GuildLimit(emoji=250, bitrate=384e3, filesize=104857600),
-        }
+    }
 
     def __init__(self, *, data, state):
         self._channels = {}
@@ -203,7 +203,7 @@ class Guild(Hashable):
     def __repr__(self):
         attrs = (
             'id', 'name', 'shard_id', 'chunked'
-            )
+        )
         resolved = ['%s=%r' % (attr, getattr(self, attr)) for attr in attrs]
         resolved.append('member_count=%r' % getattr(self, '_member_count', None))
         return '<Guild %s>' % ' '.join(resolved)
@@ -789,7 +789,7 @@ class Guild(Hashable):
                 'allow': allow.value,
                 'deny': deny.value,
                 'id': target.id
-                }
+            }
 
             if isinstance(target, Role):
                 payload['type'] = 'role'
@@ -1307,7 +1307,7 @@ class Guild(Hashable):
         return BanEntry(
             user=User(state=self._state, data=data['user']),
             reason=data['reason']
-            )
+        )
 
     async def bans(self):
         """|coro|
@@ -1774,7 +1774,7 @@ class Guild(Hashable):
             payload = {
                 'id': role.id,
                 'position': position
-                }
+            }
 
             role_positions.append(payload)
 

@@ -38,7 +38,7 @@ __all__ = (
     'HelpCommand',
     'DefaultHelpCommand',
     'MinimalHelpCommand',
-    )
+)
 
 
 # help -> shows info of bot on top/bottom and lists subcommands
@@ -283,7 +283,7 @@ class HelpCommand:
         '@here': '@\u200bhere',
         r'<@!?[0-9]{17,22}>': '@deleted-user',
         r'<@&[0-9]{17,22}>': '@deleted-role'
-        }
+    }
 
     MENTION_PATTERN = re.compile('|'.join(MENTION_TRANSFORMS.keys()))
 
@@ -302,7 +302,7 @@ class HelpCommand:
         self.__original_kwargs__ = {
             k: deepcopy(v)
             for k, v in kwargs.items()
-            }
+        }
         self.__original_args__ = deepcopy(args)
         return self
 
@@ -336,7 +336,7 @@ class HelpCommand:
         mapping = {
             cog: cog.get_commands()
             for cog in bot.cogs.values()
-            }
+        }
         mapping[None] = [c for c in bot.all_commands.values() if c.cog is None]
         return mapping
 
@@ -555,7 +555,7 @@ class HelpCommand:
         as_lengths = (
             discord.utils._string_width(c.name)
             for c in commands
-            )
+        )
         return max(as_lengths, default=0)
 
     def get_destination(self):

@@ -391,19 +391,23 @@ class Music(cmd.Cog):
             raise cmd.BadArgument('You\'re not in my voicechannel!')
 
         data = self.config.find_one({"_id": f"{ctx.guild.id}"})['music']['now_playing']
-        data['req'] = ctx.guild.get_member(int(data['req']))
+        if data:
+            data['req'] = ctx.guild.get_member(int(data['req']))
 
         em = discord.Embed(description=f"Duration:"
-                                       f" `{self.utils.parser(start=data['start'], end=datetime.now(), typ='time')}` /"
-                                       f" `{lavalink.format_time(int(player.current.duration))}`"
-                                       f"\nRequested by: `{str(data['req'])}` [{data['req'].mention}]",
-                           title=player.current.title,
-                           url=player.current.uri,
+                                       f" `{self.utils.parser(start=data['start'], end=datetime.now(), typ='time') if data else '00:00:00'}` /"
+                                       f" `{lavalink.format_time(int(player.current.duration)) if data else '00:00:00'}`"
+                                       f"\nRequested by: `{str(data['req']) if data else 'None'}` [{data['req'].mention if data else 'None'}]",
+                           title=player.current.title if data else discord.Embed.Empty,
+                           url=player.current.uri if data else discord.Embed.Empty,
                            timestamp=datetime.now(),
-                           colour=discord.Colour.green())
-        em.set_thumbnail(url=data['thumbnail'])
-        em.set_author(name=data['name'], url=data['url'],
-                      icon_url=data['icon'])
+                           colour=discord.Colour.green() if data else discord.Colour.dark_gold())
+        em.set_thumbnail(url=data[
+            'thumbnail'] if data else "https://maestroselectronics.com/wp-content/uploads/2017/12/No_Image_Available.jpg")
+        em.set_author(name=data['name'] if data else "Seems like nothing is plying now",
+                      url=data['url'] if data else discord.Embed.Empty,
+                      icon_url=data[
+                          'icon'] if data else "https://maestroselectronics.com/wp-content/uploads/2017/12/No_Image_Available.jpg")
         em.set_footer(text=str(ctx.author),
                       icon_url=ctx.author.avatar_url_as(format="png", static_format='png', size=256))
 
@@ -461,7 +465,8 @@ class Music(cmd.Cog):
             raise cmd.BadArgument("You must be in voicechannel to use this command.")
 
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
-        users = [i.id for i in ctx.guild.get_channel(int(player.channel_id)).members if not i.bot]
+        users = [i.id for i in ctx.guild.get_channel(int(player.channel_id or ctx.author.voice.channel.id)).members if
+                 not i.bot]
 
         if not player.is_connected:
             return await self.connect_to(int(ctx.guild.id), str(ctx.author.voice.channel.id))

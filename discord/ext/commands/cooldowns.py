@@ -37,7 +37,7 @@ __all__ = (
     'Cooldown',
     'CooldownMapping',
     'MaxConcurrency',
-    )
+)
 
 
 class BucketType(Enum):

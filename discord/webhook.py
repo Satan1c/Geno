@@ -44,7 +44,7 @@ __all__ = (
     'AsyncWebhookAdapter',
     'RequestsWebhookAdapter',
     'Webhook',
-    )
+)
 
 
 class WebhookAdapter:
@@ -122,14 +122,14 @@ class WebhookAdapter:
             multipart = {
                 'file': (file.filename, file.fp, 'application/octet-stream'),
                 'payload_json': utils.to_json(payload)
-                }
+            }
             data = None
             cleanup = file.close
             files_to_pass = [file]
         elif files is not None:
             multipart = {
                 'payload_json': utils.to_json(payload)
-                }
+            }
             for i, file in enumerate(files):
                 multipart['file%i' % i] = (file.filename, file.fp, 'application/octet-stream')
             data = None
@@ -516,7 +516,7 @@ class Webhook(Hashable):
             'id': id,
             'type': 1,
             'token': token
-            }
+        }
 
         return cls(data, adapter=adapter)
 
@@ -566,8 +566,8 @@ class Webhook(Hashable):
                 'discriminator': user.discriminator,
                 'id': user.id,
                 'avatar': user.avatar
-                }
             }
+        }
 
         session = channel._state.http._HTTPClient__session
         return cls(feed, adapter=AsyncWebhookAdapter(session=session))

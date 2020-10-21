@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from typing import List
 
 from discord import Guild, Member
 
@@ -18,14 +17,14 @@ class Server:
             "queue": [],
             "playlist": [],
             "last": {}
-            }
+        }
 
     def get_dict(self) -> dict:
         return {
             "_id": self._id,
             "prefix": self.prefix,
             "music": self.music
-            }
+        }
 
 
 class User:
@@ -41,22 +40,18 @@ class User:
             "uid": self.id,
             "messages": 0,
             "mute_time": self.mute_time
-            }
+        }
 
     @classmethod
     def bulk_create(cls, members: list) -> list:
-        print("bulk")
         res = []
-        print("res")
         for i in members:
-            print(i.name)
             res.append({
                 "sid": i.guild.id,
                 "uid": i.id,
                 "messages": 0,
                 "mute_time": None
-                })
-        print("res 2")
+            })
         return res
 
 
@@ -71,7 +66,7 @@ class Streamer:
             "_id": str(self._id),
             "stream_id": str(self.stream_id),
             "servers": list(self.servers)
-            }
+        }
 
 
 class Commands:
@@ -85,4 +80,4 @@ class Commands:
             "_id": self._id,
             "cogs": list(self.cogs),
             "commands": list(self.commands)
-            }
+        }

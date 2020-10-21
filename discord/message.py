@@ -215,10 +215,10 @@ def flatten_handlers(cls):
         key[prefix:]: value
         for key, value in cls.__dict__.items()
         if key.startswith('_handle_')
-        }
+    }
     cls._CACHED_SLOTS = [
         attr for attr in cls.__slots__ if attr.startswith('_cs_')
-        ]
+    ]
     return cls
 
 
@@ -583,18 +583,18 @@ class Message:
         transformations = {
             re.escape('<#%s>' % channel.id): '#' + channel.name
             for channel in self.channel_mentions
-            }
+        }
 
         mention_transforms = {
             re.escape('<@%s>' % member.id): '@' + member.display_name
             for member in self.mentions
-            }
+        }
 
         # add the <@!user_id> cases as well..
         second_mention_transforms = {
             re.escape('<@!%s>' % member.id): '@' + member.display_name
             for member in self.mentions
-            }
+        }
 
         transformations.update(mention_transforms)
         transformations.update(second_mention_transforms)
@@ -603,7 +603,7 @@ class Message:
             role_transforms = {
                 re.escape('<@&%s>' % role.id): '@' + role.name
                 for role in self.role_mentions
-                }
+            }
             transformations.update(role_transforms)
 
         def repl(obj):
@@ -679,7 +679,7 @@ class Message:
                 "Glad you're here, {0}.",
                 "Good to see you, {0}.",
                 "Yay you made it, {0}!",
-                ]
+            ]
 
             # manually reconstruct the epoch with millisecond precision, because
             # datetime.datetime.timestamp() doesn't return the exact posix

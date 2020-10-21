@@ -183,7 +183,7 @@ class _Overwrites:
             'allow': self.allow,
             'deny': self.deny,
             'type': self.type,
-            }
+        }
 
 
 class GuildChannel:
@@ -292,7 +292,7 @@ class GuildChannel:
                     'allow': allow.value,
                     'deny': deny.value,
                     'id': target.id
-                    }
+                }
 
                 if isinstance(target, Role):
                     payload['type'] = 'role'
@@ -672,7 +672,7 @@ class GuildChannel:
     async def _clone_impl(self, base_attrs, *, name=None, reason=None):
         base_attrs['permission_overwrites'] = [
             x._asdict() for x in self._overwrites
-            ]
+        ]
         base_attrs['parent_id'] = self.category_id
         base_attrs['name'] = name or self.name
         guild_id = self.guild.id

@@ -106,7 +106,7 @@ class Other(cmd.Cog):
                            timestamp=datetime.now())
         em.set_footer(text=str(ctx.author),
                       icon_url=ctx.author.avatar_url_as(format="png", static_format='png', size=256))
-        em.add_field(name=f"Members({len(g.members)}{'/' + g.max_members if g.max_members else ''}):",
+        em.add_field(name=f"Members({len(g.members)}{'/' + str(g.max_members) if g.max_members else ''}):",
                      value=f"<:people:730688969158819900> People: `{len([i.id for i in g.members if not i.bot])}`\n"
                            f"<:bot:730688278566535229> Bots: `{len([i.id for i in g.members if i.bot])}`")
         em.add_field(name=f"Channels({len([i.id for i in g.channels if not isinstance(i, discord.CategoryChannel)])}):",

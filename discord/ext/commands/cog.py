@@ -31,7 +31,7 @@ from ._types import _BaseCommand
 __all__ = (
     'CogMeta',
     'Cog',
-    )
+)
 
 
 class CogMeta(type):
@@ -174,7 +174,7 @@ class Cog(metaclass=CogMeta):
         lookup = {
             cmd.qualified_name: cmd
             for cmd in self.__cog_commands__
-            }
+        }
 
         # Update the Command instances dynamically as well
         for command in self.__cog_commands__:

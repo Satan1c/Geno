@@ -85,7 +85,7 @@ def _cancel_tasks(loop):
                 'message': 'Unhandled exception during Client.run shutdown.',
                 'exception': task.exception(),
                 'task': task
-                })
+            })
 
 
 def _cleanup_loop(loop):
@@ -109,7 +109,7 @@ class _ClientEventTask(asyncio.Task):
             ('state', self._state.lower()),
             ('event', self.__event_name),
             ('coro', repr(self.__original_coro)),
-            ]
+        ]
         if self._exception is not None:
             info.append(('exception', repr(self._exception)))
         return '<ClientEventTask {}>'.format(' '.join('%s=%s' % t for t in info))
@@ -224,7 +224,7 @@ class Client:
 
         self._handlers = {
             'ready': self._handle_ready
-            }
+        }
 
         self._connection = ConnectionState(dispatch=self.dispatch, handlers=self._handlers,
                                            syncer=self._syncer, http=self.http, loop=self.loop, **options)

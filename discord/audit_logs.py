@@ -129,7 +129,7 @@ class AuditLogChanges:
         'avatar_hash': ('avatar', None),
         'rate_limit_per_user': ('slowmode_delay', None),
         'default_message_notifications': ('default_notifications', _transform_default_notifications),
-        }
+    }
 
     def __init__(self, entry, data):
         self.before = AuditLogDiff()
@@ -249,13 +249,13 @@ class AuditLogEntry:
                 elems = {
                     'count': int(self.extra['count']),
                     'channel': self.guild.get_channel(channel_id) or Object(id=channel_id)
-                    }
+                }
                 self.extra = type('_AuditLogProxy', (), elems)()
             elif self.action is enums.AuditLogAction.member_disconnect:
                 # The member disconnect action has a dict with some information
                 elems = {
                     'count': int(self.extra['count']),
-                    }
+                }
                 self.extra = type('_AuditLogProxy', (), elems)()
             elif self.action.name.endswith('pin'):
                 # the pin actions have a dict with some information
@@ -264,7 +264,7 @@ class AuditLogEntry:
                 elems = {
                     'channel': self.guild.get_channel(channel_id) or Object(id=channel_id),
                     'message_id': message_id
-                    }
+                }
                 self.extra = type('_AuditLogProxy', (), elems)()
             elif self.action.name.startswith('overwrite_'):
                 # the overwrite_ actions have a dict with some information
@@ -362,7 +362,7 @@ class AuditLogEntry:
             'channel': changeset.channel,
             'uses': changeset.uses,
             'guild': self.guild,
-            }
+        }
 
         obj = Invite(state=self._state, data=fake_payload)
         try:

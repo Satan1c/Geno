@@ -39,7 +39,7 @@ __all__ = (
     'Game',
     'Spotify',
     'CustomActivity',
-    )
+)
 
 """If curious, this is the current schema for an activity.
 
@@ -205,7 +205,7 @@ class Activity(BaseActivity):
             'application_id',
             'session_id',
             'emoji',
-            )
+        )
         mapped = ' '.join('%s=%r' % (attr, getattr(self, attr)) for attr in attrs)
         return '<Activity %s>' % mapped
 
@@ -379,7 +379,7 @@ class Game(BaseActivity):
             'type': ActivityType.playing.value,
             'name': str(self.name),
             'timestamps': timestamps
-            }
+        }
 
     def __eq__(self, other):
         return isinstance(other, Game) and other.name == self.name
@@ -482,7 +482,7 @@ class Streaming(BaseActivity):
             'name': str(self.name),
             'url': str(self.url),
             'assets': self.assets
-            }
+        }
         if self.details:
             ret['details'] = self.details
         return ret
@@ -575,7 +575,7 @@ class Spotify:
             'timestamps': self._timestamps,
             'details': self._details,
             'state': self._state
-            }
+        }
 
     @property
     def name(self):
@@ -715,12 +715,12 @@ class CustomActivity(BaseActivity):
                 'type': ActivityType.custom.value,
                 'state': self.name,
                 'name': 'Custom Status',
-                }
+            }
         else:
             o = {
                 'type': ActivityType.custom.value,
                 'name': self.name,
-                }
+            }
 
         if self.emoji:
             o['emoji'] = self.emoji.to_dict()

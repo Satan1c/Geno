@@ -288,7 +288,7 @@ def get(iterable, **attrs):
     converted = [
         (attrget(attr.replace('__', '.')), value)
         for attr, value in attrs.items()
-        ]
+    ]
 
     for elem in iterable:
         if _all(pred(elem) == value for pred, value in converted):
@@ -366,7 +366,7 @@ async def async_all(gen, *, check=_isawaitable):
 async def sane_wait_for(futures, *, timeout):
     ensured = [
         asyncio.ensure_future(fut) for fut in futures
-        ]
+    ]
     done, pending = await asyncio.wait(ensured, timeout=timeout, return_when=asyncio.ALL_COMPLETED)
 
     if len(pending) != 0:

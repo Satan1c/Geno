@@ -52,7 +52,7 @@ __all__ = (
     'WebhookType',
     'ExpireBehaviour',
     'ExpireBehavior'
-    )
+)
 
 
 def _create_value_cls(name):
@@ -382,7 +382,7 @@ class AuditLogAction(Enum):
             AuditLogAction.integration_create: AuditLogActionCategory.create,
             AuditLogAction.integration_update: AuditLogActionCategory.update,
             AuditLogAction.integration_delete: AuditLogActionCategory.delete,
-            }
+        }
         return lookup[self]
 
     @property

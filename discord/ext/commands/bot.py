@@ -729,7 +729,7 @@ class BotBase(GroupMixin):
             name: module
             for name, module in sys.modules.items()
             if _is_submodule(lib.__name__, name)
-            }
+        }
 
         try:
             # Unload and then load the module...

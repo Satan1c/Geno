@@ -62,7 +62,7 @@ __all__ = (
     'ExtensionFailed',
     'ExtensionNotFound',
     'CommandRegistrationError',
-    )
+)
 
 
 class CommandError(DiscordException):

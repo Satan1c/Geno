@@ -175,7 +175,7 @@ _base_table = {
     '|': '-',
     '?': '-',
     '*': '-',
-    }
+}
 
 # NUL (0) and 1-31 are disallowed
 _base_table.update((chr(i), None) for i in range(32))

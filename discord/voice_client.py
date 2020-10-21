@@ -120,7 +120,7 @@ class VoiceClient:
         'xsalsa20_poly1305_lite',
         'xsalsa20_poly1305_suffix',
         'xsalsa20_poly1305',
-        )
+    )
 
     @property
     def guild(self):

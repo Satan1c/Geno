@@ -177,7 +177,7 @@ class Member(discord.abc.Messageable, _BaseUser):
         self._update_roles(data)
         self._client_status = {
             None: 'offline'
-            }
+        }
         self.activities = tuple(map(create_activity, data.get('activities', [])))
         self.nick = data.get('nick', None)
 
@@ -221,7 +221,7 @@ class Member(discord.abc.Messageable, _BaseUser):
         to_return._client_status = {
             key: value
             for key, value in data.get('client_status', {}).items()
-            }
+        }
         to_return._client_status[None] = data['status']
         return to_return, clone
 
@@ -266,7 +266,7 @@ class Member(discord.abc.Messageable, _BaseUser):
         self._client_status = {
             key: value
             for key, value in data.get('client_status', {}).items()
-            }
+        }
         self._client_status[None] = data['status']
 
         if len(user) > 1:

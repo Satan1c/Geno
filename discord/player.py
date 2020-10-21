@@ -49,7 +49,7 @@ __all__ = (
     'FFmpegPCMAudio',
     'FFmpegOpusAudio',
     'PCMVolumeTransformer',
-    )
+)
 
 
 class AudioSource:

@@ -63,7 +63,7 @@ class Loop:
             asyncio.TimeoutError,
             websockets.InvalidHandshake,
             websockets.WebSocketProtocolError,
-            )
+        )
 
         self._before_loop = None
         self._after_loop = None
@@ -483,7 +483,7 @@ def loop(*, seconds=0, minutes=0, hours=0, count=None, reconnect=True, loop=None
             'count': count,
             'reconnect': reconnect,
             'loop': loop
-            }
+        }
         return Loop(func, **kwargs)
 
     return decorator

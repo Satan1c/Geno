@@ -84,7 +84,7 @@ class PartialEmoji(_EmojiTag):
             animated=data.get('animated', False),
             id=utils._get_as_snowflake(data, 'id'),
             name=data.get('name'),
-            )
+        )
 
     def to_dict(self):
         o = {'name': self.name}

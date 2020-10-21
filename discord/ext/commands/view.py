@@ -45,7 +45,7 @@ _quotes = {
     "‹": "›",
     "《": "》",
     "〈": "〉",
-    }
+}
 _all_quotes = set(_quotes.keys()) | set(_quotes.values())
 
 

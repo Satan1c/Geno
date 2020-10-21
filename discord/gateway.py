@@ -52,7 +52,7 @@ __all__ = (
     'DiscordVoiceWebSocket',
     'ResumeWebSocket',
     'IdentifyConfig',
-    )
+)
 
 
 class IdentifyConfig:
@@ -143,7 +143,7 @@ class KeepAliveHandler(threading.Thread):
         return {
             'op': self.ws.HEARTBEAT,
             'd': self.ws.sequence
-            }
+        }
 
     def stop(self):
         self._stop_ev.set()
@@ -168,7 +168,7 @@ class VoiceKeepAliveHandler(KeepAliveHandler):
         return {
             'op': self.ws.HEARTBEAT,
             'd': int(time.time() * 1000)
-            }
+        }
 
     def ack(self):
         ack_time = time.perf_counter()
@@ -330,13 +330,13 @@ class DiscordWebSocket(websockets.client.WebSocketClientProtocol):
                     '$device': IdentifyConfig.device,
                     '$referrer': IdentifyConfig.referrer,
                     '$referring_domain': IdentifyConfig.referring_domain
-                    },
+                },
                 'compress': True,
                 'large_threshold': 250,
                 'guild_subscriptions': self._connection.guild_subscriptions,
                 'v': 3
-                }
             }
+        }
 
         if not self._connection.is_bot:
             payload['d']['synced_guilds'] = []
@@ -351,7 +351,7 @@ class DiscordWebSocket(websockets.client.WebSocketClientProtocol):
                 'game': state._activity,
                 'since': 0,
                 'afk': False
-                }
+            }
 
         await self.send_as_json(payload)
         log.info('Shard ID %s has sent the IDENTIFY payload.', self.shard_id)
@@ -364,8 +364,8 @@ class DiscordWebSocket(websockets.client.WebSocketClientProtocol):
                 'seq': self.sequence,
                 'session_id': self.session_id,
                 'token': self.token
-                }
             }
+        }
 
         await self.send_as_json(payload)
         log.info('Shard ID %s has sent the RESUME payload.', self.shard_id)
@@ -540,8 +540,8 @@ class DiscordWebSocket(websockets.client.WebSocketClientProtocol):
                 'afk': afk,
                 'since': since,
                 'status': status
-                }
             }
+        }
 
         sent = utils.to_json(payload)
         log.debug('Sending "%s" to change status', sent)
@@ -551,7 +551,7 @@ class DiscordWebSocket(websockets.client.WebSocketClientProtocol):
         payload = {
             'op': self.GUILD_SYNC,
             'd': list(guild_ids)
-            }
+        }
         await self.send_as_json(payload)
 
     async def request_chunks(self, guild_id, query=None, *, limit, user_ids=None, nonce=None):
@@ -560,8 +560,8 @@ class DiscordWebSocket(websockets.client.WebSocketClientProtocol):
             'd': {
                 'guild_id': guild_id,
                 'limit': limit
-                }
             }
+        }
 
         if nonce:
             payload['d']['nonce'] = nonce
@@ -582,8 +582,8 @@ class DiscordWebSocket(websockets.client.WebSocketClientProtocol):
                 'channel_id': channel_id,
                 'self_mute': self_mute,
                 'self_deaf': self_deaf
-                }
             }
+        }
 
         log.debug('Updating our voice state to %s.', payload)
         await self.send_as_json(payload)
@@ -662,8 +662,8 @@ class DiscordVoiceWebSocket(websockets.client.WebSocketClientProtocol):
                 'token': state.token,
                 'server_id': str(state.server_id),
                 'session_id': state.session_id
-                }
             }
+        }
         await self.send_as_json(payload)
 
     async def identify(self):
@@ -675,8 +675,8 @@ class DiscordVoiceWebSocket(websockets.client.WebSocketClientProtocol):
                 'user_id': str(state.user.id),
                 'session_id': state.session_id,
                 'token': state.token
-                }
             }
+        }
         await self.send_as_json(payload)
 
     @classmethod
@@ -705,9 +705,9 @@ class DiscordVoiceWebSocket(websockets.client.WebSocketClientProtocol):
                     'address': ip,
                     'port': port,
                     'mode': mode
-                    }
                 }
             }
+        }
 
         await self.send_as_json(payload)
 
@@ -716,8 +716,8 @@ class DiscordVoiceWebSocket(websockets.client.WebSocketClientProtocol):
             'op': self.CLIENT_CONNECT,
             'd': {
                 'audio_ssrc': self._connection.ssrc
-                }
             }
+        }
 
         await self.send_as_json(payload)
 
@@ -727,8 +727,8 @@ class DiscordVoiceWebSocket(websockets.client.WebSocketClientProtocol):
             'd': {
                 'speaking': int(state),
                 'delay': 0
-                }
             }
+        }
 
         await self.send_as_json(payload)
 

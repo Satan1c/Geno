@@ -81,7 +81,7 @@ exported_functions = [
      None, ctypes.c_int32, _err_lt),
     ('opus_encoder_destroy',
      [EncoderStructPtr], None, None),
-    ]
+]
 
 
 def libopus_loader(name):
@@ -217,13 +217,13 @@ band_ctl = {
     'wide': 1103,
     'superwide': 1104,
     'full': 1105,
-    }
+}
 
 signal_ctl = {
     'auto': -1000,
     'voice': 3001,
     'music': 3002,
-    }
+}
 
 
 class Encoder:

@@ -30,7 +30,7 @@ __all__ = (
     'SystemChannelFlags',
     'MessageFlags',
     'PublicUserFlags'
-    )
+)
 
 
 class flag_value:
@@ -56,7 +56,7 @@ def fill_with_flags(*, inverted=False):
             name: value.flag
             for name, value in cls.__dict__.items()
             if isinstance(value, flag_value)
-            }
+        }
 
         if inverted:
             max_bits = max(cls.VALID_FLAGS.values()).bit_length()

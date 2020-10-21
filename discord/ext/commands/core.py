@@ -61,7 +61,7 @@ __all__ = (
     'is_nsfw',
     'has_guild_permissions',
     'bot_has_guild_permissions'
-    )
+)
 
 
 def wrap_callback(coro):

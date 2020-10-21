@@ -133,7 +133,7 @@ class BaseUser(_BaseUser):
             'avatar': self.avatar,
             'discriminator': self.discriminator,
             'bot': self.bot,
-            }
+        }
 
     @property
     def public_flags(self):
@@ -468,7 +468,7 @@ class ClientUser(BaseUser):
             'password': password,
             'username': fields.get('username', self.name),
             'avatar': avatar
-            }
+        }
 
         if not_bot_account:
             args['email'] = fields.get('email', self.email)

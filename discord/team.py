@@ -32,7 +32,7 @@ from .user import BaseUser
 __all__ = (
     'Team',
     'TeamMember',
-    )
+)
 
 
 class Team:

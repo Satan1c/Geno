@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import asyncio
 import json
 import os
 import re
@@ -26,13 +27,13 @@ YTDL_OPTS = {
     "no_warnings": True,
     "extract_flat": "in_queue",
     "ignoreerrors": True,
-    }
+}
 
 
 class Twitch:
     def __init__(self):
         self.client_id = "zoucwv8yjggvgydciwu6vluq20c533"  # https://dev.twitch.tv/console/apps
-        self.token = "zrs93vtu8zxt532qwnnux1cs0jwjhk"  # https://twitchapps.com/tokengen/
+        self.token = "4bov40pb2i9d3agv7mltnybiejdu4y"  # https://twitchapps.com/tokengen/  https://dev.twitch.tv/
         self.url = "https://api.twitch.tv/helix/"
 
     def get_response(self, query):
@@ -40,7 +41,7 @@ class Twitch:
                            headers={
                                "Client-ID": self.client_id, 'Authorization': f'Bearer {self.token}',
                                "Accept": "application/vnd.v5+json"
-                               })
+                           })
         return res
 
     @staticmethod
@@ -172,7 +173,7 @@ class Utils:
             part="snippet,contentDetails,statistics",
             id=req,
             maxResults=1
-            )
+        )
         response = request.execute()
 
         return response
@@ -243,7 +244,7 @@ class Utils:
             "duration": self.parser(int(track['info']['length']) // 1000, typ="time"),
             "video_url": track['info']['uri']
 
-            } if typ == "yt" else {
+        } if typ == "yt" else {
 
             "name": track['info']['author'],
             "url": f"https://{r[0]}/{r[1]}",
@@ -253,7 +254,7 @@ class Utils:
             "title": track['info']['title'],
             "duration": self.parser(int(track['info']['length']) // 1000, typ="time"),
             "video_url": track['info']['uri']
-            }
+        }
 
     def now_playing(self, player) -> dict:
         if not player.current:
@@ -283,7 +284,7 @@ class Utils:
             "channel": channel,
             "csnipp": csnipp,
             "tags": ", ".join(snipp['tags']) if 'tags' in snipp else "No Tags",
-            }
+        }
 
     async def queue(self, ctx: cmd.Context, player) -> list:
         data = self.now_playing(player)
@@ -400,8 +401,11 @@ class Utils:
     async def reaction_roles(self, ctx: cmd.Context, message: str, args: tuple) -> [list, list, discord.Message]:
         if len(re.sub(r"[^0-9]", r"", f"{message}")) == 18:
             for i in ctx.guild.text_channels:
+                print(message)
                 try:
                     message = await i.fetch_message(int(re.sub(r"[^0-9]", r"", f"{message}")))
+                    if message:
+                        break
                 except BaseException as err:
                     print(err)
                     continue
@@ -409,13 +413,16 @@ class Utils:
         key = args[::2]
         k = []
         for i in key:
+            print(i)
             ids = re.sub(r"[^0-9]", r"", f"{i}")
             if len(ids) == 18:
                 e = self.bot.get_emoji(int(ids))
                 if not e:
                     k.append(i)
                     continue
-                k.append(e)
+                k.append(e.id)
+            else:
+                k.append(i)
         key = k
 
         value = args[1::2]
@@ -442,7 +449,7 @@ class Utils:
         return key, value, message
 
     @staticmethod
-    async def twitch(ctx: cmd.Context, nick: str, channel: str) -> [str, discord.TextChannel]:
+    async def twitch_nickname(ctx: cmd.Context, nick: str, channel: str) -> [str, discord.TextChannel]:
         if len(ctx.message.channel_mentions) > 0:
             channel = ctx.guild.get_channel(int(ctx.message.channel_mentions[0].id))
         elif len(re.sub(r"[^0-9]", r"", f"{channel}")) == 18:
@@ -558,10 +565,7 @@ class DataBase:
         self.profiles = bot.profiles
 
     async def create(self):
-        await self._create_servers()
-        print(f"created: servers")
-        await self._create_users()
-        print(f"created: users")
+        await asyncio.gather(self._create_servers(), self._create_users())
 
     async def _create_servers(self):
         arr = [int(i['_id']) for i in self.servers.find()]
@@ -572,6 +576,7 @@ class DataBase:
             self.servers.insert_many(create)
 
         del create, arr
+        print("created: servers")
 
     async def __create_users(self):
         arr = [f"{i['sid']} {i['uid']}" for i in self.profiles.find()]
@@ -584,25 +589,23 @@ class DataBase:
             self.profiles.insert_many(create)
 
         del create, raw, arr
+        print("created: users")
 
     async def _create_users(self):
-        print("us cr")
         arr = [f"{i['sid']} {i['uid']}" for i in self.profiles.find()]
-        print("arr")
-        raw = [[f"{member.guild.id} {member.id}", member] for guild in self.bot.guilds for member in guild.members if not member.bot]
-        print("raw")
+        raw = [[f"{member.guild.id} {member.id}", member] for guild in self.bot.guilds for member in guild.members if
+               not member.bot]
         if len(arr) == len(raw):
             return
         create = [i[1] for i in raw if i[0] not in arr]
-        print("create")
         create = self.models.User.bulk_create(create)
-        print(create)
 
         if len(create):
             print("...users creation")
             self.profiles.insert_many(create)
 
         del create, arr
+        print("created: users")
 
     async def create_server(self, guild: discord.Guild):
         i = self.models.Server(guild).get_dict()

@@ -29,7 +29,7 @@ from .flags import BaseFlags, flag_value, fill_with_flags
 __all__ = (
     'Permissions',
     'PermissionOverwrite',
-    )
+)
 
 
 # A permission alias works like a regular flag but is marked

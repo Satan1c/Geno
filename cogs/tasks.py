@@ -1,3 +1,6 @@
+import asyncio
+from threading import Thread
+
 import requests
 
 from bot.bot import Geno
@@ -15,8 +18,9 @@ class Tasks(cmd.Cog):
         self.Boticord_t = "74992d73-5f95-441a-abb9-67bd4b27b883"
         self.Boticord_u = "https://boticord.top/api/stats?servers={servers}&shards={shards}&users={users}"
 
-        self.monitors_update.start()
-        self.check_twitch.start()
+        ls = [self.monitors_update, self.check_twitch, self.db_update]
+        for i in ls:
+            Thread(target=i.start).start()
 
     @loop(seconds=3601)
     async def monitors_update(self):
@@ -24,23 +28,17 @@ class Tasks(cmd.Cog):
                       data={
                           "shards": 1,
                           "servers": len(self.bot.guilds)
-                          },
+                      },
                       headers={"Authorization": f"SDC {self.SDC}"})
-
-        print("SDC")
 
         requests.post(url=f"https://discord.boats/api/bot/{self.bot.user.id}",
                       data={"server_count": len(self.bot.guilds)},
                       headers={"Authorization": self.Boat})
 
-        print("Boats")
-
         requests.get(url=self.Boticord_u.format(servers=len(self.bot.guilds),
                                                 users=len(self.bot.users),
                                                 shards=self.bot.shard_count),
                      headers={"Authorization": self.Boticord_t})
-
-        print("Boticord")
 
     @loop(seconds=301)
     async def check_twitch(self):
@@ -65,7 +63,13 @@ class Tasks(cmd.Cog):
                     await self.twitch.stream_embed(streamer['_id'], res1, res2, channel)
 
         except BaseException as err:
-            print(err)
+            print(f"twitch_update: {err}")
+
+    @loop(hours=6)
+    async def db_update(self):
+        coro = self.bot.DataBase(self.bot).create()
+        for i in range(1):
+            Thread(target=asyncio.run, args=(coro,)).start()
 
 
 def setup(bot):

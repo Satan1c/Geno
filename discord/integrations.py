@@ -155,7 +155,7 @@ class Integration:
         payload = {
             'expire_behavior': expire_behaviour.value,
             'expire_grace_period': expire_grace_period,
-            }
+        }
 
         enable_emoticons = fields.get('enable_emoticons')
 

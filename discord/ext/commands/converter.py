@@ -48,7 +48,7 @@ __all__ = (
     'IDConverter',
     'clean_content',
     'Greedy',
-    )
+)
 
 
 def _get_from_guilds(bot, getter, argument):
@@ -213,7 +213,7 @@ class MessageConverter(Converter):
             r'^https?://(?:(ptb|canary)\.)?discord(?:app)?\.com/channels/'
             r'(?:([0-9]{15,21})|(@me))'
             r'/(?P<channel_id>[0-9]{15,21})/(?P<message_id>[0-9]{15,21})/?$'
-            )
+        )
         match = id_regex.match(argument) or link_regex.match(argument)
         if not match:
             raise BadArgument('Message "{msg}" not found.'.format(msg=argument))
@@ -545,12 +545,12 @@ class clean_content(Converter):
         transformations.update(
             ('<@%s>' % member_id, resolve_member(member_id))
             for member_id in message.raw_mentions
-            )
+        )
 
         transformations.update(
             ('<@!%s>' % member_id, resolve_member(member_id))
             for member_id in message.raw_mentions
-            )
+        )
 
         if ctx.guild:
             def resolve_role(_id, *, _find=ctx.guild.get_role):
@@ -560,7 +560,7 @@ class clean_content(Converter):
             transformations.update(
                 ('<@&%s>' % role_id, resolve_role(role_id))
                 for role_id in message.raw_role_mentions
-                )
+            )
 
         def repl(obj):
             return transformations.get(obj.group(0), '')

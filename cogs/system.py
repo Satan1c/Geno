@@ -47,8 +47,8 @@ class System(cmd.Cog):
         with proc.oneshot():
             mem = proc.memory_full_info()
             ram = f"uss: {round((mem.uss / 1024) / 1024, 1)}\n" \
-                  f"vms: {round((mem.vms / 1024) / 1024, 1)}" \
-                  f"rss: {round((mem.rss / 1024) / 1024, 1)}"
+                  f"vms: {round((mem.vms / 1024) / 1024, 1)}\n" \
+                  f"rss: {round((mem.rss / 1024) / 1024, 1)}\n"
             await ctx.send(ram)
 
     @cmd.command(name="Prefix", aliases=['prefix', 'prf', 'set_prefix', 'set_pref', 'префикс', 'преф'],
@@ -137,7 +137,7 @@ class System(cmd.Cog):
             self.streamers.update_one({"_id": nick}, {"$set": dict(cfg)})
             return await ctx.send(embed=em)
 
-        nick, channel = await self.utils.twitch(ctx, nick, channel)
+        nick, channel = await self.utils.twitch_nickname(ctx, nick, channel)
 
         query = self.twitch.get_user_query(nick)
         res2 = self.twitch.get_response(query).json()['data'][0]
@@ -218,8 +218,7 @@ class System(cmd.Cog):
 
         data = {}
         for i in range(len(key)):
-            data[f"{key[i].id}"] = value[i].id
-        print(data)
+            data[f"{key[i]}"] = [f"{value[i].id}", f"{message.id}"]
         self.config.update_one({"_id": f"{ctx.guild.id}"}, {"$set": {"reactions": dict(data)}})
         for i in key:
             print(i)
@@ -277,7 +276,7 @@ class System(cmd.Cog):
 
             cfg['cogs'].append(cogs[0])
             res = f"Category: {cogs[0]}"
-        elif cmds:
+        else:
             if cmds[0] in cfg['commands']:
                 return await ctx.send("This command already disabled")
 
@@ -339,7 +338,7 @@ class System(cmd.Cog):
             index = [i for i in range(len(cfg['cogs'])) if cfg['cogs'][i].lower() == cogs[0].lower()][0]
             res = cfg['cogs'].pop(index)
             res = f"Category: {res}"
-        elif cmds:
+        else:
             if cmds[0] not in cfg['commands']:
                 return await ctx.send("This command already enabled")
 
@@ -454,13 +453,13 @@ class System(cmd.Cog):
                 "username": data['username'] if "username" in data else webhook.name,
                 "avatar_url": data['avatar_url'] if "avatar_url" in data else webhook.avatar_url,
                 "embeds": data['embeds'] if "embeds" in data else None
-                }
+            }
 
             self.webhooks.update_one({"_id": f"{ctx.guild.id}"}, {
                 "$set": {
                     "webhooks": res['webhooks']
-                    }
-                })
+                }
+            })
         elif res:
             res['webhooks'][alias] = {
                 "url": url,
@@ -468,13 +467,13 @@ class System(cmd.Cog):
                 "username": data['username'] if "username" in data else webhook.name,
                 "avatar_url": data['avatar_url'] if "avatar_url" in data else webhook.avatar_url,
                 "embeds": data['embeds'] if "embeds" in data else None
-                }
+            }
 
             self.webhooks.update_one({"_id": f"{ctx.guild.id}"}, {
                 "$set": {
                     "webhooks": res['webhooks']
-                    }
-                })
+                }
+            })
         elif not res:
             self.webhooks.insert_one({
                 "_id": f"{ctx.guild.id}",
@@ -485,9 +484,9 @@ class System(cmd.Cog):
                         "username": data['username'] if "username" in data else webhook.name,
                         "avatar_url": data['avatar_url'] if "avatar_url" in data else f"{webhook.avatar_url}",
                         "embeds": data['embeds'] if "embeds" in data else None
-                        }
                     }
-                })
+                }
+            })
 
         del data, res
 

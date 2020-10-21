@@ -296,7 +296,7 @@ class Embed:
         else:
             self._image = {
                 'url': str(url)
-                }
+            }
 
         return self
 
@@ -335,7 +335,7 @@ class Embed:
         else:
             self._thumbnail = {
                 'url': str(url)
-                }
+            }
 
         return self
 
@@ -391,7 +391,7 @@ class Embed:
 
         self._author = {
             'name': str(name)
-            }
+        }
 
         if url is not EmptyEmbed:
             self._author['url'] = str(url)
@@ -446,7 +446,7 @@ class Embed:
             'inline': inline,
             'name': str(name),
             'value': str(value)
-            }
+        }
 
         try:
             self._fields.append(field)
@@ -479,7 +479,7 @@ class Embed:
             'inline': inline,
             'name': str(name),
             'value': str(value)
-            }
+        }
 
         try:
             self._fields.insert(index, field)
@@ -559,7 +559,7 @@ class Embed:
             key[1:]: getattr(self, key)
             for key in self.__slots__
             if key[0] == '_' and hasattr(self, key)
-            }
+        }
 
         # deal with basic convenience wrappers
 

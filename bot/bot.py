@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import asyncio
 import os
 from datetime import datetime
 
@@ -11,7 +10,6 @@ from discord.ext import commands as cmd
 from discord.gateway import IdentifyConfig
 from . import models
 from .utils import Utils, Paginator, DataBase, EmbedGenerator, Twitch, Checks
-import threading
 
 IdentifyConfig.browser = 'Discord Android'
 
@@ -24,7 +22,7 @@ class Geno(cmd.Bot):
         self.token = config.TOKEN
         # self.prefix = "t-"
         self.prefix = "g-"
-        self.version = "(v0.2.0a)"
+        self.version = "(v0.2.1a)"
         self.main = client.cfg.main
         self.servers = client.servers.configs
 
@@ -61,7 +59,6 @@ class Geno(cmd.Bot):
                                type=discord.ActivityType.listening)
         await self.change_presence(status=discord.Status.online, activity=act)
 
-        #await self.DataBase(self).create()
         print(f"{self.user.name}, is ready")
 
     async def on_command_error(self, ctx: cmd.Context, err):
@@ -101,7 +98,8 @@ class Geno(cmd.Bot):
         # return prefix
 
         if message.guild:
-            prefix = self.servers.find_one({"_id": f"{message.guild.id}"})['prefix']
+            prefix = self.servers.find_one({"_id": f"{message.guild.id}"})
+            prefix = prefix['prefix'] if prefix else self.prefix
 
         return prefix
 
