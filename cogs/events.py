@@ -16,9 +16,9 @@ class Events(cmd.Cog):
     async def on_guild_join(self, guild: discord.Guild):
         await self.DB(self.bot).create_server(guild)
 
-    @cmd.Cog.listener()
-    async def on_member_join(self, member: discord.Member):
-        await self.DB(self.bot).create_user(member)
+    # @cmd.Cog.listener()
+    # async def on_member_join(self, member: discord.Member):
+    #     await self.DB(self.bot).create_user(member)
 
     @cmd.Cog.listener()
     async def on_voice_state_update(self, member: discord.Member, before, after):

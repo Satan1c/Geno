@@ -213,11 +213,14 @@ class Music(cmd.Cog):
             for i in services:
                 query = f'{i}search:{query}'
                 results = await player.node.get_tracks(query)
-                if results:
+                if results or ('loadType' in results and results['loadType'] != 'NO_MATCHES'):
                     break
 
             if not results or not results['tracks']:
-                results = await player.node.get_tracks(self.utils.get_info(query)["webpage_url"])
+                url = self.utils.get_info(video_url=query.split(":")[1])
+                if not url:
+                    url = self.utils._get_info(video_url=query.split(":")[1])
+                results = await player.node.get_tracks(url)
         else:
             results = await player.node.get_tracks(query)
 

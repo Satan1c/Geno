@@ -11,6 +11,7 @@ from typing import Union
 
 import requests
 import youtube_dl
+import youtube_search
 from dateutil.relativedelta import relativedelta
 from googleapiclient import discovery
 
@@ -27,7 +28,9 @@ YTDL_OPTS = {
     "no_warnings": True,
     "extract_flat": "in_queue",
     "ignoreerrors": True,
-}
+    "forceurl": True,
+    "simulate": True
+    }
 
 
 class Twitch:
@@ -41,7 +44,7 @@ class Twitch:
                            headers={
                                "Client-ID": self.client_id, 'Authorization': f'Bearer {self.token}',
                                "Accept": "application/vnd.v5+json"
-                           })
+                               })
         return res
 
     @staticmethod
@@ -145,18 +148,29 @@ class Utils:
 
         return string
 
-    def get_info(self, video_url):
-        with youtube_dl.YoutubeDL(YTDL_OPTS) as ydl:
+    def _get_info(self, video_url):
+        with youtube_dl.YoutubeDL(params=YTDL_OPTS) as ydl:
             try:
                 info = ydl.extract_info(video_url, download=False)
             except BaseException as err:
-                print(err)
-                info = self.get_info(video_url)
+                info = self._get_info(video_url)
 
             if "_type" in info and info["_type"] == "playlist":
-                info = self.get_info(info["entries"][0]['webpage_url'])
+                info = self._get_info(info["entries"][0]['webpage_url'])
 
             return info
+
+    def get_info(self, video_url: str, max_results: int = 1) -> str:
+        try:
+            info = youtube_search.YoutubeSearch(video_url, max_results=max_results).to_dict()
+            info = "https://www.youtube.com" + info[0]['url_suffix'] if info and len(info) else None
+
+            if not info:
+                return " "
+
+            return info
+        except:
+            print("fail 2")
 
     # google api---------------------------------------------------------------------------------------------------
 
@@ -173,7 +187,7 @@ class Utils:
             part="snippet,contentDetails,statistics",
             id=req,
             maxResults=1
-        )
+            )
         response = request.execute()
 
         return response
@@ -216,7 +230,7 @@ class Utils:
             thumb = self.search_video(track['info']['identifier'])
             snippet = thumb['items'][0]['snippet']
 
-            ico = self.search_channel(snippet['channelId'])
+            ico = self.search_channel(snippet['channelId'], usid=True)
             channel_snippet = ico['items'][0]['snippet']
 
             img = snippet['thumbnails']
@@ -244,7 +258,7 @@ class Utils:
             "duration": self.parser(int(track['info']['length']) // 1000, typ="time"),
             "video_url": track['info']['uri']
 
-        } if typ == "yt" else {
+            } if typ == "yt" else {
 
             "name": track['info']['author'],
             "url": f"https://{r[0]}/{r[1]}",
@@ -254,7 +268,7 @@ class Utils:
             "title": track['info']['title'],
             "duration": self.parser(int(track['info']['length']) // 1000, typ="time"),
             "video_url": track['info']['uri']
-        }
+            }
 
     def now_playing(self, player) -> dict:
         if not player.current:
@@ -284,7 +298,7 @@ class Utils:
             "channel": channel,
             "csnipp": csnipp,
             "tags": ", ".join(snipp['tags']) if 'tags' in snipp else "No Tags",
-        }
+            }
 
     async def queue(self, ctx: cmd.Context, player) -> list:
         data = self.now_playing(player)
@@ -565,7 +579,7 @@ class DataBase:
         self.profiles = bot.profiles
 
     async def create(self):
-        await asyncio.gather(self._create_servers(), self._create_users())
+        await asyncio.gather(self._create_servers())  # , self._create_users())
 
     async def _create_servers(self):
         arr = [int(i['_id']) for i in self.servers.find()]
