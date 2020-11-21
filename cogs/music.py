@@ -25,8 +25,8 @@ class Music(cmd.Cog):
         self.utils = bot.utils
         self.models = bot.models
 
-        for i in range(1):
-            threading.Thread(target=system, args=("java -jar s/Lavalink.jar",)).start()
+        # for i in range(1):
+        #     threading.Thread(target=system, args=("java -jar s/Lavalink.jar",)).start()
 
         if not hasattr(bot, 'lavalink'):
             bot.lavalink = lavalink.Client(bot.user.id)
@@ -98,8 +98,6 @@ class Music(cmd.Cog):
                     await self.connect_to(guild_id)
                     await guild.get_channel(cfg['last']['channel']).send("End of playback, auto disconnect")
 
-                del cfg
-
             elif isinstance(event, lavalink.TrackStartEvent):
                 player = event.player
                 if not player:
@@ -140,8 +138,6 @@ class Music(cmd.Cog):
                 cfg['last'] = {"message": f"{message.id}", "channel": f"{message.channel.id}"}
                 self.config.update_one({"_id": f"{player.guild_id}"}, {"$set": {"music": dict(cfg)}})
 
-                del cfg, data
-
             elif isinstance(event, lavalink.TrackEndEvent):
                 player = event.player
                 if not player:
@@ -163,12 +159,9 @@ class Music(cmd.Cog):
                     cfg['now_playing'] = ""
                     ch = cfg['last']['channel']
                     self.config.update_one({"_id": str(player.guild_id)}, {"$set": {"music": dict(cfg)}})
-
-                    del cfg
-
+                    
                     await guild.get_channel(ch).send("Empty voice channel, auto disconnect")
 
-                del cfg
         except BaseException as err:
             print(err)
 
@@ -214,12 +207,11 @@ class Music(cmd.Cog):
                 query = f'{i}search:{query}'
                 results = await player.node.get_tracks(query)
                 if results or ('loadType' in results and results['loadType'] != 'NO_MATCHES'):
+                    results = None
                     break
 
             if not results or not results['tracks']:
-                url = self.utils.get_info(video_url=query.split(":")[1])
-                if not url:
-                    url = self.utils._get_info(video_url=query.split(":")[1])
+                url = await self.utils.get_info(video_url=query.split(":")[1])
                 results = await player.node.get_tracks(url)
         else:
             results = await player.node.get_tracks(query)
@@ -229,12 +221,11 @@ class Music(cmd.Cog):
 
         if results['loadType'] == 'PLAYLIST_LOADED':
             tracks = results['tracks']
-            print(results)
 
             for track in tracks:
                 player.add(requester=ctx.author.id, track=track)
 
-            desc = f'({results["playlistInfo"]["name"]})[{query}]' if url_rx.match(query) \
+            desc = f'[{results["playlistInfo"]["name"]}]({query})' if url_rx.match(query) \
                 else results["playlistInfo"]["name"]
 
             await ctx.send(embed=discord.Embed(title="Loaded playlist:",
@@ -263,10 +254,6 @@ class Music(cmd.Cog):
             em.set_footer(text=str(ctx.author),
                           icon_url=ctx.author.avatar_url_as(format="png", static_format='png', size=256))
             await ctx.send(embed=em)
-
-            del data
-
-        del cfg, results
 
     @cmd.command(name="Leave",
                  aliases=['dc', 'leave', 'l', 'disconnect', 'stop', 'стоп', 'отключится', 'откл', 'д'], usage="stop",
@@ -331,8 +318,6 @@ class Music(cmd.Cog):
         em.description = em.description.format(raw=int(raw), end=int(end))
 
         await ctx.send(embed=em)
-
-        del cfg
 
     @cmd.command(name="Queue", aliases=['q', 'queue', 'очередь', 'о'], usage="queue", description="""
     Returns ito chat back list of music list
@@ -415,8 +400,6 @@ class Music(cmd.Cog):
                       icon_url=ctx.author.avatar_url_as(format="png", static_format='png', size=256))
 
         await ctx.send(embed=em)
-
-        del data
 
     @cmd.command(name="Pause", aliases=['pause', 'пауза'], usage="pause", description="""
     Pausing music playback

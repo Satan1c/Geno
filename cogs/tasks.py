@@ -18,31 +18,36 @@ class Tasks(cmd.Cog):
         self.Boticord_t = "74992d73-5f95-441a-abb9-67bd4b27b883"
         self.Boticord_u = "https://boticord.top/api/stats?servers={servers}&shards={shards}&users={users}"
 
-        ls = [self.monitors_update, self.check_twitch, self.db_update]
+        ls = [self.check_twitch, self.db_update]
         for i in ls:
-            Thread(target=i.start).start()
+            i.start()
 
     @loop(seconds=3601)
     async def monitors_update(self):
-        requests.post(url=f"https://api.server-discord.com/v2/bots/{self.bot.user.id}/stats",
-                      data={
-                          "shards": 1,
-                          "servers": len(self.bot.guilds)
-                      },
-                      headers={"Authorization": f"SDC {self.SDC}"})
+        for i in [[requests.post,
+                   [f"https://api.server-discord.com/v2/bots/{self.bot.user.id}/stats",
+                    {
+                        "shards": 1,
+                        "servers": len(self.bot.guilds)
+                        }
+                    ],
+                   [{"headers": {"Authorization": f"SDC {self.SDC}"}}]],
 
-        requests.post(url=f"https://discord.boats/api/bot/{self.bot.user.id}",
-                      data={"server_count": len(self.bot.guilds)},
-                      headers={"Authorization": self.Boat})
+                  [f"https://discord.boats/api/bot/{self.bot.user.id}",
+                   [{"server_count": len(self.bot.guilds)}],
+                   [{"headers": {"Authorization": self.Boat}}]],
 
-        requests.get(url=self.Boticord_u.format(servers=len(self.bot.guilds),
-                                                users=len(self.bot.users),
-                                                shards=self.bot.shard_count),
-                     headers={"Authorization": self.Boticord_t})
+                  [self.Boticord_u.format(servers=len(self.bot.guilds),
+                                          users=len(self.bot.users),
+                                          shards=self.bot.shard_count),
+                   [],
+                   [{"headers": {"Authorization": self.Boticord_t}}]]]:
+            Thread(target=i[0], args=iter(i[1]), kwargs=i[2][0])
+        
+        print("monitorings")
 
     @loop(seconds=301)
     async def check_twitch(self):
-        print("twitch")
         try:
             streamers = [i for i in self.streamers.find()]
 
@@ -64,12 +69,16 @@ class Tasks(cmd.Cog):
 
         except BaseException as err:
             print(f"twitch_update: {err}")
+        
+        print("twitch")
 
     @loop(hours=6)
     async def db_update(self):
         coro = self.bot.DataBase(self.bot).create()
         for i in range(1):
             Thread(target=asyncio.run, args=(coro,)).start()
+        
+        print("db")
 
 
 def setup(bot):

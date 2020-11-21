@@ -12,16 +12,28 @@ class Events(cmd.Cog):
         self.config = bot.servers
         self.DB = bot.DataBase
 
-    @cmd.Cog.listener()
-    async def on_guild_join(self, guild: discord.Guild):
+    @cmd.Cog.listener("on_guild_join")
+    async def guild_join(self, guild: discord.Guild):
         await self.DB(self.bot).create_server(guild)
+        
+    @cmd.Cog.listener("on_member_update")
+    async def member_update(self, before: discord.Member, after: discord.Member):
+        pass
+    
+    @cmd.Cog.listener("on_user_update")
+    async def user_update(self, before: discord.User, after: discord.User):
+        pass
+    
+    @cmd.Cog.listener("on_member_join")
+    async def member_join(self, member: discord.Member):
+        pass
+    
+    @cmd.Cog.listener("on_member_remove")
+    async def member_remove(self, member: discord.Member):
+        pass
 
-    # @cmd.Cog.listener()
-    # async def on_member_join(self, member: discord.Member):
-    #     await self.DB(self.bot).create_user(member)
-
-    @cmd.Cog.listener()
-    async def on_voice_state_update(self, member: discord.Member, before, after):
+    @cmd.Cog.listener("on_voice_state_update")
+    async def voice_update(self, member: discord.Member, before, after):
         cfg = self.config.find_one({"_id": f"{member.guild.id}"})['music']
         if member.id == self.bot.user.id and after.channel and member.voice and not member.voice.deaf:
             try:
@@ -37,8 +49,8 @@ class Events(cmd.Cog):
 
         del cfg
 
-    @cmd.Cog.listener()
-    async def on_message(self, message: discord.Message):
+    @cmd.Cog.listener("on_message")
+    async def message(self, message: discord.Message):
         if re.sub(r'[^@<>#A-Za-z0-9]', r'', message.content) in [f"{str(self.bot.user)}",
                                                                  f"<@{str(self.bot.user)}>",
                                                                  f"@{str(self.bot.user)}",
@@ -59,61 +71,46 @@ class Events(cmd.Cog):
         if not message.embeds or isinstance(message.embeds[0].image.url, type(em.image.url)):
             await message.delete(delay=120)
 
-    @cmd.Cog.listener()
-    async def on_raw_reaction_add(self, pay: discord.RawReactionActionEvent):
-        if not pay.guild_id:
+    @cmd.Cog.listener("on_raw_reaction_add")
+    async def reaction_add(self, payload: discord.RawReactionActionEvent):
+        if not payload.guild_id: return
+
+        cfg = self.bot.servers.find_one({"_id": str(payload.guild_id)}) if payload.guild_id else None
+
+        if payload.member and payload.member.bot or str(payload.message_id) not in cfg['rroles']: return
+
+        message = await payload.member.guild.get_channel(payload.channel_id).fetch_message(payload.message_id)
+
+        if str(payload.message_id) in cfg['rroles']['reaction_remove_msgs']:
+            await message.remove_reaction(payload.emoji, payload.member)
+
+        roles = [i.id for i in payload.member.roles]
+        for role in cfg['rroles'][str(payload.message_id)][payload.emoji.name]['roles']:
+            if role not in roles:
+                await payload.member.add_roles(int(role))
+
+    @cmd.Cog.listener("on_raw_reaction_remove")
+    async def reaction_remove(self, payload: discord.RawReactionActionEvent):
+        cfg = self.bot.servers.find_one({"_id": str(payload.guild_id)})
+        if not payload.guild_id or str(payload.message_id) not in cfg['rroles']:
             return
 
-        guild = self.bot.get_guild(int(pay.guild_id))
-        if not pay.member or pay.member.bot:
+        guild = self.bot.get_guild(payload.guild_id)
+        if not payload.member:
+            payload.member = guild.get_member(payload.user_id)
+
+        if payload.member and payload.member.bot:
             return
 
-        cfg = self.config.find_one({"_id": f"{pay.guild_id}"})
-        if not cfg or 'reactions' not in cfg:
-            return
+        message = await guild.get_channel(payload.channel_id).fetch_message(payload.message_id)
 
-        if f"{pay.emoji.id}" in cfg['reactions'] or pay.emoji.name in cfg['reactions']:
-            role = guild.get_role(int(
-                cfg['reactions'][f"{pay.emoji.id if str(pay.emoji.id) in cfg['reactions'] else pay.emoji.name}"][0]))
-            if not role or pay.message_id != int(
-                    cfg['reactions'][f"{pay.emoji.id if str(pay.emoji.id) in cfg['reactions'] else pay.emoji.name}"][
-                        1]):
-                return
+        if str(payload.message_id) in cfg['rroles']['reaction_remove_msgs']:
+            await message.remove_reaction(payload.emoji, payload.member)
 
-            if role not in pay.member.roles:
-                return await pay.member.add_roles(role)
-
-        del cfg
-
-    @cmd.Cog.listener()
-    async def on_raw_reaction_remove(self, pay: discord.RawReactionActionEvent):
-        if not pay.guild_id:
-            return
-
-        guild = self.bot.get_guild(int(pay.guild_id))
-
-        if pay.member and pay.member.bot:
-            return
-
-        if not pay.member:
-            pay.member = guild.get_member(pay.user_id)
-
-        cfg = self.config.find_one({"_id": f"{pay.guild_id}"})
-        if not cfg or 'reactions' not in cfg:
-            return
-
-        if f"{pay.emoji.id}" in cfg['reactions'] or f"{pay.emoji.name}" in cfg['reactions']:
-            role = guild.get_role(int(
-                cfg['reactions'][f"{pay.emoji.id if str(pay.emoji.id) in cfg['reactions'] else pay.emoji.name}"][0]))
-            if not role or pay.message_id != int(
-                    cfg['reactions'][f"{pay.emoji.id if str(pay.emoji.id) in cfg['reactions'] else pay.emoji.name}"][
-                        1]):
-                return
-
-            if role in pay.member.roles:
-                return await pay.member.remove_roles(role)
-
-        del cfg
+        roles = [str(i.id) for i in payload.member.roles]
+        for role in cfg['rroles'][str(payload.message_id)][payload.emoji.name]['roles']:
+            if str(role) in roles:
+                await payload.member.remove_roles(int(role))
 
 
 def setup(bot):

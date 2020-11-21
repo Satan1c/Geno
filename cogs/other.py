@@ -108,7 +108,11 @@ class Other(cmd.Cog):
                       icon_url=ctx.author.avatar_url_as(format="png", static_format='png', size=256))
         em.add_field(name=f"Members({len(g.members)}{'/' + str(g.max_members) if g.max_members else ''}):",
                      value=f"<:people:730688969158819900> People: `{len([i.id for i in g.members if not i.bot])}`\n"
-                           f"<:bot:730688278566535229> Bots: `{len([i.id for i in g.members if i.bot])}`")
+                           f"<:bot:730688278566535229> Bots: `{len([i.id for i in g.members if i.bot])}`\n"
+                           f"online: `{len([i.id for i in g.members if not i.bot and i.status is discord.Status.online])}`\n"
+                           f"dnd: `{len([i.id for i in g.members if not i.bot and i.status is discord.Status.dnd])}`\n"
+                           f"idle: `{len([i.id for i in g.members if not i.bot and i.status is discord.Status.idle])}`\n"
+                           f"offline: `{len([i.id for i in g.members if not i.bot and i.status is discord.Status.offline])}`\n")
         em.add_field(name=f"Channels({len([i.id for i in g.channels if not isinstance(i, discord.CategoryChannel)])}):",
                      value=f"<:voice:730689231139241984> Voices: `{len(g.voice_channels)}`\n"
                            f"<:text:730689530461552710> Texts: `{len(g.text_channels)}`")
@@ -133,9 +137,7 @@ class Other(cmd.Cog):
                   f"\nusage: {psutil.cpu_percent()}%`"
 
             mem = proc.memory_full_info()
-            ram = f"`usage volume: {round((mem.vms // 1024) / 1024, 1)}mb`"  # \
-            # f" {round((mem.uss // 1024) /1024, 1)}mb\n" \
-            # f"percentage: {proc.memory_percent('vms')}%`"
+            ram = f"`usage volume: {round((mem.vms // 1024) / 1024, 1)}mb`"
 
             em = self.EmbedGenerator(target="bot", ctx=ctx, system=system, cpu=cpu, ram=ram, platform=platform,
                                      data=self).get()
@@ -159,6 +161,20 @@ class Other(cmd.Cog):
 
         for i in range(len(self.urls)):
             em.add_field(name=titles[i], value=f"[Click]({urls[i]})")
+
+        await ctx.send(embed=em)
+
+    @cmd.command(name="Profile", aliases=['профиль', 'profile'], usage="profile")
+    @cmd.check(checks.is_off)
+    async def _profile(self, ctx: cmd.Context):
+        activity = f"{str(ctx.author.activities[1].type).split('.')[1]} {ctx.author.activities[1].name}" if "emoji" in dir(ctx.author.activities[0]) else f"{ctx.author.activities[0].emoji} {ctx.author.activities[0].name}"
+        custom = f"{ctx.author.activities[0].emoji} {ctx.author.activities[0].name}\n" if "emoji" in dir(ctx.author.activities[0]) else None
+
+        em = discord.Embed(title=f"{ctx.author.display_name}'s profile", colour=discord.Colour.green())
+        em.add_field(inline=False, name="Status:", value=ctx.author.status)
+        em.add_field(inline=False, name="Activity:", value=f"{custom if custom else ''}{activity} " if ctx.author.activities else"No activity")
+        em.add_field(inline=False, name="Joined:", value=f"{ctx.author.joined_at}")
+        em.add_field(inline=False, name="Roles:", value="\n".join([i.mention for i in ctx.author.roles]) if len(ctx.author.roles) <= 5 else ", ".join([i.mention for i in ctx.author.roles]))
 
         await ctx.send(embed=em)
 

@@ -4,14 +4,13 @@ import asyncio
 import json
 import os
 import re
+import urllib
 from asyncio import TimeoutError
 from datetime import datetime
 from math import floor
-from typing import Union
+from typing import Union, Tuple
 
 import requests
-import youtube_dl
-import youtube_search
 from dateutil.relativedelta import relativedelta
 from googleapiclient import discovery
 
@@ -148,25 +147,37 @@ class Utils:
 
         return string
 
-    def _get_info(self, video_url):
-        with youtube_dl.YoutubeDL(params=YTDL_OPTS) as ydl:
+    def rroles_check(self, roles: list, ctx: cmd.Context) -> Tuple[bool, Union[list, None]]:
+        if len(roles) > 0 and isinstance(roles[0], list):
+            res = []
+            for i in roles:
+                f, s = self.rroles_check(i[1:], ctx)
+                s.insert(0, i[0])
+                res.append(s)
+            return True, res
+        for r in roles:
             try:
-                info = ydl.extract_info(video_url, download=False)
+                role = ctx.guild.get_role(int(r))
+
             except BaseException as err:
-                info = self._get_info(video_url)
+                print("[!] rroles_check:", err)
+                break
 
-            if "_type" in info and info["_type"] == "playlist":
-                info = self._get_info(info["entries"][0]['webpage_url'])
+            if not role:
+                break
+        else:
+            return True, roles
 
-            return info
+        return False, None
 
-    def get_info(self, video_url: str, max_results: int = 1) -> str:
+    async def get_info(self, video_url: str, max_results: int = 1) -> str:
         try:
-            info = youtube_search.YoutubeSearch(video_url, max_results=max_results).to_dict()
+            video_url = urllib.parse.quote(video_url)
+            info = json.loads(requests.get(f"https://geno.glitch.me/youtube/{video_url}").text)
             info = "https://www.youtube.com" + info[0]['url_suffix'] if info and len(info) else None
 
             if not info:
-                return " "
+                return video_url
 
             return info
         except:
@@ -412,7 +423,7 @@ class Utils:
 
         return em, value
 
-    async def reaction_roles(self, ctx: cmd.Context, message: str, args: tuple) -> [list, list, discord.Message]:
+    async def reaction_roles(self, ctx: cmd.Context, message: str, args: tuple) -> Tuple[list, list, discord.Message]:
         if len(re.sub(r"[^0-9]", r"", f"{message}")) == 18:
             for i in ctx.guild.text_channels:
                 print(message)
@@ -463,7 +474,7 @@ class Utils:
         return key, value, message
 
     @staticmethod
-    async def twitch_nickname(ctx: cmd.Context, nick: str, channel: str) -> [str, discord.TextChannel]:
+    async def twitch_nickname(ctx: cmd.Context, nick: str, channel: str) -> Tuple[str, discord.TextChannel]:
         if len(ctx.message.channel_mentions) > 0:
             channel = ctx.guild.get_channel(int(ctx.message.channel_mentions[0].id))
         elif len(re.sub(r"[^0-9]", r"", f"{channel}")) == 18:
@@ -682,7 +693,7 @@ class EmbedGenerator:
             em.add_field(name="OS:", value=f"`{system[0]} {system[2]}`")
             em.add_field(name="CPU:", value=f'`{cpu}`')
             em.add_field(name="RAM:", value=ram)
-            em.add_field(name="Users:", value=f"`{len(data.bot.users)}`")
+            em.add_field(name="Users:", value=f"`{len([i.id for i in data.bot.users if not i.bot])}`")
             em.add_field(name="Guilds:", value=f"`{len(data.bot.guilds)}`")
             em.add_field(name='\u200b', value="\u200b")
             em.add_field(name="Up-time:", value=f"`{data.utils.uptime()}`")

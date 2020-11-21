@@ -4,8 +4,6 @@ import json
 import re
 from datetime import datetime
 
-import psutil
-
 import discord
 from bot.bot import Geno
 from bot.bot import bot as b
@@ -42,33 +40,31 @@ class System(cmd.Cog):
     @cmd.command(name="Test", aliases=['test'], hidden=True)
     @cmd.is_owner()
     @cmd.check(checks.is_off)
-    async def _test(self, ctx: cmd.Context):
-        proc = psutil.Process()
-        with proc.oneshot():
-            mem = proc.memory_full_info()
-            ram = f"uss: {round((mem.uss / 1024) / 1024, 1)}\n" \
-                  f"vms: {round((mem.vms / 1024) / 1024, 1)}\n" \
-                  f"rss: {round((mem.rss / 1024) / 1024, 1)}\n"
-            await ctx.send(ram)
+    async def _test(self, ctx: cmd.Context, *, msg: str):
+        print(msg.strip('<>'))
+        msg = msg.strip('<>').split(':')
+        msg.pop(0)
+        await ctx.send(f"{msg}")
+        print(msg)
 
     @cmd.command(name="Prefix", aliases=['prefix', 'prf', 'set_prefix', 'set_pref', 'префикс', 'преф'],
-                 usage="prefix <prefix>",
-                 description="""
+                 usage="prefix `<prefix>`",
+                 description=f"""
     prefix - any prefix what you want
      examples: `-g`, `!`, `some_awesome_prefix`
-     default: `g-`
+     default: `{Geno.prefix}`
     
     Changing current server prefix, to "prefix"
     :-:
     prefix - любой префикс, который вам надо
      примеры: `-g`, `!`, `some_awesome_prefix`
-     по умолчанию: `g-`
+     по умолчанию: `{Geno.prefix}`
     
     Изменяет текущий префикс на сервере, на "prefix"
     """)
     @cmd.check(checks.is_off)
     @cmd.has_guild_permissions(manage_messages=True)
-    async def _prefix(self, ctx: cmd.Context, *, prefix: str = "g-"):
+    async def _prefix(self, ctx: cmd.Context, *, prefix: str = Geno.prefix):
         cfg = self.config.find_one({"_id": f"{ctx.guild.id}"})
         raw = cfg['prefix']
         if str(raw) == str(prefix):
@@ -84,7 +80,7 @@ class System(cmd.Cog):
 
         del cfg
 
-    @cmd.command(name="Twitch", aliases=['twitch', 'твитч'], usage="twitch [channel | \"remove\"] <nickname>",
+    @cmd.command(name="Twitch", aliases=['twitch', 'твитч'], usage="twitch `[channel | \"remove\"]` `<nickname>`",
                  description="""
     channel - can be channel **mention** or **channel id**,
      example: <#648622079779799040>, `648622079779799040`
@@ -180,53 +176,106 @@ class System(cmd.Cog):
 
     @cmd.command(name="Role Reactions",
                  aliases=['rr', 'role_reactions', 'rolereactions', 'рр', 'роли_по_реакциям', 'ролипореакцим', 'рлпрк'],
-                 usage="role_reactions <message id> <list: <emoji id> <role mention or id> >",
+                 usage="role_reactions `<\"add\" | \"remove\">` `<message id>` `<List[emoji, role id/s]>`",
                  description="""
-    message id - must be integer number of message on what you wanna add reactions
+    \"add\" | \"remove\" - text parameter of action, add reaction roles or remove, from message
+    
+    message id - must be an integer number of message id
      example: `648622822889095172`
      
-    emoji - must be integer number of emoji that you wanna add as reaction
-     example: `123456789012345678`
-    role - must be id or mention of role that you wanna mark as reaction role
-     examples: `648571307860164618`, @everyone
+    emoji - must be an full formatted emoji, not only name or id(*if exist*)
+     example: `👍`(👍), `<a:37:637697316932812816>`(<a:37:637697316932812816>)
+     
+    role id/s - must be an integer number of role id or its list
+     example: `648571307860164618`, `648571307860164618 648571307806164618`
     
     command usage example:
-     -role_reaction 648622822889095172 123456789012345678 648571307860164618 098765432109876543 @some_role
-     -role_reaction message emoji role_id emoji role_mention
+     -role_reaction add 123456789012345678 👍 098765432109876543 648571307860164618; <a:37:637697316932812816> 738550307806164618
+     -role_reaction message emoji role_id role_id; emoji role_id
      
     Adds "emojis" to "message", and mark "roles" as reaction roles
     :-:
-    message id - должен быть, целым числом сообщения, на которое нужно добавить реакцию
+    \"add\" | \"remove\" - текстовый параметр, для действия, добавления или уменьшения ролей по реакции с сообщения
+    
+    message id - должен быть, целым числом сообщения
      пример: `648622822889095172`
      
-    emoji - должен быть целым чилом, id емодзи которое нужно добавить как реакцию
-     пример: `123456789012345678`
-    role - должен быть id роли или ее упоминанием
-     примеры: `648571307860164618`, @everyone
+    emoji - должен быть полной реакцией, не только именем или айди(*если есть*)
+     пример: 👍, <a:37:637697316932812816>
+     
+    role id/s - должен быть id роли, или их перечень разделенный пробелом
+     примеры: `648571307860164618`, `648571307860164618 648571307806164618`
     
     пример использования команды:
-     -role_reaction 648622822889095172 123456789012345678 648571307860164618 098765432109876543 @some_role
-     -role_reaction message emoji role_id emoji role_mention
+     -role_reaction add 123456789012345678 👍 098765432109876543 648571307860164618; <a:37:637697316932812816> 648571307806164618
+     -role_reaction message emoji role_id role_id; emoji role_id
      
     Добавляет "emojis" под "message", и отмечает "roles" как роли по реакциям
     """)
+    @cmd.guild_only()
     @cmd.check(checks.is_off)
     @cmd.has_guild_permissions(manage_channels=True, manage_roles=True)
     @cmd.bot_has_guild_permissions(manage_channels=True, manage_roles=True)
-    async def _reaction_roles(self, ctx: cmd.Context, message: str, *args):
-        key, value, message = await self.utils.reaction_roles(ctx, message, args)
+    async def _reaction_role(self, ctx: cmd.Context, remove: str, message: str, *, roles: str):
+        cfg = self.config.find_one({"_id": str(ctx.guild.id)})
+        if remove in ["add"]:
+            roles = [i.split(" ") for i in roles.split("; ")] \
+                if len(re.sub(r'[^;]', r'1', roles.strip())) > 1 else roles.split(" ")
 
-        data = {}
-        for i in range(len(key)):
-            data[f"{key[i]}"] = [f"{value[i].id}", f"{message.id}"]
-        self.config.update_one({"_id": f"{ctx.guild.id}"}, {"$set": {"reactions": dict(data)}})
-        for i in key:
-            print(i)
-            await message.add_reaction(i)
+            res, roles = self.bot.utils.rroles_check(roles, ctx)
+            if not res: raise cmd.BadArgument("invalid roles")
 
-        del data
+            cfg['rroles'][message] = {} if message and message not in cfg['rroles'] else cfg['rroles'][message]
 
-    @cmd.command(name="Disable", aliases=['disable', 'отключить'], usage="disable <category name | command alias>",
+            for i in roles:
+                r = i[0].strip("<>").split(":")
+                i[0] = r[1] if len(r) > 1 else i[0]
+                cfg['rroles'][message][i[0]] = {"emoji": str(r[2]) if len(r) >= 3 and r[2] != 'None' else None, "roles": []}\
+                    if i[0] and i[0] not in cfg['rroles'][message] else cfg['rroles'][message][i[0]]
+
+                for role in i[1:]:
+                    cfg['rroles'][message][i[0]]["roles"].append(role)
+
+                m = await ctx.channel.fetch_message(int(message))
+                await m.add_reaction(f"<:{i[0]}:{cfg['rroles'][message][i[0]]['emoji']}>" if cfg['rroles'][message][i[0]]['emoji'] is not None else i[0])
+
+            else:
+                self.config.update_one({"_id": str(ctx.guild.id)}, {"$set": dict(cfg)})
+
+        elif remove in ["remove"]:
+            roles = [i.split(" ") for i in roles.split("; ")] \
+                if len(re.sub(r'[^;]', r'1', roles.strip())) > 1 else roles.split(" ")
+
+            res, roles = self.bot.utils.rroles_check(roles, ctx)
+            if not res: raise cmd.BadArgument("invalid roles")
+
+            if message in cfg['rroles']:
+                for i in roles:
+                    r = i[0].strip("<>").split(":")
+                    i[0] = r[1] if len(r) > 1 else i[0]
+                    cfg['rroles'][message][i[0]] = {"emoji": str(r[2]) if r[2] != "None" else None, "roles": []} \
+                        if i[0] and i[0] not in cfg['rroles'][message] else cfg['rroles'][message][i[0]]
+
+                    if len(cfg['rroles'][message][i[0]]['roles']):
+                        for role in i[1:]:
+                            cfg['rroles'][message][i[0]]['roles'].pop(cfg['rroles'][message][i[0]]['roles'].index(role))
+
+                        else:
+                            if len(cfg['rroles'][message][i[0]]['roles']) <= 0:
+                                m = await ctx.channel.fetch_message(int(message))
+                                await m.clear_reaction(f"<:{i[0]}:{cfg['rroles'][message][i[0]]['emoji']}>" if cfg['rroles'][message][i[0]]['emoji'] is not None else i[0])
+                    else:
+                        m = await ctx.channel.fetch_message(int(message))
+                        await m.clear_reaction(f"<:{i[0]}:{i[0]['emoji']}>" if i[0]['emoji'] is not None else i[0])
+
+                    if len(cfg['rroles'][message][i[0]]['roles']) <= 0:
+                        cfg['rroles'][message].pop(i[0])
+                        if len(cfg['rroles'][message]) <= 0:
+                            cfg['rroles'].pop(message)
+
+                    self.config.update_one({"_id": str(ctx.guild.id)}, {"$set": dict(cfg)})
+
+    @cmd.command(name="Disable", aliases=['disable', 'отключить'], usage="disable `<category name | command alias>`",
                  description="""
     Category name - must be full name of category
      example: `Music`
@@ -244,8 +293,8 @@ class System(cmd.Cog):
     
     Отключает все команды в "category" или команду "command" на сервере
     """)
-    @cmd.check(checks.is_off)
     @cmd.guild_only()
+    @cmd.check(checks.is_off)
     @cmd.has_guild_permissions(manage_guild=True)
     async def _disable_command_or_category(self, ctx: cmd.Context, *, target: str):
         if not target:
@@ -289,9 +338,7 @@ class System(cmd.Cog):
                                            colour=discord.Colour.green(),
                                            timestamp=datetime.now()))
 
-        del cfg
-
-    @cmd.command(name="Enable", aliases=['enable', 'включить'], usage="enable <category name | command alias>",
+    @cmd.command(name="Enable", aliases=['enable', 'включить'], usage="enable `<category name | command alias>`",
                  description="""
     Category name - must be full name of category
      example: `Music`
@@ -351,170 +398,6 @@ class System(cmd.Cog):
                                            description=res,
                                            colour=discord.Colour.green(),
                                            timestamp=datetime.now()))
-
-        del cfg
-
-    @cmd.command(name="Create Webhook", aliases=['sendwh', 'send_webhook'], usage="create_webhook [url] <json | alias>",
-                 description="""
-    URL - must be full formatted url address to some text-channel webhook
-    
-    JSON data - JSON format, u can take it on this [site](https://geno.page.link/tobR)
-     example: `{ \"embeds\": [ { \"title\": \"Some title\", \"description\": \"Some description\", \"author\": {\"name\": \"Some author name\"}, \"footer\": {\"text\": \"Some footer text\"} } ] }`
-    
-    Alias - name of saved webhook pattern, if u have some
-    
-    Send the webhook that was given by `url` and `json data` or pattern `alias`
-    :-:
-    URL - должен быть полноформатной ссылкой на вебхук любого текстового-канала
-    
-    JSON data - JSON формат, выможете создать его на этом [сайте](https://geno.page.link/tobR)
-     пример: `{ \"embeds\": [ { \"title\": \"Some title\", \"description\": \"Some description\", \"author\": {\"name\": \"Some author name\"}, \"footer\": {\"text\": \"Some footer text\"} } ] }`
-    
-    Alias - имя под которым был сохранен паттерн вебхука
-    
-    Отправляет вебхук который задан `url` и `json data` или `alias` паттерна
-    """)
-    @cmd.check(checks.is_off)
-    @cmd.bot_has_guild_permissions(manage_channels=True)
-    async def _send_webhook(self, ctx: cmd.Context, url: str = None, *, data: str = None):
-        if url_rx.match(url):
-            webhook = discord.Webhook.from_url(url=url, adapter=discord.RequestsWebhookAdapter())
-            data = json.loads(data)
-
-        else:
-            data = self.webhooks.find_one({"_id": f"{ctx.guild.id}"})
-            if not data or url not in data['webhooks']:
-                raise cmd.BadArgument(f"No saved pattern `{url}` was found")
-            else:
-                data = data['webhooks'][url]
-
-            webhook = discord.Webhook.from_url(url=data['url'], adapter=discord.RequestsWebhookAdapter())
-
-        if "embeds" in data and len(data['embeds']) > 0:
-            ems = []
-            for i in data['embeds']:
-                ems.append(discord.Embed.from_dict(i))
-
-            data['embeds'] = ems
-
-        webhook.send(content=data['content'] if "content" in data else None,
-                     username=data['username'] if "username" in data else webhook.name,
-                     avatar_url=data['avatar_url'] if "avatar_url" in data else webhook.avatar_url,
-                     embeds=data['embeds'] if "embeds" in data else None)
-
-        del data
-
-    @cmd.command(name="Save Pattern", aliases=['savept', 'save_pattern'], usage="save_pattern <alias> <url> <json>",
-                 description="""
-    Alias - an alias of new pattern to save it
-    
-    URL - must be full formatted url address to some text-channel webhook
-    
-    JSON data - JSON format, u can take it on this [site](https://geno.page.link/tobR)
-     example: `{ \"embeds\": [ { \"title\": \"Some title\", \"description\": \"Some description\", \"author\": {\"name\": \"Some author name\"}, \"footer\": {\"text\": \"Some footer text\"} } ] }`
-    
-    Creates an unique pattern by given `alias` with `url` and `json` for server
-    :-:
-    Alias - имя нового пвттерна для его сохранения
-    
-    URL - должен быть полноформатной ссылкой на вебхук любого текстового-канала
-    
-    JSON data - JSON формат, выможете создать его на этом [сайте](https://geno.page.link/tobR)
-     пример: `{ \"embeds\": [ { \"title\": \"Some title\", \"description\": \"Some description\", \"author\": {\"name\": \"Some author name\"}, \"footer\": {\"text\": \"Some footer text\"} } ] }`
-    
-    Создает уникальный паттерн по указаному `alias` с `url` и `json` для сервера
-    """)
-    @cmd.check(checks.is_off)
-    @cmd.bot_has_guild_permissions(manage_channels=True)
-    async def _save_pattern(self, ctx: cmd.Context, alias: str, url: str, *, data: str):
-        if not alias or not data or not url:
-            raise cmd.BadArgument(
-                f"To create webhook pattern give {'json data' if not data else 'alias' if not alias else 'url'}")
-
-        if url_rx.match(url):
-            webhook = discord.Webhook.from_url(url=url, adapter=discord.RequestsWebhookAdapter())
-
-        else:
-            res = self.webhooks.find_one({"_id": f"{ctx.guild.id}"})
-            if not res or alias not in res['webhooks']:
-                raise cmd.BadArgument(f"No saved pattern `{url}` was found")
-            else:
-                url = res['webhooks'][alias]['data']['url']
-                data = url + data
-
-            webhook = discord.Webhook.from_url(url=url, adapter=discord.RequestsWebhookAdapter())
-
-        data = json.loads(data)
-        res = self.webhooks.find_one({"_id": f"{ctx.guild.id}"})
-        if res and alias in res['webhooks']:
-            res['webhooks'][alias] = {
-                "url": url,
-                "content": data['content'] if "content" in data else None,
-                "username": data['username'] if "username" in data else webhook.name,
-                "avatar_url": data['avatar_url'] if "avatar_url" in data else webhook.avatar_url,
-                "embeds": data['embeds'] if "embeds" in data else None
-            }
-
-            self.webhooks.update_one({"_id": f"{ctx.guild.id}"}, {
-                "$set": {
-                    "webhooks": res['webhooks']
-                }
-            })
-        elif res:
-            res['webhooks'][alias] = {
-                "url": url,
-                "content": data['content'] if "content" in data else None,
-                "username": data['username'] if "username" in data else webhook.name,
-                "avatar_url": data['avatar_url'] if "avatar_url" in data else webhook.avatar_url,
-                "embeds": data['embeds'] if "embeds" in data else None
-            }
-
-            self.webhooks.update_one({"_id": f"{ctx.guild.id}"}, {
-                "$set": {
-                    "webhooks": res['webhooks']
-                }
-            })
-        elif not res:
-            self.webhooks.insert_one({
-                "_id": f"{ctx.guild.id}",
-                "webhooks": {
-                    alias: {
-                        "url": url,
-                        "content": data['content'] if "content" in data else None,
-                        "username": data['username'] if "username" in data else webhook.name,
-                        "avatar_url": data['avatar_url'] if "avatar_url" in data else f"{webhook.avatar_url}",
-                        "embeds": data['embeds'] if "embeds" in data else None
-                    }
-                }
-            })
-
-        del data, res
-
-    @cmd.command(name="Delete Pattern", aliases=['delpt', 'delete_pattern'], usage="delete_pattern <alias>",
-                 description="""
-    Alias - name of saved pattern to delete
-    
-    Delete `alias` pattern from server 
-    :-:
-    Alias - мя сохраненного паттерна который будет удален
-    
-    Удаляет `alias` паттерн с сервера
-    """)
-    @cmd.check(checks.is_off)
-    @cmd.bot_has_guild_permissions(manage_channels=True)
-    async def _delete_pattern(self, ctx: cmd.Context, alias: str):
-        if not alias:
-            raise cmd.BadArgument("To delete pattern give alias")
-
-        data = self.webhooks.find_one({"_id": f"{ctx.guild.id}"})
-
-        if not data or alias not in data['webhooks']:
-            raise cmd.BadArgument(f"Not found {'saved patterns' if not data else alias + ' pattern'}")
-
-        data['webhooks'].pop(alias)
-        self.webhooks.update_one({"_id": f"{ctx.guild.id}"}, {"$set": {"webhooks": data['webhooks']}})
-
-        del data
 
 
 def setup(bot):
