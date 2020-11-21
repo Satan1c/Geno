@@ -5,5 +5,5 @@ BOTICORD = "https://boticord.top/api/stats?servers={servers}&shards={shards}&use
 TOKEN = "NjQ4NTcwMzQxOTc0NzM2OTI2.XdwKMw.vnTwJNSOzT9jhKdtgQgX9sK8Hn4"
 MONGO = "mongodb+srv://Geno:Atlas23Game@genodb-wrqdw.mongodb.net/test?retryWrites=true&w=majority"
 
-# TOKEN = "NzMxNTE1ODI3NjcyNzExMTk4.XxfkMA.C-Zj5SFlJ78SralveRlxcJZoWrc"
-# MONGO = "mongodb+srv://Geno_TEST:Atlas23Game@genodb-wrqdw.mongodb.net/test?retryWrites=true&w=majority"
+#TOKEN = "NzMxNTE1ODI3NjcyNzExMTk4.XxfkMA.C-Zj5SFlJ78SralveRlxcJZoWrc"
+#MONGO = "mongodb+srv://Geno_TEST:Atlas23Game@genodb-wrqdw.mongodb.net/test?retryWrites=true&w=majority"
