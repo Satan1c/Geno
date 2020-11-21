@@ -25,17 +25,18 @@ DEALINGS IN THE SOFTWARE.
 """
 
 import itertools
+import sys
 from operator import attrgetter
 
 import discord.abc
-from . import utils
-from .activity import create_activity
-from .colour import Colour
-from .enums import Status, try_enum
-from .object import Object
-from .permissions import Permissions
-from .user import BaseUser, User
 
+from . import utils
+from .user import BaseUser, User
+from .activity import create_activity
+from .permissions import Permissions
+from .enums import Status, try_enum, UserFlags, HypeSquadHouse
+from .colour import Colour
+from .object import Object
 
 class VoiceState:
     """Represents a Discord user's voice state.
@@ -82,9 +83,7 @@ class VoiceState:
         self.channel = channel
 
     def __repr__(self):
-        return '<VoiceState self_mute={0.self_mute} self_deaf={0.self_deaf} self_stream={0.self_stream} channel={0.channel!r}>'.format(
-            self)
-
+        return '<VoiceState self_mute={0.self_mute} self_deaf={0.self_deaf} self_stream={0.self_stream} channel={0.channel!r}>'.format(self)
 
 def flatten_user(cls):
     for attr, value in itertools.chain(BaseUser.__dict__.items(), User.__dict__.items()):
@@ -119,9 +118,7 @@ def flatten_user(cls):
 
     return cls
 
-
 _BaseUser = discord.abc.User
-
 
 @flatten_user
 class Member(discord.abc.Messageable, _BaseUser):
@@ -152,8 +149,8 @@ class Member(discord.abc.Messageable, _BaseUser):
     Attributes
     ----------
     joined_at: Optional[:class:`datetime.datetime`]
-        A datetime object that specifies the date and time in UTC that the member joined the guild for
-        the first time. In certain cases, this can be ``None``.
+        A datetime object that specifies the date and time in UTC that the member joined the guild.
+        If the member left and rejoined the guild, this will be the latest date. In certain cases, this can be ``None``.
     activities: Tuple[Union[:class:`BaseActivity`, :class:`Spotify`]]
         The activities that the user is currently doing.
     guild: :class:`Guild`
@@ -203,8 +200,14 @@ class Member(discord.abc.Messageable, _BaseUser):
         data['user'] = author._to_minimal_user_json()
         return cls(data=data, guild=message.guild, state=message._state)
 
+    def _update_from_message(self, data):
+        self.joined_at = utils.parse_time(data.get('joined_at'))
+        self.premium_since = utils.parse_time(data.get('premium_since'))
+        self._update_roles(data)
+        self.nick = data.get('nick', None)
+
     @classmethod
-    def _try_upgrade(cls, *, data, guild, state):
+    def _try_upgrade(cls, *,  data, guild, state):
         # A User object with a 'member' key
         try:
             member_data = data.pop('member')
@@ -219,15 +222,15 @@ class Member(discord.abc.Messageable, _BaseUser):
         clone = cls(data=data, guild=guild, state=state)
         to_return = cls(data=data, guild=guild, state=state)
         to_return._client_status = {
-            key: value
+            sys.intern(key): sys.intern(value)
             for key, value in data.get('client_status', {}).items()
         }
-        to_return._client_status[None] = data['status']
+        to_return._client_status[None] = sys.intern(data['status'])
         return to_return, clone
 
     @classmethod
     def _copy(cls, member):
-        self = cls.__new__(cls)  # to bypass __init__
+        self = cls.__new__(cls) # to bypass __init__
 
         self._roles = utils.SnowflakeList(member._roles, is_sorted=True)
         self.joined_at = member.joined_at
@@ -264,27 +267,38 @@ class Member(discord.abc.Messageable, _BaseUser):
     def _presence_update(self, data, user):
         self.activities = tuple(map(create_activity, data.get('activities', [])))
         self._client_status = {
-            key: value
+            sys.intern(key): sys.intern(value)
             for key, value in data.get('client_status', {}).items()
         }
-        self._client_status[None] = data['status']
+        self._client_status[None] = sys.intern(data['status'])
 
         if len(user) > 1:
-            u = self._user
-            original = (u.name, u.avatar, u.discriminator)
-            # These keys seem to always be available
-            modified = (user['username'], user['avatar'], user['discriminator'])
-            if original != modified:
-                to_return = User._copy(self._user)
-                u.name, u.avatar, u.discriminator = modified
-                # Signal to dispatch on_user_update
-                return to_return, u
+            return self._update_inner_user(user)
         return False
+
+    def _update_inner_user(self, user):
+        u = self._user
+        original = (u.name, u.avatar, u.discriminator)
+        # These keys seem to always be available
+        modified = (user['username'], user['avatar'], user['discriminator'])
+        if original != modified:
+            to_return = User._copy(self._user)
+            u.name, u.avatar, u.discriminator = modified
+            # Signal to dispatch on_user_update
+            return to_return, u
 
     @property
     def status(self):
         """:class:`Status`: The member's overall status. If the value is unknown, then it will be a :class:`str` instead."""
         return try_enum(Status, self._client_status[None])
+
+    @property
+    def raw_status(self):
+        """:class:`str`: The member's overall status as a string value.
+
+        .. versionadded:: 1.5
+        """
+        return self._client_status[None]
 
     @status.setter
     def status(self, value):
@@ -307,7 +321,7 @@ class Member(discord.abc.Messageable, _BaseUser):
         return try_enum(Status, self._client_status.get('web', 'offline'))
 
     def is_on_mobile(self):
-        """A helper function that determines if a member is active on a mobile device."""
+        """:class:`bool`: A helper function that determines if a member is active on a mobile device."""
         return 'mobile' in self._client_status
 
     @property
@@ -319,7 +333,7 @@ class Member(discord.abc.Messageable, _BaseUser):
         There is an alias for this named :attr:`color`.
         """
 
-        roles = self.roles[1:]  # remove @everyone
+        roles = self.roles[1:] # remove @everyone
 
         # highest order of the colour is the one that gets rendered.
         # if the highest is the default colour then the next one with a colour
@@ -393,6 +407,11 @@ class Member(discord.abc.Messageable, _BaseUser):
         -----------
         message: :class:`Message`
             The message to check if you're mentioned in.
+
+        Returns
+        -------
+        :class:`bool`
+            Indicates if the member is mentioned in the message.
         """
         if message.guild is None or message.guild.id != self.guild.id:
             return False
@@ -635,14 +654,14 @@ class Member(discord.abc.Messageable, _BaseUser):
         """
 
         if not atomic:
-            new_roles = utils._unique(Object(id=r.id) for s in (self.roles[1:], roles) for r in s)
+            new_roles = utils._unique(Object(id=r if isinstance(r, int) else r.id) for s in (self.roles[1:], roles) for r in s)
             await self.edit(roles=new_roles, reason=reason)
         else:
             req = self._state.http.add_role
             guild_id = self.guild.id
             user_id = self.id
             for role in roles:
-                await req(guild_id, user_id, role.id, reason=reason)
+                await req(guild_id, user_id, role if isinstance(role, int) else role.id, reason=reason)
 
     async def remove_roles(self, *roles, reason=None, atomic=True):
         r"""|coro|
@@ -673,7 +692,7 @@ class Member(discord.abc.Messageable, _BaseUser):
         """
 
         if not atomic:
-            new_roles = [Object(id=r.id) for r in self.roles[1:]]  # remove @everyone
+            new_roles = [Object(id=r if isinstance(r, int) else r.id) for r in self.roles[1:]] # remove @everyone
             for role in roles:
                 try:
                     new_roles.remove(Object(id=role.id))
@@ -686,4 +705,4 @@ class Member(discord.abc.Messageable, _BaseUser):
             guild_id = self.guild.id
             user_id = self.id
             for role in roles:
-                await req(guild_id, user_id, role.id, reason=reason)
+                await req(guild_id, user_id, role if isinstance(role, int) else role.id, reason=reason)

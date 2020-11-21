@@ -24,20 +24,21 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
 
+import logging
 import asyncio
 import json
-import re
 import time
+import re
 from urllib.parse import quote as _uriquote
 
 import aiohttp
 
 from . import utils
-from .asset import Asset
+from .errors import InvalidArgument, HTTPException, Forbidden, NotFound, DiscordServerError
 from .enums import try_enum, WebhookType
-from .errors import InvalidArgument, HTTPException, Forbidden, NotFound
-from .mixins import Hashable
 from .user import BaseUser, User
+from .asset import Asset
+from .mixins import Hashable
 
 __all__ = (
     'WebhookAdapter',
@@ -46,6 +47,7 @@ __all__ = (
     'Webhook',
 )
 
+log = logging.getLogger(__name__)
 
 class WebhookAdapter:
     """Base class for all webhook adapters.
@@ -159,7 +161,6 @@ class WebhookAdapter:
         # if request raises up there then this should never be `None`
         return self.handle_execution_response(maybe_coro, wait=wait)
 
-
 class AsyncWebhookAdapter(WebhookAdapter):
     """A webhook adapter suited for use with aiohttp.
 
@@ -196,11 +197,14 @@ class AsyncWebhookAdapter(WebhookAdapter):
                 else:
                     data.add_field(key, value)
 
+        base_url = url.replace(self._request_url, '/') or '/'
+        _id = self._webhook_id
         for tries in range(5):
             for file in files:
                 file.reset(seek=tries)
 
             async with self.session.request(verb, url, headers=headers, data=data) as r:
+                log.debug('Webhook ID %s with %s %s has returned status code %s', _id, verb, base_url, r.status)
                 # Coerce empty strings to return None for hygiene purposes
                 response = (await r.text(encoding='utf-8')) or None
                 if r.headers['Content-Type'] == 'application/json':
@@ -210,6 +214,7 @@ class AsyncWebhookAdapter(WebhookAdapter):
                 remaining = r.headers.get('X-Ratelimit-Remaining')
                 if remaining == '0' and r.status != 429:
                     delta = utils._parse_ratelimit_header(r)
+                    log.debug('Webhook ID %s has been pre-emptively rate limited, waiting %.2f seconds', _id, delta)
                     await asyncio.sleep(delta)
 
                 if 300 > r.status >= 200:
@@ -217,7 +222,12 @@ class AsyncWebhookAdapter(WebhookAdapter):
 
                 # we are being rate limited
                 if r.status == 429:
+                    if not r.headers.get('Via'):
+                        # Banned by Cloudflare more than likely.
+                        raise HTTPException(r, data)
+
                     retry_after = response['retry_after'] / 1000.0
+                    log.warning('Webhook ID %s is rate limited. Retrying in %.2f seconds', _id, retry_after)
                     await asyncio.sleep(retry_after)
                     continue
 
@@ -231,7 +241,10 @@ class AsyncWebhookAdapter(WebhookAdapter):
                     raise NotFound(r, response)
                 else:
                     raise HTTPException(r, response)
+
         # no more retries
+        if r.status >= 500:
+            raise DiscordServerError(r, response)
         raise HTTPException(r, response)
 
     async def handle_execution_response(self, response, *, wait):
@@ -242,7 +255,6 @@ class AsyncWebhookAdapter(WebhookAdapter):
         # transform into Message object
         from .message import Message
         return Message(data=data, state=self.webhook._state, channel=self.webhook.channel)
-
 
 class RequestsWebhookAdapter(WebhookAdapter):
     """A webhook adapter suited for use with ``requests``.
@@ -281,6 +293,8 @@ class RequestsWebhookAdapter(WebhookAdapter):
         if multipart is not None:
             data = {'payload_json': multipart.pop('payload_json')}
 
+        base_url = url.replace(self._request_url, '/') or '/'
+        _id = self._webhook_id
         for tries in range(5):
             for file in files:
                 file.reset(seek=tries)
@@ -293,6 +307,7 @@ class RequestsWebhookAdapter(WebhookAdapter):
             # compatibility with aiohttp
             r.status = r.status_code
 
+            log.debug('Webhook ID %s with %s %s has returned status code %s', _id, verb, base_url, r.status)
             if r.headers['Content-Type'] == 'application/json':
                 response = json.loads(response)
 
@@ -300,6 +315,7 @@ class RequestsWebhookAdapter(WebhookAdapter):
             remaining = r.headers.get('X-Ratelimit-Remaining')
             if remaining == '0' and r.status != 429 and self.sleep:
                 delta = utils._parse_ratelimit_header(r)
+                log.debug('Webhook ID %s has been pre-emptively rate limited, waiting %.2f seconds', _id, delta)
                 time.sleep(delta)
 
             if 300 > r.status >= 200:
@@ -308,7 +324,12 @@ class RequestsWebhookAdapter(WebhookAdapter):
             # we are being rate limited
             if r.status == 429:
                 if self.sleep:
+                    if not r.headers.get('Via'):
+                        # Banned by Cloudflare more than likely.
+                        raise HTTPException(r, data)
+
                     retry_after = response['retry_after'] / 1000.0
+                    log.warning('Webhook ID %s is rate limited. Retrying in %.2f seconds', _id, retry_after)
                     time.sleep(retry_after)
                     continue
                 else:
@@ -324,7 +345,10 @@ class RequestsWebhookAdapter(WebhookAdapter):
                 raise NotFound(r, response)
             else:
                 raise HTTPException(r, response)
+
         # no more retries
+        if r.status >= 500:
+            raise DiscordServerError(r, response)
         raise HTTPException(r, response)
 
     def handle_execution_response(self, response, *, wait):
@@ -335,13 +359,11 @@ class RequestsWebhookAdapter(WebhookAdapter):
         from .message import Message
         return Message(data=response, state=self.webhook._state, channel=self.webhook.channel)
 
-
 class _FriendlyHttpAttributeErrorHelper:
     __slots__ = ()
 
     def __getattr__(self, attr):
         raise AttributeError('PartialWebhookState does not support http methods.')
-
 
 class _PartialWebhookState:
     __slots__ = ('loop',)
@@ -371,7 +393,6 @@ class _PartialWebhookState:
 
     def __getattr__(self, attr):
         raise AttributeError('PartialWebhookState does not support {0!r}.'.format(attr))
-
 
 class Webhook(Hashable):
     """Represents a Discord webhook.
@@ -415,22 +436,22 @@ class Webhook(Hashable):
         webhook.send('Hello World', username='Foo')
 
     .. container:: operations
-    
+
         .. describe:: x == y
-        
+
             Checks if two webhooks are equal.
-            
+
         .. describe:: x != y
-        
+
             Checks if two webhooks are not equal.
-            
+
         .. describe:: hash(x)
-        
+
             Returns the webhooks's hash.
-            
+
     .. versionchanged:: 1.4
         Webhooks are now comparable and hashable.
-    
+
     Attributes
     ------------
     id: :class:`int`
@@ -699,7 +720,7 @@ class Webhook(Hashable):
         avatar: Optional[:class:`bytes`]
             A :term:`py:bytes-like object` representing the webhook's new default avatar.
         reason: Optional[:class:`str`]
-            The reason for deleting this webhook. Shows up on the audit log.
+            The reason for editing this webhook. Shows up on the audit log.
 
             .. versionadded:: 1.4
 
@@ -740,7 +761,7 @@ class Webhook(Hashable):
         return self._adapter.edit_webhook(reason=reason, **payload)
 
     def send(self, content=None, *, wait=False, username=None, avatar_url=None, tts=False,
-             file=None, files=None, embed=None, embeds=None, allowed_mentions=None):
+                                    file=None, files=None, embed=None, embeds=None, allowed_mentions=None):
         """|maybecoro|
 
         Sends a message using the webhook.

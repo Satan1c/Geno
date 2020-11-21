@@ -29,7 +29,6 @@ import datetime
 from . import utils
 from .colour import Colour
 
-
 class _EmptyEmbed:
     def __bool__(self):
         return False
@@ -40,9 +39,7 @@ class _EmptyEmbed:
     def __len__(self):
         return 0
 
-
 EmptyEmbed = _EmptyEmbed()
-
 
 class EmbedProxy:
     def __init__(self, layer):
@@ -52,12 +49,10 @@ class EmbedProxy:
         return len(self.__dict__)
 
     def __repr__(self):
-        return 'EmbedProxy(%s)' % ', '.join(
-            ('%s=%r' % (k, v) for k, v in self.__dict__.items() if not k.startswith('_')))
+        return 'EmbedProxy(%s)' % ', '.join(('%s=%r' % (k, v) for k, v in self.__dict__.items() if not k.startswith('_')))
 
     def __getattr__(self, attr):
         return EmptyEmbed
-
 
 class Embed:
     """Represents a Discord embed.
@@ -212,8 +207,7 @@ class Embed:
         elif isinstance(value, int):
             self._colour = Colour(value=value)
         else:
-            raise TypeError(
-                'Expected discord.Colour, int, or Embed.Empty but received %s instead.' % value.__class__.__name__)
+            raise TypeError('Expected discord.Colour, int, or Embed.Empty but received %s instead.' % value.__class__.__name__)
 
     color = colour
 
@@ -292,7 +286,10 @@ class Embed:
         """
 
         if url is EmptyEmbed:
-            del self._image
+            try:
+                del self._image
+            except AttributeError:
+                pass
         else:
             self._image = {
                 'url': str(url)
@@ -331,7 +328,10 @@ class Embed:
         """
 
         if url is EmptyEmbed:
-            del self._thumbnail
+            try:
+                del self._thumbnail
+            except AttributeError:
+                pass
         else:
             self._thumbnail = {
                 'url': str(url)

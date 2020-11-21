@@ -24,7 +24,6 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
 
-
 class _FakeBool:
     def __repr__(self):
         return 'True'
@@ -35,14 +34,12 @@ class _FakeBool:
     def __bool__(self):
         return True
 
-
 default = _FakeBool()
-
 
 class AllowedMentions:
     """A class that represents what mentions are allowed in a message.
 
-    This class can be set during :class:`Client` initialization to apply
+    This class can be set during :class:`Client` initialisation to apply
     to every message sent. It can also be applied on a per message basis
     via :meth:`abc.Messageable.send` for more fine-grained control.
 
@@ -70,6 +67,22 @@ class AllowedMentions:
         self.everyone = everyone
         self.users = users
         self.roles = roles
+
+    @classmethod
+    def all(cls):
+        """A factory method that returns a :class:`AllowedMentions` with all fields explicitly set to ``True``
+
+        .. versionadded:: 1.5
+        """
+        return cls(everyone=True, users=True, roles=True)
+
+    @classmethod
+    def none(cls):
+        """A factory method that returns a :class:`AllowedMentions` with all fields set to ``False``
+
+        .. versionadded:: 1.5
+        """
+        return cls(everyone=False, users=False, roles=False)
 
     def to_dict(self):
         parse = []

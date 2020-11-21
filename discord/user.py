@@ -27,13 +27,12 @@ DEALINGS IN THE SOFTWARE.
 from collections import namedtuple
 
 import discord.abc
-from .asset import Asset
-from .colour import Colour
-from .enums import DefaultAvatar, RelationshipType, UserFlags, HypeSquadHouse, PremiumType, try_enum
-from .errors import ClientException
 from .flags import PublicUserFlags
 from .utils import snowflake_time, _bytes_to_base64_data, parse_time
-
+from .enums import DefaultAvatar, RelationshipType, UserFlags, HypeSquadHouse, PremiumType, try_enum
+from .errors import ClientException
+from .colour import Colour
+from .asset import Asset
 
 class Profile(namedtuple('Profile', 'flags user mutual_guilds connected_accounts premium_since')):
     __slots__ = ()
@@ -81,9 +80,7 @@ class Profile(namedtuple('Profile', 'flags user mutual_guilds connected_accounts
     def system(self):
         return self._has_flag(UserFlags.system)
 
-
 _BaseUser = discord.abc.User
-
 
 class BaseUser(_BaseUser):
     __slots__ = ('name', 'id', 'discriminator', 'avatar', 'bot', 'system', '_public_flags', '_state')
@@ -115,7 +112,7 @@ class BaseUser(_BaseUser):
 
     @classmethod
     def _copy(cls, user):
-        self = cls.__new__(cls)  # bypass __init__
+        self = cls.__new__(cls) # bypass __init__
 
         self.name = user.name
         self.id = user.id
@@ -153,7 +150,7 @@ class BaseUser(_BaseUser):
         return self.avatar_url_as(format=None, size=1024)
 
     def is_avatar_animated(self):
-        """Indicates if the user has an animated avatar."""
+        """:class:`bool`: Indicates if the user has an animated avatar."""
         return bool(self.avatar and self.avatar.startswith('a_'))
 
     def avatar_url_as(self, *, format=None, static_format='webp', size=1024):
@@ -265,6 +262,11 @@ class BaseUser(_BaseUser):
         -----------
         message: :class:`Message`
             The message to check if you're mentioned in.
+
+        Returns
+        -------
+        :class:`bool`
+            Indicates if the user is mentioned in the message.
         """
 
         if message.mention_everyone:
@@ -275,7 +277,6 @@ class BaseUser(_BaseUser):
                 return True
 
         return False
-
 
 class ClientUser(BaseUser):
     """Represents your Discord user.
@@ -624,7 +625,7 @@ class ClientUser(BaseUser):
         friend_flags = kwargs.pop('friend_source_flags', None)
         if friend_flags:
             dicts = [{}, {'mutual_guilds': True}, {'mutual_friends': True},
-                     {'mutual_guilds': True, 'mutual_friends': True}, {'all': True}]
+            {'mutual_guilds': True, 'mutual_friends': True}, {'all': True}]
             payload.update({'friend_source_flags': dicts[friend_flags.value]})
 
         guild_positions = kwargs.pop('guild_positions', None)
@@ -649,7 +650,6 @@ class ClientUser(BaseUser):
 
         data = await self._state.http.edit_settings(**payload)
         return data
-
 
 class User(BaseUser, discord.abc.Messageable):
     """Represents a Discord user.
@@ -711,6 +711,11 @@ class User(BaseUser, discord.abc.Messageable):
 
         This should be rarely called, as this is done transparently for most
         people.
+
+        Returns
+        -------
+        :class:`.DMChannel`
+            The channel that was created.
         """
         found = self.dm_channel
         if found is not None:
@@ -756,7 +761,7 @@ class User(BaseUser, discord.abc.Messageable):
         return [User(state=state, data=friend) for friend in mutuals]
 
     def is_friend(self):
-        """Checks if the user is your friend.
+        """:class:`bool`: Checks if the user is your friend.
 
         .. note::
 
@@ -768,7 +773,7 @@ class User(BaseUser, discord.abc.Messageable):
         return r.type is RelationshipType.friend
 
     def is_blocked(self):
-        """Checks if the user is blocked.
+        """:class:`bool`: Checks if the user is blocked.
 
         .. note::
 

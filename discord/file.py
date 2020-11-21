@@ -24,9 +24,8 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
 
-import io
 import os.path
-
+import io
 
 class File:
     """A parameter object used for :meth:`abc.Messageable.send`

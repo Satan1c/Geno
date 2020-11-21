@@ -25,35 +25,28 @@ DEALINGS IN THE SOFTWARE.
 """
 
 from . import utils, enums
-from .colour import Colour
-from .invite import Invite
 from .object import Object
 from .permissions import PermissionOverwrite, Permissions
-
+from .colour import Colour
+from .invite import Invite
 
 def _transform_verification_level(entry, data):
     return enums.try_enum(enums.VerificationLevel, data)
 
-
 def _transform_default_notifications(entry, data):
     return enums.try_enum(enums.NotificationLevel, data)
-
 
 def _transform_explicit_content_filter(entry, data):
     return enums.try_enum(enums.ContentFilter, data)
 
-
 def _transform_permissions(entry, data):
     return Permissions(data)
-
 
 def _transform_color(entry, data):
     return Colour(data)
 
-
 def _transform_snowflake(entry, data):
     return int(data)
-
 
 def _transform_channel(entry, data):
     if data is None:
@@ -61,18 +54,15 @@ def _transform_channel(entry, data):
     channel = entry.guild.get_channel(int(data)) or Object(id=data)
     return channel
 
-
 def _transform_owner_id(entry, data):
     if data is None:
         return None
     return entry._get_member(int(data))
 
-
 def _transform_inviter_id(entry, data):
     if data is None:
         return None
     return entry._get_member(int(data))
-
 
 def _transform_overwrites(entry, data):
     overwrites = []
@@ -95,7 +85,6 @@ def _transform_overwrites(entry, data):
 
     return overwrites
 
-
 class AuditLogDiff:
     def __len__(self):
         return len(self.__dict__)
@@ -107,27 +96,26 @@ class AuditLogDiff:
         values = ' '.join('%s=%r' % item for item in self.__dict__.items())
         return '<AuditLogDiff %s>' % values
 
-
 class AuditLogChanges:
     TRANSFORMERS = {
-        'verification_level': (None, _transform_verification_level),
-        'explicit_content_filter': (None, _transform_explicit_content_filter),
-        'allow': (None, _transform_permissions),
-        'deny': (None, _transform_permissions),
-        'permissions': (None, _transform_permissions),
-        'id': (None, _transform_snowflake),
-        'color': ('colour', _transform_color),
-        'owner_id': ('owner', _transform_owner_id),
-        'inviter_id': ('inviter', _transform_inviter_id),
-        'channel_id': ('channel', _transform_channel),
-        'afk_channel_id': ('afk_channel', _transform_channel),
-        'system_channel_id': ('system_channel', _transform_channel),
-        'widget_channel_id': ('widget_channel', _transform_channel),
-        'permission_overwrites': ('overwrites', _transform_overwrites),
-        'splash_hash': ('splash', None),
-        'icon_hash': ('icon', None),
-        'avatar_hash': ('avatar', None),
-        'rate_limit_per_user': ('slowmode_delay', None),
+        'verification_level':            (None, _transform_verification_level),
+        'explicit_content_filter':       (None, _transform_explicit_content_filter),
+        'allow':                         (None, _transform_permissions),
+        'deny':                          (None, _transform_permissions),
+        'permissions':                   (None, _transform_permissions),
+        'id':                            (None, _transform_snowflake),
+        'color':                         ('colour', _transform_color),
+        'owner_id':                      ('owner', _transform_owner_id),
+        'inviter_id':                    ('inviter', _transform_inviter_id),
+        'channel_id':                    ('channel', _transform_channel),
+        'afk_channel_id':                ('afk_channel', _transform_channel),
+        'system_channel_id':             ('system_channel', _transform_channel),
+        'widget_channel_id':             ('widget_channel', _transform_channel),
+        'permission_overwrites':         ('overwrites', _transform_overwrites),
+        'splash_hash':                   ('splash', None),
+        'icon_hash':                     ('icon', None),
+        'avatar_hash':                   ('avatar', None),
+        'rate_limit_per_user':           ('slowmode_delay', None),
         'default_message_notifications': ('default_notifications', _transform_default_notifications),
     }
 
@@ -198,7 +186,6 @@ class AuditLogChanges:
             data.append(role)
 
         setattr(second, 'roles', data)
-
 
 class AuditLogEntry:
     r"""Represents an Audit Log entry.

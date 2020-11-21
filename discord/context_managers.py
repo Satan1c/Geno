@@ -26,14 +26,12 @@ DEALINGS IN THE SOFTWARE.
 
 import asyncio
 
-
 def _typing_done_callback(fut):
     # just retrieve any exception and call it a day
     try:
         fut.exception()
     except (asyncio.CancelledError, Exception):
         pass
-
 
 class Typing:
     def __init__(self, messageable):

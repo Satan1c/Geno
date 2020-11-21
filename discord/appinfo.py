@@ -25,9 +25,9 @@ DEALINGS IN THE SOFTWARE.
 """
 
 from . import utils
+from .user import User
 from .asset import Asset
 from .team import Team
-from .user import User
 
 
 class AppInfo:
@@ -97,7 +97,7 @@ class AppInfo:
     __slots__ = ('_state', 'description', 'id', 'name', 'rpc_origins',
                  'bot_public', 'bot_require_code_grant', 'owner', 'icon',
                  'summary', 'verify_key', 'team', 'guild_id', 'primary_sku_id',
-                 'slug', 'cover_image')
+                  'slug', 'cover_image')
 
     def __init__(self, state, data):
         self._state = state

@@ -26,7 +26,6 @@ DEALINGS IN THE SOFTWARE.
 
 from .iterators import ReactionIterator
 
-
 class Reaction:
     """Represents a reaction to a message.
 

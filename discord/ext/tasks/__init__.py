@@ -26,43 +26,36 @@ DEALINGS IN THE SOFTWARE.
 
 import asyncio
 import datetime
+import aiohttp
+import discord
 import inspect
 import logging
 import sys
 import traceback
 
-import aiohttp
-import websockets
-
-import discord
 from discord.backoff import ExponentialBackoff
 
 log = logging.getLogger(__name__)
-
 
 class Loop:
     """A background task helper that abstracts the loop and reconnection logic for you.
 
     The main interface to create this is through :func:`loop`.
     """
-
     def __init__(self, coro, seconds, hours, minutes, count, reconnect, loop):
         self.coro = coro
         self.reconnect = reconnect
-        self.loop = loop or asyncio.get_event_loop()
+        self.loop = loop
         self.count = count
         self._current_loop = 0
         self._task = None
         self._injected = None
         self._valid_exception = (
             OSError,
-            discord.HTTPException,
             discord.GatewayNotFound,
             discord.ConnectionClosed,
             aiohttp.ClientError,
             asyncio.TimeoutError,
-            websockets.InvalidHandshake,
-            websockets.WebSocketProtocolError,
         )
 
         self._before_loop = None
@@ -75,6 +68,7 @@ class Loop:
             raise ValueError('count must be greater than 0 or None.')
 
         self.change_interval(seconds=seconds, minutes=minutes, hours=hours)
+        self._last_iteration_failed = False
         self._last_iteration = None
         self._next_iteration = None
 
@@ -95,18 +89,22 @@ class Loop:
         backoff = ExponentialBackoff()
         await self._call_loop_function('before_loop')
         sleep_until = discord.utils.sleep_until
+        self._last_iteration_failed = False
         self._next_iteration = datetime.datetime.now(datetime.timezone.utc)
         try:
-            await asyncio.sleep(0)  # allows canceling in before_loop
+            await asyncio.sleep(0) # allows canceling in before_loop
             while True:
-                self._last_iteration = self._next_iteration
-                self._next_iteration = self._get_next_sleep_time()
+                if not self._last_iteration_failed:
+                    self._last_iteration = self._next_iteration
+                    self._next_iteration = self._get_next_sleep_time()
                 try:
                     await self.coro(*args, **kwargs)
+                    self._last_iteration_failed = False
                     now = datetime.datetime.now(datetime.timezone.utc)
                     if now > self._next_iteration:
                         self._next_iteration = now
                 except self._valid_exception as exc:
+                    self._last_iteration_failed = True
                     if not self.reconnect:
                         raise
                     await asyncio.sleep(backoff.delay())
@@ -137,7 +135,7 @@ class Loop:
             return self
 
         copy = Loop(self.coro, seconds=self.seconds, hours=self.hours, minutes=self.minutes,
-                    count=self.count, reconnect=self.reconnect, loop=self.loop)
+                               count=self.count, reconnect=self.reconnect, loop=self.loop)
         copy._injected = obj
         copy._before_loop = self._before_loop
         copy._after_loop = self._after_loop
@@ -188,6 +186,9 @@ class Loop:
 
         if self._injected is not None:
             args = (self._injected, *args)
+
+        if self.loop is None:
+            self.loop = asyncio.get_event_loop()
 
         self._task = self.loop.create_task(self._loop(*args, **kwargs))
         return self._task
@@ -443,7 +444,6 @@ class Loop:
         self.hours = hours
         self.minutes = minutes
 
-
 def loop(*, seconds=0, minutes=0, hours=0, count=None, reconnect=True, loop=None):
     """A decorator that schedules a task in the background for you with
     optional reconnect logic. The decorator returns a :class:`Loop`.
@@ -474,7 +474,6 @@ def loop(*, seconds=0, minutes=0, hours=0, count=None, reconnect=True, loop=None
     TypeError
         The function was not a coroutine.
     """
-
     def decorator(func):
         kwargs = {
             'seconds': seconds,
@@ -485,5 +484,4 @@ def loop(*, seconds=0, minutes=0, hours=0, count=None, reconnect=True, loop=None
             'loop': loop
         }
         return Loop(func, **kwargs)
-
     return decorator

@@ -28,11 +28,9 @@ import struct
 
 from .errors import DiscordException
 
-
 class OggError(DiscordException):
     """An exception that is thrown for Ogg stream parsing errors."""
     pass
-
 
 # https://tools.ietf.org/html/rfc3533
 # https://tools.ietf.org/html/rfc7845
@@ -48,7 +46,7 @@ class OggPage:
             self.pagenum, self.crc, self.segnum = self._header.unpack(header)
 
             self.segtable = stream.read(self.segnum)
-            bodylen = sum(struct.unpack('B' * self.segnum, self.segtable))
+            bodylen = sum(struct.unpack('B'*self.segnum, self.segtable))
             self.data = stream.read(bodylen)
         except Exception:
             raise OggError('bad data stream') from None
@@ -63,14 +61,13 @@ class OggPage:
                 partial = True
             else:
                 packetlen += seg
-                yield self.data[offset:offset + packetlen], True
+                yield self.data[offset:offset+packetlen], True
                 offset += packetlen
                 packetlen = 0
                 partial = False
 
         if partial:
             yield self.data[offset:], False
-
 
 class OggStream:
     def __init__(self, stream):

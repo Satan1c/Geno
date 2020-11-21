@@ -24,9 +24,8 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
 
-import random
 import time
-
+import random
 
 class ExponentialBackoff:
     """An implementation of the exponential backoff algorithm

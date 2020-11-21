@@ -25,14 +25,12 @@ DEALINGS IN THE SOFTWARE.
 """
 
 import io
-
-from . import utils
 from .errors import DiscordException
 from .errors import InvalidArgument
+from . import utils
 
 VALID_STATIC_FORMATS = frozenset({"jpeg", "jpg", "webp", "png"})
 VALID_AVATAR_FORMATS = VALID_STATIC_FORMATS | {"gif"}
-
 
 class Asset:
     """Represents a CDN asset on Discord.
@@ -137,6 +135,7 @@ class Asset:
             format = 'gif' if guild.is_icon_animated() else static_format
 
         return cls(state, '/icons/{0.id}/{0.icon}.{1}?size={2}'.format(guild, format, size))
+
 
     def __str__(self):
         return self.BASE + self._url if self._url is not None else ''

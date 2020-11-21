@@ -28,16 +28,16 @@ import asyncio
 import json
 import logging
 import sys
-import weakref
 from urllib.parse import quote as _uriquote
+import weakref
 
 import aiohttp
 
+from .errors import HTTPException, Forbidden, NotFound, LoginFailure, DiscordServerError, GatewayNotFound
+from .gateway import DiscordClientWebSocketResponse
 from . import __version__, utils
-from .errors import HTTPException, Forbidden, NotFound, LoginFailure, GatewayNotFound
 
 log = logging.getLogger(__name__)
-
 
 async def json_or_text(response):
     text = await response.text(encoding='utf-8')
@@ -49,7 +49,6 @@ async def json_or_text(response):
         pass
 
     return text
-
 
 class Route:
     BASE = 'https://discord.com/api/v7'
@@ -72,7 +71,6 @@ class Route:
         # the bucket is just method + path w/ major parameters
         return '{0.channel_id}:{0.guild_id}:{0.path}'.format(self)
 
-
 class MaybeUnlock:
     def __init__(self, lock):
         self.lock = lock
@@ -88,6 +86,9 @@ class MaybeUnlock:
         if self._unlock:
             self.lock.release()
 
+# For some reason, the Discord voice websocket expects this header to be
+# completely lowercase while aiohttp respects spec and does it as case-insensitive
+aiohttp.hdrs.WEBSOCKET = 'websocket'
 
 class HTTPClient:
     """Represents an HTTP client sending HTTP requests to the Discord API."""
@@ -98,7 +99,7 @@ class HTTPClient:
     def __init__(self, connector=None, *, proxy=None, proxy_auth=None, loop=None, unsync_clock=True):
         self.loop = asyncio.get_event_loop() if loop is None else loop
         self.connector = connector
-        self.__session = None  # filled in static_login
+        self.__session = None # filled in static_login
         self._locks = weakref.WeakValueDictionary()
         self._global_over = asyncio.Event()
         self._global_over.set()
@@ -113,7 +114,22 @@ class HTTPClient:
 
     def recreate(self):
         if self.__session.closed:
-            self.__session = aiohttp.ClientSession(connector=self.connector)
+            self.__session = aiohttp.ClientSession(connector=self.connector, ws_response_class=DiscordClientWebSocketResponse)
+
+    async def ws_connect(self, url, *, compress=0):
+        kwargs = {
+            'proxy_auth': self.proxy_auth,
+            'proxy': self.proxy,
+            'max_msg_size': 0,
+            'timeout': 30.0,
+            'autoclose': False,
+            'headers': {
+                'User-Agent': self.user_agent,
+            },
+            'compress': compress
+        }
+
+        return await self.__session.ws_connect(url, **kwargs)
 
     async def request(self, route, *, files=None, **kwargs):
         bucket = route.bucket
@@ -165,70 +181,80 @@ class HTTPClient:
                 if files:
                     for f in files:
                         f.reset(seek=tries)
+                try:
+                    async with self.__session.request(method, url, **kwargs) as r:
+                        log.debug('%s %s with %s has returned %s', method, url, kwargs.get('data'), r.status)
 
-                async with self.__session.request(method, url, **kwargs) as r:
-                    log.debug('%s %s with %s has returned %s', method, url, kwargs.get('data'), r.status)
+                        # even errors have text involved in them so this is safe to call
+                        data = await json_or_text(r)
 
-                    # even errors have text involved in them so this is safe to call
-                    data = await json_or_text(r)
+                        # check if we have rate limit header information
+                        remaining = r.headers.get('X-Ratelimit-Remaining')
+                        if remaining == '0' and r.status != 429:
+                            # we've depleted our current bucket
+                            delta = utils._parse_ratelimit_header(r, use_clock=self.use_clock)
+                            log.debug('A rate limit bucket has been exhausted (bucket: %s, retry: %s).', bucket, delta)
+                            maybe_lock.defer()
+                            self.loop.call_later(delta, lock.release)
 
-                    # check if we have rate limit header information
-                    remaining = r.headers.get('X-Ratelimit-Remaining')
-                    if remaining == '0' and r.status != 429:
-                        # we've depleted our current bucket
-                        delta = utils._parse_ratelimit_header(r, use_clock=self.use_clock)
-                        log.debug('A rate limit bucket has been exhausted (bucket: %s, retry: %s).', bucket, delta)
-                        maybe_lock.defer()
-                        self.loop.call_later(delta, lock.release)
+                        # the request was successful so just return the text/json
+                        if 300 > r.status >= 200:
+                            log.debug('%s %s has received %s', method, url, data)
+                            return data
 
-                    # the request was successful so just return the text/json
-                    if 300 > r.status >= 200:
-                        log.debug('%s %s has received %s', method, url, data)
-                        return data
+                        # we are being rate limited
+                        if r.status == 429:
+                            if not r.headers.get('Via'):
+                                # Banned by Cloudflare more than likely.
+                                raise HTTPException(r, data)
 
-                    # we are being rate limited
-                    if r.status == 429:
-                        if not r.headers.get('Via'):
-                            # Banned by Cloudflare more than likely.
+                            fmt = 'We are being rate limited. Retrying in %.2f seconds. Handled under the bucket "%s"'
+
+                            # sleep a bit
+                            retry_after = data['retry_after'] / 1000.0
+                            log.warning(fmt, retry_after, bucket)
+
+                            # check if it's a global rate limit
+                            is_global = data.get('global', False)
+                            if is_global:
+                                log.warning('Global rate limit has been hit. Retrying in %.2f seconds.', retry_after)
+                                self._global_over.clear()
+
+                            await asyncio.sleep(retry_after)
+                            log.debug('Done sleeping for the rate limit. Retrying...')
+
+                            # release the global lock now that the
+                            # global rate limit has passed
+                            if is_global:
+                                self._global_over.set()
+                                log.debug('Global rate limit is now over.')
+
+                            continue
+
+                        # we've received a 500 or 502, unconditional retry
+                        if r.status in {500, 502}:
+                            await asyncio.sleep(1 + tries * 2)
+                            continue
+
+                        # the usual error cases
+                        if r.status == 403:
+                            raise Forbidden(r, data)
+                        elif r.status == 404:
+                            raise NotFound(r, data)
+                        else:
                             raise HTTPException(r, data)
 
-                        fmt = 'We are being rate limited. Retrying in %.2f seconds. Handled under the bucket "%s"'
-
-                        # sleep a bit
-                        retry_after = data['retry_after'] / 1000.0
-                        log.warning(fmt, retry_after, bucket)
-
-                        # check if it's a global rate limit
-                        is_global = data.get('global', False)
-                        if is_global:
-                            log.warning('Global rate limit has been hit. Retrying in %.2f seconds.', retry_after)
-                            self._global_over.clear()
-
-                        await asyncio.sleep(retry_after)
-                        log.debug('Done sleeping for the rate limit. Retrying...')
-
-                        # release the global lock now that the
-                        # global rate limit has passed
-                        if is_global:
-                            self._global_over.set()
-                            log.debug('Global rate limit is now over.')
-
+                # This is handling exceptions from the request
+                except OSError as e:
+                    # Connection reset by peer
+                    if tries < 4 and e.errno in (54, 10054):
                         continue
-
-                    # we've received a 500 or 502, unconditional retry
-                    if r.status in {500, 502}:
-                        await asyncio.sleep(1 + tries * 2)
-                        continue
-
-                    # the usual error cases
-                    if r.status == 403:
-                        raise Forbidden(r, data)
-                    elif r.status == 404:
-                        raise NotFound(r, data)
-                    else:
-                        raise HTTPException(r, data)
+                    raise
 
             # We've run out of retries, raise.
+            if r.status >= 500:
+                raise DiscordServerError(r, data)
+
             raise HTTPException(r, data)
 
     async def get_from_cdn(self, url):
@@ -257,7 +283,7 @@ class HTTPClient:
 
     async def static_login(self, token, *, bot):
         # Necessary to get aiohttp to stop complaining about session creation
-        self.__session = aiohttp.ClientSession(connector=self.connector)
+        self.__session = aiohttp.ClientSession(connector=self.connector, ws_response_class=DiscordClientWebSocketResponse)
         old_token, old_bot = self.token, self.bot_token
         self._token(token, bot=bot)
 
@@ -358,14 +384,12 @@ class HTTPClient:
             form.add_field('file', file.fp, filename=file.filename, content_type='application/octet-stream')
         else:
             for index, file in enumerate(files):
-                form.add_field('file%s' % index, file.fp, filename=file.filename,
-                               content_type='application/octet-stream')
+                form.add_field('file%s' % index, file.fp, filename=file.filename, content_type='application/octet-stream')
 
         return self.request(r, data=form, files=files)
 
     async def ack_message(self, channel_id, message_id):
-        r = Route('POST', '/channels/{channel_id}/messages/{message_id}/ack', channel_id=channel_id,
-                  message_id=message_id)
+        r = Route('POST', '/channels/{channel_id}/messages/{message_id}/ack', channel_id=channel_id, message_id=message_id)
         data = await self.request(r, json={'token': self._ack_token})
         self._ack_token = data['token']
 
@@ -373,8 +397,7 @@ class HTTPClient:
         return self.request(Route('POST', '/guilds/{guild_id}/ack', guild_id=guild_id))
 
     def delete_message(self, channel_id, message_id, *, reason=None):
-        r = Route('DELETE', '/channels/{channel_id}/messages/{message_id}', channel_id=channel_id,
-                  message_id=message_id)
+        r = Route('DELETE', '/channels/{channel_id}/messages/{message_id}', channel_id=channel_id, message_id=message_id)
         return self.request(r, reason=reason)
 
     def delete_messages(self, channel_id, message_ids, *, reason=None):
@@ -421,7 +444,7 @@ class HTTPClient:
 
     def clear_single_reaction(self, channel_id, message_id, emoji):
         r = Route('DELETE', '/channels/{channel_id}/messages/{message_id}/reactions/{emoji}',
-                  channel_id=channel_id, message_id=message_id, emoji=emoji)
+                   channel_id=channel_id, message_id=message_id, emoji=emoji)
         return self.request(r)
 
     def get_message(self, channel_id, message_id):
@@ -474,7 +497,7 @@ class HTTPClient:
     def ban(self, user_id, guild_id, delete_message_days=1, reason=None):
         r = Route('PUT', '/guilds/{guild_id}/bans/{user_id}', guild_id=guild_id, user_id=user_id)
         params = {
-            'delete-message-days': delete_message_days,
+            'delete_message_days': delete_message_days,
         }
 
         if reason:
@@ -559,8 +582,7 @@ class HTTPClient:
             k: v for k, v in options.items() if k in valid_keys and v is not None
         })
 
-        return self.request(Route('POST', '/guilds/{guild_id}/channels', guild_id=guild_id), json=payload,
-                            reason=reason)
+        return self.request(Route('POST', '/guilds/{guild_id}/channels', guild_id=guild_id), json=payload, reason=reason)
 
     def delete_channel(self, channel_id, *, reason=None):
         return self.request(Route('DELETE', '/channels/{channel_id}', channel_id=channel_id), reason=reason)
@@ -590,8 +612,7 @@ class HTTPClient:
         payload = {
             'webhook_channel_id': str(webhook_channel_id)
         }
-        return self.request(Route('POST', '/channels/{channel_id}/followers', channel_id=channel_id), json=payload,
-                            reason=reason)
+        return self.request(Route('POST', '/channels/{channel_id}/followers', channel_id=channel_id), json=payload, reason=reason)
 
     # Guild management
 
@@ -661,8 +682,7 @@ class HTTPClient:
 
     def change_vanity_code(self, guild_id, code, *, reason=None):
         payload = {'code': code}
-        return self.request(Route('PATCH', '/guilds/{guild_id}/vanity-url', guild_id=guild_id), json=payload,
-                            reason=reason)
+        return self.request(Route('PATCH', '/guilds/{guild_id}/vanity-url', guild_id=guild_id), json=payload, reason=reason)
 
     def get_all_guild_channels(self, guild_id):
         return self.request(Route('GET', '/guilds/{guild_id}/channels', guild_id=guild_id))
@@ -678,8 +698,7 @@ class HTTPClient:
         return self.request(r, params=params)
 
     def get_member(self, guild_id, member_id):
-        return self.request(
-            Route('GET', '/guilds/{guild_id}/members/{member_id}', guild_id=guild_id, member_id=member_id))
+        return self.request(Route('GET', '/guilds/{guild_id}/members/{member_id}', guild_id=guild_id, member_id=member_id))
 
     def prune_members(self, guild_id, days, compute_prune_count, roles, *, reason=None):
         payload = {
@@ -791,7 +810,7 @@ class HTTPClient:
         params = {
             'with_counts': int(with_counts)
         }
-        return self.request(Route('GET', '/invite/{invite_id}', invite_id=invite_id), params=params)
+        return self.request(Route('GET', '/invites/{invite_id}', invite_id=invite_id), params=params)
 
     def invites_from(self, guild_id):
         return self.request(Route('GET', '/guilds/{guild_id}/invites', guild_id=guild_id))
@@ -800,7 +819,7 @@ class HTTPClient:
         return self.request(Route('GET', '/channels/{channel_id}/invites', channel_id=channel_id))
 
     def delete_invite(self, invite_id, *, reason=None):
-        return self.request(Route('DELETE', '/invite/{invite_id}', invite_id=invite_id), reason=reason)
+        return self.request(Route('DELETE', '/invites/{invite_id}', invite_id=invite_id), reason=reason)
 
     # Role management
 

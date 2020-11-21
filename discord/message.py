@@ -26,22 +26,23 @@ DEALINGS IN THE SOFTWARE.
 
 import asyncio
 import datetime
-import io
 import re
+import io
 
 from . import utils
-from .calls import CallMessage
-from .embeds import Embed
+from .reaction import Reaction
 from .emoji import Emoji
+from .partial_emoji import PartialEmoji
+from .calls import CallMessage
 from .enums import MessageType, try_enum
 from .errors import InvalidArgument, ClientException, HTTPException
-from .file import File
-from .flags import MessageFlags
-from .guild import Guild
+from .embeds import Embed
 from .member import Member
-from .partial_emoji import PartialEmoji
-from .reaction import Reaction
+from .flags import MessageFlags
+from .file import File
 from .utils import escape_mentions
+from .guild import Guild
+from .mixins import Hashable
 
 
 class Attachment:
@@ -208,6 +209,36 @@ class Attachment:
         data = await self.read(use_cached=use_cached)
         return File(io.BytesIO(data), filename=self.filename, spoiler=spoiler)
 
+class MessageReference:
+    """Represents a reference to a :class:`Message`.
+
+    .. versionadded:: 1.5
+
+    Attributes
+    -----------
+    message_id: Optional[:class:`int`]
+        The id of the message referenced.
+    channel_id: :class:`int`
+        The channel id of the message referenced.
+    guild_id: Optional[:class:`int`]
+        The guild id of the message referenced.
+    """
+
+    __slots__ = ('message_id', 'channel_id', 'guild_id', '_state')
+
+    def __init__(self, state, **kwargs):
+        self.message_id = utils._get_as_snowflake(kwargs, 'message_id')
+        self.channel_id = int(kwargs.pop('channel_id'))
+        self.guild_id = utils._get_as_snowflake(kwargs, 'guild_id')
+        self._state = state
+
+    @property
+    def cached_message(self):
+        """Optional[:class:`Message`]: The cached message, if found in the internal message cache."""
+        return self._state._get_message(self.message_id)
+
+    def __repr__(self):
+        return '<MessageReference message_id={0.message_id!r} channel_id={0.channel_id!r} guild_id={0.guild_id!r}>'.format(self)
 
 def flatten_handlers(cls):
     prefix = len('_handle_')
@@ -221,9 +252,8 @@ def flatten_handlers(cls):
     ]
     return cls
 
-
 @flatten_handlers
-class Message:
+class Message(Hashable):
     r"""Represents a message from Discord.
 
     There should be no need to create one of these manually.
@@ -253,6 +283,13 @@ class Message:
     call: Optional[:class:`CallMessage`]
         The call that the message refers to. This is only applicable to messages of type
         :attr:`MessageType.call`.
+    reference: Optional[:class:`MessageReference`]
+        The message that this message references. This is only applicable to messages of
+        type :attr:`MessageType.pins_add` or crossposted messages created by a
+        followed channel integration.
+
+        .. versionadded:: 1.5
+
     mention_everyone: :class:`bool`
         Specifies if the message mentions everyone.
 
@@ -318,7 +355,7 @@ class Message:
                  '_cs_channel_mentions', '_cs_raw_mentions', 'attachments',
                  '_cs_clean_content', '_cs_raw_channel_mentions', 'nonce', 'pinned',
                  'role_mentions', '_cs_raw_role_mentions', 'type', 'call', 'flags',
-                 '_cs_system_content', '_cs_guild', '_state', 'reactions',
+                 '_cs_system_content', '_cs_guild', '_state', 'reactions', 'reference', 
                  'application', 'activity')
 
     def __init__(self, *, state, channel, data):
@@ -340,6 +377,9 @@ class Message:
         self.content = data['content']
         self.nonce = data.get('nonce')
 
+        ref = data.get('message_reference')
+        self.reference = MessageReference(state, **ref) if ref is not None else None
+
         for handler in ('author', 'member', 'mentions', 'mention_roles', 'call', 'flags'):
             try:
                 getattr(self, '_handle_%s' % handler)(data[handler])
@@ -347,8 +387,7 @@ class Message:
                 continue
 
     def __repr__(self):
-        return '<Message id={0.id} channel={0.channel!r} type={0.type!r} author={0.author!r} flags={0.flags!r}>'.format(
-            self)
+        return '<Message id={0.id} channel={0.channel!r} type={0.type!r} author={0.author!r} flags={0.flags!r}>'.format(self)
 
     def _try_patch(self, data, key, transform=None):
         try:
@@ -476,8 +515,7 @@ class Message:
         author = self.author
         try:
             # Update member reference
-            if author.joined_at is None:
-                author.joined_at = utils.parse_time(member.get('joined_at'))
+            author._update_from_message(member)
         except AttributeError:
             # It's a user here
             # TODO: consider adding to cache here
@@ -527,6 +565,14 @@ class Message:
         call['participants'] = participants
         self.call = CallMessage(message=self, **call)
 
+    def _rebind_channel_reference(self, new_channel):
+        self.channel = new_channel
+
+        try:
+            del self._cs_guild
+        except AttributeError:
+            pass
+
     @utils.cached_slot_property('_cs_guild')
     def guild(self):
         """Optional[:class:`Guild`]: The guild that the message belongs to, if applicable."""
@@ -565,7 +611,7 @@ class Message:
 
     @utils.cached_slot_property('_cs_clean_content')
     def clean_content(self):
-        """A property that returns the content in a "cleaned up"
+        """:class:`str`: A property that returns the content in a "cleaned up"
         manner. This basically means that mentions are transformed
         into the way the client shows it. e.g. ``<#id>`` will transform
         into ``#name``.
@@ -816,9 +862,9 @@ class Message:
         except KeyError:
             pass
         else:
-            flags = MessageFlags._from_value(self.flags.value)
-            flags.suppress_embeds = suppress
-            fields['flags'] = flags.value
+             flags = MessageFlags._from_value(self.flags.value)
+             flags.suppress_embeds = suppress
+             fields['flags'] = flags.value
 
         delete_after = fields.pop('delete_after', None)
 
@@ -899,7 +945,7 @@ class Message:
         Parameters
         -----------
         reason: Optional[:class:`str`]
-            The reason for pinning the message. Shows up on the audit log.
+            The reason for unpinning the message. Shows up on the audit log.
 
             .. versionadded:: 1.4
 

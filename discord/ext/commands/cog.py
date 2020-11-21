@@ -25,14 +25,13 @@ DEALINGS IN THE SOFTWARE.
 """
 
 import inspect
-
+import copy
 from ._types import _BaseCommand
 
 __all__ = (
     'CogMeta',
     'Cog',
 )
-
 
 class CogMeta(type):
     """A metaclass for defining a cog.
@@ -125,7 +124,7 @@ class CogMeta(type):
                             raise TypeError(no_bot_cog.format(base, elem))
                         listeners[elem] = value
 
-        new_cls.__cog_commands__ = list(commands.values())  # this will be copied in Cog.__new__
+        new_cls.__cog_commands__ = list(commands.values()) # this will be copied in Cog.__new__
 
         listeners_as_list = []
         for listener in listeners.values():
@@ -144,11 +143,9 @@ class CogMeta(type):
     def qualified_name(cls):
         return cls.__cog_name__
 
-
 def _cog_special_method(func):
     func.__cog_special_method__ = None
     return func
-
 
 class Cog(metaclass=CogMeta):
     """The base class that all cogs must inherit from.
@@ -219,7 +216,13 @@ class Cog(metaclass=CogMeta):
             return cleaned
 
     def walk_commands(self):
-        """An iterator that recursively walks through this cog's commands and subcommands."""
+        """An iterator that recursively walks through this cog's commands and subcommands.
+
+        Yields
+        ------
+        Union[:class:`.Command`, :class:`.Group`]
+            A command or group from the cog.
+        """
         from .core import GroupMixin
         for command in self.__cog_commands__:
             if command.parent is None:
@@ -281,7 +284,6 @@ class Cog(metaclass=CogMeta):
             # to pick it up but the metaclass unfurls the function and
             # thus the assignments need to be on the actual function
             return func
-
         return decorator
 
     @_cog_special_method
@@ -389,7 +391,7 @@ class Cog(metaclass=CogMeta):
                 except Exception as e:
                     # undo our additions
                     for to_undo in self.__cog_commands__[:index]:
-                        bot.remove_command(to_undo)
+                        bot.remove_command(to_undo.name)
                     raise e
 
         # check if we're overriding the default

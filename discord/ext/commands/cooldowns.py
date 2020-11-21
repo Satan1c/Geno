@@ -24,13 +24,13 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
 
-import asyncio
+from discord.enums import Enum
 import time
+import asyncio
 from collections import deque
 
-from discord.enums import Enum
-from .errors import MaxConcurrencyReached
 from ...abc import PrivateChannel
+from .errors import MaxConcurrencyReached
 
 __all__ = (
     'BucketType',
@@ -39,15 +39,14 @@ __all__ = (
     'MaxConcurrency',
 )
 
-
 class BucketType(Enum):
-    default = 0
-    user = 1
-    guild = 2
-    channel = 3
-    member = 4
+    default  = 0
+    user     = 1
+    guild    = 2
+    channel  = 3
+    member   = 4
     category = 5
-    role = 6
+    role     = 6
 
     def get_key(self, msg):
         if self is BucketType.user:
@@ -92,6 +91,15 @@ class Cooldown:
             tokens = self.rate
         return tokens
 
+    def get_retry_after(self, current=None):
+        current = current or time.time()
+        tokens = self.get_tokens(current)
+
+        if tokens == 0:
+            return self.per - (current - self._window)
+
+        return 0.0
+
     def update_rate_limit(self, current=None):
         current = current or time.time()
         self._last = current
@@ -123,7 +131,6 @@ class Cooldown:
 
     def __repr__(self):
         return '<Cooldown rate: {0.rate} per: {0.per} window: {0._window} tokens: {0._tokens}>'.format(self)
-
 
 class CooldownMapping:
     def __init__(self, original):
@@ -172,7 +179,6 @@ class CooldownMapping:
     def update_rate_limit(self, message, current=None):
         bucket = self.get_bucket(message, current)
         return bucket.update_rate_limit(current)
-
 
 class _Semaphore:
     """This class is a version of a semaphore.
@@ -232,7 +238,6 @@ class _Semaphore:
     def release(self):
         self.value += 1
         self.wake_up()
-
 
 class MaxConcurrency:
     __slots__ = ('number', 'per', 'wait', '_mapping')

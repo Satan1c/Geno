@@ -24,12 +24,11 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
 
-from .colour import Colour
-from .errors import InvalidArgument
-from .mixins import Hashable
 from .permissions import Permissions
+from .errors import InvalidArgument
+from .colour import Colour
+from .mixins import Hashable
 from .utils import snowflake_time
-
 
 class Role(Hashable):
     """Represents a Discord role in a :class:`Guild`.
@@ -149,7 +148,7 @@ class Role(Hashable):
         self.mentionable = data.get('mentionable', False)
 
     def is_default(self):
-        """Checks if the role is the default role."""
+        """:class:`bool`: Checks if the role is the default role."""
         return self.guild.id == self.id
 
     @property
@@ -261,7 +260,7 @@ class Role(Hashable):
             colour = fields['colour']
         except KeyError:
             colour = fields.get('color', self.colour)
-
+        
         if isinstance(colour, int):
             colour = Colour(value=colour)
 

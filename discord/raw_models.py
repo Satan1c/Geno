@@ -24,12 +24,10 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
 
-
 class _RawReprMixin:
     def __repr__(self):
         value = ' '.join('%s=%r' % (attr, getattr(self, attr)) for attr in self.__slots__)
         return '<%s %s>' % (self.__class__.__name__, value)
-
 
 class RawMessageDeleteEvent(_RawReprMixin):
     """Represents the event payload for a :func:`on_raw_message_delete` event.
@@ -56,7 +54,6 @@ class RawMessageDeleteEvent(_RawReprMixin):
             self.guild_id = int(data['guild_id'])
         except KeyError:
             self.guild_id = None
-
 
 class RawBulkMessageDeleteEvent(_RawReprMixin):
     """Represents the event payload for a :func:`on_raw_bulk_message_delete` event.
@@ -85,7 +82,6 @@ class RawBulkMessageDeleteEvent(_RawReprMixin):
         except KeyError:
             self.guild_id = None
 
-
 class RawMessageUpdateEvent(_RawReprMixin):
     """Represents the payload for a :func:`on_raw_message_edit` event.
 
@@ -112,7 +108,6 @@ class RawMessageUpdateEvent(_RawReprMixin):
         self.data = data
         self.cached_message = None
 
-
 class RawReactionActionEvent(_RawReprMixin):
     """Represents the payload for a :func:`on_raw_reaction_add` or
     :func:`on_raw_reaction_remove` event.
@@ -130,7 +125,7 @@ class RawReactionActionEvent(_RawReprMixin):
     emoji: :class:`PartialEmoji`
         The custom or unicode emoji being used.
     member: Optional[:class:`Member`]
-        The member who added the reaction. Only available if `event_type` is `REACTION_ADD`.
+        The member who added the reaction. Only available if `event_type` is `REACTION_ADD` and the reaction is inside a guild.
 
         .. versionadded:: 1.3
 
@@ -158,7 +153,6 @@ class RawReactionActionEvent(_RawReprMixin):
         except KeyError:
             self.guild_id = None
 
-
 class RawReactionClearEvent(_RawReprMixin):
     """Represents the payload for a :func:`on_raw_reaction_clear` event.
 
@@ -182,7 +176,6 @@ class RawReactionClearEvent(_RawReprMixin):
             self.guild_id = int(data['guild_id'])
         except KeyError:
             self.guild_id = None
-
 
 class RawReactionClearEmojiEvent(_RawReprMixin):
     """Represents the payload for a :func:`on_raw_reaction_clear_emoji` event.

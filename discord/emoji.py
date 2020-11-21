@@ -24,11 +24,10 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
 
-from . import utils
 from .asset import Asset
+from . import utils
 from .partial_emoji import _EmojiTag
 from .user import User
-
 
 class Emoji(_EmojiTag):
     """Represents a custom emoji.

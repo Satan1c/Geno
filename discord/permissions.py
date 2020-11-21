@@ -24,28 +24,24 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
 
-from .flags import BaseFlags, flag_value, fill_with_flags
+from .flags import BaseFlags, flag_value, fill_with_flags, alias_flag_value
 
 __all__ = (
     'Permissions',
     'PermissionOverwrite',
 )
 
-
 # A permission alias works like a regular flag but is marked
 # So the PermissionOverwrite knows to work with it
-class permission_alias(flag_value):
+class permission_alias(alias_flag_value):
     pass
-
 
 def make_permission_alias(alias):
     def decorator(func):
         ret = permission_alias(func)
         ret.alias = alias
         return ret
-
     return decorator
-
 
 @fill_with_flags()
 class Permissions(BaseFlags):
@@ -135,14 +131,6 @@ class Permissions(BaseFlags):
     __lt__ = is_strict_subset
     __gt__ = is_strict_superset
 
-    def __iter__(self):
-        for name, value in self.__class__.__dict__.items():
-            if isinstance(value, permission_alias):
-                continue
-
-            if isinstance(value, flag_value):
-                yield (name, self._has_flag(value.flag))
-
     @classmethod
     def none(cls):
         """A factory method that creates a :class:`Permissions` with all
@@ -187,6 +175,7 @@ class Permissions(BaseFlags):
         """A factory method that creates a :class:`Permissions` with all
         "Voice" permissions from the official Discord UI set to ``True``."""
         return cls(0b00000011111100000000001100000000)
+
 
     def update(self, **kwargs):
         r"""Bulk updates this permission object.
@@ -418,7 +407,6 @@ class Permissions(BaseFlags):
 
     # after these 32 bits, there's 21 more unused ones technically
 
-
 def augment_from_permissions(cls):
     cls.VALID_NAMES = set(Permissions.VALID_FLAGS)
     aliases = set()
@@ -436,7 +424,6 @@ def augment_from_permissions(cls):
         # god bless Python
         def getter(self, x=key):
             return self._values.get(x)
-
         def setter(self, value, x=key):
             self._set(x, value)
 
@@ -445,7 +432,6 @@ def augment_from_permissions(cls):
 
     cls.PURE_FLAGS = cls.VALID_NAMES - aliases
     return cls
-
 
 @augment_from_permissions
 class PermissionOverwrite:
@@ -498,13 +484,13 @@ class PermissionOverwrite:
         if value not in (True, None, False):
             raise TypeError('Expected bool or NoneType, received {0.__class__.__name__}'.format(value))
 
-        self._values[key] = value
+        if value is None:
+            self._values.pop(key, None)
+        else:
+            self._values[key] = value
 
     def pair(self):
-        """Returns the (allow, deny) pair from this overwrite.
-
-        The value of these pairs is :class:`Permissions`.
-        """
+        """Tuple[:class:`Permissions`, :class:`Permissions`]: Returns the (allow, deny) pair from this overwrite."""
 
         allow = Permissions.none()
         deny = Permissions.none()
@@ -536,8 +522,13 @@ class PermissionOverwrite:
 
         An empty permission overwrite is one that has no overwrites set
         to ``True`` or ``False``.
+
+        Returns
+        -------
+        :class:`bool`
+            Indicates if the overwrite is empty.
         """
-        return all(x is None for x in self._values.values())
+        return len(self._values) == 0
 
     def update(self, **kwargs):
         r"""Bulk updates this permission overwrite object.

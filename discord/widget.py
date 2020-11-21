@@ -24,16 +24,13 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
 
-from collections import namedtuple
-
-from .activity import create_activity
-from .enums import Status, try_enum
-from .invite import Invite
-from .user import BaseUser
 from .utils import snowflake_time, _get_as_snowflake, resolve_invite
+from .user import BaseUser
+from .activity import create_activity
+from .invite import Invite
+from .enums import Status, try_enum
 
-
-class WidgetChannel(namedtuple('WidgetChannel', 'id name position')):
+class WidgetChannel:
     """Represents a "partial" widget channel.
 
     .. container:: operations
@@ -63,10 +60,19 @@ class WidgetChannel(namedtuple('WidgetChannel', 'id name position')):
     position: :class:`int`
         The channel's position
     """
-    __slots__ = ()
+    __slots__ = ('id', 'name', 'position')
+
+
+    def __init__(self, **kwargs):
+        self.id = kwargs.pop('id')
+        self.name = kwargs.pop('name')
+        self.position = kwargs.pop('position')
 
     def __str__(self):
         return self.name
+
+    def __repr__(self):
+        return '<WidgetChannel id={0.id} name={0.name!r} position={0.position!r}>'.format(self)
 
     @property
     def mention(self):
@@ -77,7 +83,6 @@ class WidgetChannel(namedtuple('WidgetChannel', 'id name position')):
     def created_at(self):
         """:class:`datetime.datetime`: Returns the channel's creation time in UTC."""
         return snowflake_time(self.id)
-
 
 class WidgetMember(BaseUser):
     """Represents a "partial" member of the widget's guild.
@@ -152,7 +157,6 @@ class WidgetMember(BaseUser):
     def display_name(self):
         """:class:`str`: Returns the member's display name."""
         return self.nick if self.nick else self.name
-
 
 class Widget:
     """Represents a :class:`Guild` widget.

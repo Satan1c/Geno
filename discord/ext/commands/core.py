@@ -25,17 +25,18 @@ DEALINGS IN THE SOFTWARE.
 """
 
 import asyncio
-import datetime
 import functools
 import inspect
 import typing
+import datetime
 
 import discord
+
+from .errors import *
+from .cooldowns import Cooldown, BucketType, CooldownMapping, MaxConcurrency
 from . import converter as converters
 from ._types import _BaseCommand
 from .cog import Cog
-from .cooldowns import Cooldown, BucketType, CooldownMapping, MaxConcurrency
-from .errors import *
 
 __all__ = (
     'Command',
@@ -63,7 +64,6 @@ __all__ = (
     'bot_has_guild_permissions'
 )
 
-
 def wrap_callback(coro):
     @functools.wraps(coro)
     async def wrapped(*args, **kwargs):
@@ -76,9 +76,7 @@ def wrap_callback(coro):
         except Exception as exc:
             raise CommandInvokeError(exc) from exc
         return ret
-
     return wrapped
-
 
 def hooked_wrapped_callback(command, ctx, coro):
     @functools.wraps(coro)
@@ -100,9 +98,7 @@ def hooked_wrapped_callback(command, ctx, coro):
 
             await command.call_after_hooks(ctx)
         return ret
-
     return wrapped
-
 
 def _convert_to_bool(argument):
     lowered = argument.lower()
@@ -111,8 +107,7 @@ def _convert_to_bool(argument):
     elif lowered in ('no', 'n', 'false', 'f', '0', 'disable', 'off'):
         return False
     else:
-        raise BadArgument(lowered + ' is not a recognised boolean option')
-
+        raise BadBoolArgument(lowered)
 
 class _CaseInsensitiveDict(dict):
     def __contains__(self, k):
@@ -132,7 +127,6 @@ class _CaseInsensitiveDict(dict):
 
     def __setitem__(self, k, v):
         super().__setitem__(k.casefold(), v)
-
 
 class Command(_BaseCommand):
     r"""A class that implements the protocol for a bot text command.
@@ -185,6 +179,12 @@ class Command(_BaseCommand):
         in a completely raw matter. Defaults to ``False``.
     invoked_subcommand: Optional[:class:`Command`]
         The subcommand that was invoked, if any.
+    require_var_positional: :class:`bool`
+        If ``True`` and a variadic positional argument is specified, requires
+        the user to specify at least one argument. Defaults to ``False``.
+
+        .. versionadded:: 1.5
+
     ignore_extra: :class:`bool`
         If ``True``\, ignores extraneous strings passed to a command if all its
         requirements are met (e.g. ``?foo a b c`` when only expecting ``a``
@@ -266,6 +266,7 @@ class Command(_BaseCommand):
         finally:
             self._max_concurrency = max_concurrency
 
+        self.require_var_positional = kwargs.get('require_var_positional', False)
         self.ignore_extra = kwargs.get('ignore_extra', True)
         self.cooldown_after_parsing = kwargs.get('cooldown_after_parsing', False)
         self.cog = None
@@ -534,7 +535,7 @@ class Command(_BaseCommand):
 
         if view.eof:
             if param.kind == param.VAR_POSITIONAL:
-                raise RuntimeError()  # break the loop
+                raise RuntimeError() # break the loop
             if required:
                 if self._is_typing_optional(param.annotation):
                     return None
@@ -579,7 +580,7 @@ class Command(_BaseCommand):
             value = await self.do_conversion(ctx, converter, argument, param)
         except (CommandError, ArgumentParsingError):
             view.index = previous
-            raise RuntimeError() from None  # break loop
+            raise RuntimeError() from None # break loop
         else:
             return value
 
@@ -705,6 +706,8 @@ class Command(_BaseCommand):
                     kwargs[name] = await self.transform(ctx, param)
                 break
             elif param.kind == param.VAR_POSITIONAL:
+                if view.eof and self.require_var_positional:
+                    raise MissingRequiredArgument(param)
                 while not view.eof:
                     try:
                         transformed = await self.transform(ctx, param)
@@ -721,18 +724,14 @@ class Command(_BaseCommand):
         # first, call the command local hook:
         cog = self.cog
         if self._before_invoke is not None:
-            try:
-                instance = self._before_invoke.__self__
-                # should be cog if @commands.before_invoke is used
-            except AttributeError:
-                # __self__ only exists for methods, not functions
-                # however, if @command.before_invoke is used, it will be a function
-                if self.cog:
-                    await self._before_invoke(cog, ctx)
-                else:
-                    await self._before_invoke(ctx)
-            else:
+            # should be cog if @commands.before_invoke is used
+            instance = getattr(self._before_invoke, '__self__', cog)
+            # __self__ only exists for methods, not functions
+            # however, if @command.before_invoke is used, it will be a function
+            if instance:
                 await self._before_invoke(instance, ctx)
+            else:
+                await self._before_invoke(ctx)
 
         # call the cog local hook if applicable:
         if cog is not None:
@@ -748,15 +747,11 @@ class Command(_BaseCommand):
     async def call_after_hooks(self, ctx):
         cog = self.cog
         if self._after_invoke is not None:
-            try:
-                instance = self._after_invoke.__self__
-            except AttributeError:
-                if self.cog:
-                    await self._after_invoke(cog, ctx)
-                else:
-                    await self._after_invoke(ctx)
+            instance = getattr(self._after_invoke, '__self__', cog)
+            if instance:
+                    await self._after_invoke(instance, ctx)
             else:
-                await self._after_invoke(instance, ctx)
+                await self._after_invoke(ctx)
 
         # call the cog local hook if applicable:
         if cog is not None:
@@ -770,7 +765,8 @@ class Command(_BaseCommand):
 
     def _prepare_cooldowns(self, ctx):
         if self._buckets.valid:
-            current = ctx.message.created_at.replace(tzinfo=datetime.timezone.utc).timestamp()
+            dt = ctx.message.edited_at or ctx.message.created_at
+            current = dt.replace(tzinfo=datetime.timezone.utc).timestamp()
             bucket = self._buckets.get_bucket(ctx.message, current)
             retry_after = bucket.update_rate_limit(current)
             if retry_after:
@@ -811,7 +807,9 @@ class Command(_BaseCommand):
             return False
 
         bucket = self._buckets.get_bucket(ctx.message)
-        return bucket.get_tokens() == 0
+        dt = ctx.message.edited_at or ctx.message.created_at
+        current = dt.replace(tzinfo=datetime.timezone.utc).timestamp()
+        return bucket.get_tokens(current) == 0
 
     def reset_cooldown(self, ctx):
         """Resets the cooldown on this command.
@@ -825,6 +823,30 @@ class Command(_BaseCommand):
             bucket = self._buckets.get_bucket(ctx.message)
             bucket.reset()
 
+    def get_cooldown_retry_after(self, ctx):
+        """Retrieves the amount of seconds before this command can be tried again.
+
+        .. versionadded:: 1.4
+
+        Parameters
+        -----------
+        ctx: :class:`.Context`
+            The invocation context to retrieve the cooldown from.
+
+        Returns
+        --------
+        :class:`float`
+            The amount of time left on this command's cooldown in seconds.
+            If this is ``0.0`` then the command isn't on cooldown.
+        """
+        if self._buckets.valid:
+            bucket = self._buckets.get_bucket(ctx.message)
+            dt = ctx.message.edited_at or ctx.message.created_at
+            current = dt.replace(tzinfo=datetime.timezone.utc).timestamp()
+            return bucket.get_retry_after(current)
+
+        return 0.0
+
     async def invoke(self, ctx):
         await self.prepare(ctx)
 
@@ -832,6 +854,7 @@ class Command(_BaseCommand):
         # since we're in a regular command (and not a group) then
         # the invoked subcommand is None.
         ctx.invoked_subcommand = None
+        ctx.subcommand_passed = None
         injected = hooked_wrapped_callback(self, ctx, self.callback)
         await injected(*ctx.args, **ctx.kwargs)
 
@@ -966,6 +989,7 @@ class Command(_BaseCommand):
         if self.usage is not None:
             return self.usage
 
+
         params = self.clean_params
         if not params:
             return ''
@@ -986,7 +1010,10 @@ class Command(_BaseCommand):
                     result.append('[%s]' % name)
 
             elif param.kind == param.VAR_POSITIONAL:
-                result.append('[%s...]' % name)
+                if self.require_var_positional:
+                    result.append('<%s...>' % name)
+                else:
+                    result.append('[%s...]' % name)
             elif greedy:
                 result.append('[%s]...' % name)
             elif self._is_typing_optional(param.annotation):
@@ -1000,7 +1027,7 @@ class Command(_BaseCommand):
         """|coro|
 
         Checks if the command can be executed by checking all the predicates
-        inside the :attr:`.checks` attribute. This also checks whether the
+        inside the :attr:`checks` attribute. This also checks whether the
         command is disabled.
 
         .. versionchanged:: 1.3
@@ -1050,7 +1077,6 @@ class Command(_BaseCommand):
         finally:
             ctx.command = original
 
-
 class GroupMixin:
     """A mixin that implements common functionality for classes that behave
     similar to :class:`.Group` and are allowed to register commands.
@@ -1063,7 +1089,6 @@ class GroupMixin:
     case_insensitive: :class:`bool`
         Whether the commands should be case insensitive. Defaults to ``False``.
     """
-
     def __init__(self, *args, **kwargs):
         case_insensitive = kwargs.get('case_insensitive', False)
         self.all_commands = _CaseInsensitiveDict() if case_insensitive else {}
@@ -1155,6 +1180,11 @@ class GroupMixin:
 
         .. versionchanged:: 1.4
             Duplicates due to aliases are no longer returned
+
+        Yields
+        ------
+        Union[:class:`.Command`, :class:`.Group`]
+            A command or group from the internal list of commands.
         """
         for command in self.commands:
             yield command
@@ -1187,6 +1217,8 @@ class GroupMixin:
             return self.all_commands.get(name)
 
         names = name.split()
+        if not names:
+            return None
         obj = self.all_commands.get(names[0])
         if not isinstance(obj, GroupMixin):
             return obj
@@ -1202,8 +1234,12 @@ class GroupMixin:
     def command(self, *args, **kwargs):
         """A shortcut decorator that invokes :func:`.command` and adds it to
         the internal command list via :meth:`~.GroupMixin.add_command`.
-        """
 
+        Returns
+        --------
+        Callable[..., :class:`Command`]
+            A decorator that converts the provided method into a Command, adds it to the bot, then returns it.
+        """
         def decorator(func):
             kwargs.setdefault('parent', self)
             result = command(*args, **kwargs)(func)
@@ -1215,8 +1251,12 @@ class GroupMixin:
     def group(self, *args, **kwargs):
         """A shortcut decorator that invokes :func:`.group` and adds it to
         the internal command list via :meth:`~.GroupMixin.add_command`.
-        """
 
+        Returns
+        --------
+        Callable[..., :class:`Group`]
+            A decorator that converts the provided method into a Group, adds it to the bot, then returns it.
+        """
         def decorator(func):
             kwargs.setdefault('parent', self)
             result = group(*args, **kwargs)(func)
@@ -1224,7 +1264,6 @@ class GroupMixin:
             return result
 
         return decorator
-
 
 class Group(GroupMixin, Command):
     """A class that implements a grouping protocol for commands to be
@@ -1248,7 +1287,6 @@ class Group(GroupMixin, Command):
         Indicates if the group's commands should be case insensitive.
         Defaults to ``False``.
     """
-
     def __init__(self, *args, **attrs):
         self.invoke_without_command = attrs.pop('invoke_without_command', False)
         super().__init__(*args, **attrs)
@@ -1268,6 +1306,7 @@ class Group(GroupMixin, Command):
 
     async def invoke(self, ctx):
         ctx.invoked_subcommand = None
+        ctx.subcommand_passed = None
         early_invoke = not self.invoke_without_command
         if early_invoke:
             await self.prepare(ctx)
@@ -1332,7 +1371,6 @@ class Group(GroupMixin, Command):
             view.previous = previous
             await super().reinvoke(ctx, call_hooks=call_hooks)
 
-
 # Decorators
 
 def command(name=None, cls=None, **attrs):
@@ -1375,7 +1413,6 @@ def command(name=None, cls=None, **attrs):
 
     return decorator
 
-
 def group(name=None, **attrs):
     """A decorator that transforms a function into a :class:`.Group`.
 
@@ -1388,7 +1425,6 @@ def group(name=None, **attrs):
 
     attrs.setdefault('cls', Group)
     return command(name=name, **attrs)
-
 
 def check(predicate):
     r"""A decorator that adds a check to the :class:`.Command` or its
@@ -1478,11 +1514,9 @@ def check(predicate):
         @functools.wraps(predicate)
         async def wrapper(ctx):
             return predicate(ctx)
-
         decorator.predicate = wrapper
 
     return decorator
-
 
 def check_any(*checks):
     r"""A :func:`check` that is added that checks if any of the checks passed
@@ -1552,7 +1586,6 @@ def check_any(*checks):
 
     return check(predicate)
 
-
 def has_role(item):
     """A :func:`.check` that is added that checks if the member invoking the
     command has the role specified via the name or ID specified.
@@ -1594,7 +1627,6 @@ def has_role(item):
 
     return check(predicate)
 
-
 def has_any_role(*items):
     r"""A :func:`.check` that is added that checks if the member invoking the
     command has **any** of the roles specified. This means that if they have
@@ -1626,19 +1658,16 @@ def has_any_role(*items):
         async def cool(ctx):
             await ctx.send('You are cool indeed')
     """
-
     def predicate(ctx):
         if not isinstance(ctx.channel, discord.abc.GuildChannel):
             raise NoPrivateMessage()
 
         getter = functools.partial(discord.utils.get, ctx.author.roles)
-        if any(getter(id=item) is not None if isinstance(item, int) else getter(name=item) is not None for item in
-               items):
+        if any(getter(id=item) is not None if isinstance(item, int) else getter(name=item) is not None for item in items):
             return True
         raise MissingAnyRole(items)
 
     return check(predicate)
-
 
 def bot_has_role(item):
     """Similar to :func:`.has_role` except checks if the bot itself has the
@@ -1667,9 +1696,7 @@ def bot_has_role(item):
         if role is None:
             raise BotMissingRole(item)
         return True
-
     return check(predicate)
-
 
 def bot_has_any_role(*items):
     """Similar to :func:`.has_any_role` except checks if the bot itself has
@@ -1684,7 +1711,6 @@ def bot_has_any_role(*items):
         Raise :exc:`.BotMissingAnyRole` or :exc:`.NoPrivateMessage`
         instead of generic checkfailure
     """
-
     def predicate(ctx):
         ch = ctx.channel
         if not isinstance(ch, discord.abc.GuildChannel):
@@ -1692,13 +1718,10 @@ def bot_has_any_role(*items):
 
         me = ch.guild.me
         getter = functools.partial(discord.utils.get, me.roles)
-        if any(getter(id=item) is not None if isinstance(item, int) else getter(name=item) is not None for item in
-               items):
+        if any(getter(id=item) is not None if isinstance(item, int) else getter(name=item) is not None for item in items):
             return True
         raise BotMissingAnyRole(items)
-
     return check(predicate)
-
 
 def has_permissions(**perms):
     """A :func:`.check` that is added that checks if the member has all of
@@ -1734,19 +1757,18 @@ def has_permissions(**perms):
     if invalid:
         raise TypeError('Invalid permission(s): %s' % (', '.join(invalid)))
 
-    async def predicate(ctx):
+    def predicate(ctx):
         ch = ctx.channel
         permissions = ch.permissions_for(ctx.author)
 
         missing = [perm for perm, value in perms.items() if getattr(permissions, perm) != value]
 
-        if await ctx.bot.is_owner(ctx.author) or not missing:
+        if not missing:
             return True
 
         raise MissingPermissions(missing)
 
     return check(predicate)
-
 
 def bot_has_permissions(**perms):
     """Similar to :func:`.has_permissions` except checks if the bot itself has
@@ -1774,7 +1796,6 @@ def bot_has_permissions(**perms):
 
     return check(predicate)
 
-
 def has_guild_permissions(**perms):
     """Similar to :func:`.has_permissions`, but operates on guild wide
     permissions instead of the current channel permissions.
@@ -1789,20 +1810,19 @@ def has_guild_permissions(**perms):
     if invalid:
         raise TypeError('Invalid permission(s): %s' % (', '.join(invalid)))
 
-    async def predicate(ctx):
+    def predicate(ctx):
         if not ctx.guild:
             raise NoPrivateMessage
 
         permissions = ctx.author.guild_permissions
         missing = [perm for perm, value in perms.items() if getattr(permissions, perm) != value]
 
-        if await ctx.bot.is_owner(ctx.author) or not missing:
+        if not missing:
             return True
 
         raise MissingPermissions(missing)
 
     return check(predicate)
-
 
 def bot_has_guild_permissions(**perms):
     """Similar to :func:`.has_guild_permissions`, but checks the bot
@@ -1810,6 +1830,7 @@ def bot_has_guild_permissions(**perms):
 
     .. versionadded:: 1.3
     """
+
     invalid = set(perms) - set(discord.Permissions.VALID_FLAGS)
     if invalid:
         raise TypeError('Invalid permission(s): %s' % (', '.join(invalid)))
@@ -1827,7 +1848,6 @@ def bot_has_guild_permissions(**perms):
         raise BotMissingPermissions(missing)
 
     return check(predicate)
-
 
 def dm_only():
     """A :func:`.check` that indicates this command must only be used in a
@@ -1847,7 +1867,6 @@ def dm_only():
 
     return check(predicate)
 
-
 def guild_only():
     """A :func:`.check` that indicates this command must only be used in a
     guild context only. Basically, no private messages are allowed when
@@ -1863,7 +1882,6 @@ def guild_only():
         return True
 
     return check(predicate)
-
 
 def is_owner():
     """A :func:`.check` that checks if the person invoking this command is the
@@ -1882,7 +1900,6 @@ def is_owner():
 
     return check(predicate)
 
-
 def is_nsfw():
     """A :func:`.check` that checks if the channel is a NSFW channel.
 
@@ -1894,15 +1911,12 @@ def is_nsfw():
         Raise :exc:`.NSFWChannelRequired` instead of generic :exc:`.CheckFailure`.
         DM channels will also now pass this check.
     """
-
     def pred(ctx):
         ch = ctx.channel
         if ctx.guild is None or (isinstance(ch, discord.TextChannel) and ch.is_nsfw()):
             return True
         raise NSFWChannelRequired(ch)
-
     return check(pred)
-
 
 def cooldown(rate, per, type=BucketType.default):
     """A decorator that adds a cooldown to a :class:`.Command`
@@ -1934,9 +1948,7 @@ def cooldown(rate, per, type=BucketType.default):
         else:
             func.__commands_cooldown__ = Cooldown(rate, per, type)
         return func
-
     return decorator
-
 
 def max_concurrency(number, per=BucketType.default, *, wait=False):
     """A decorator that adds a maximum concurrency to a :class:`.Command` or its subclasses.
@@ -1969,9 +1981,7 @@ def max_concurrency(number, per=BucketType.default, *, wait=False):
         else:
             func.__commands_max_concurrency__ = value
         return func
-
     return decorator
-
 
 def before_invoke(coro):
     """A decorator that registers a coroutine as a pre-invoke hook.
@@ -2011,16 +2021,13 @@ def before_invoke(coro):
 
         bot.add_cog(What())
     """
-
     def decorator(func):
         if isinstance(func, Command):
             func.before_invoke(coro)
         else:
             func.__before_invoke__ = coro
         return func
-
     return decorator
-
 
 def after_invoke(coro):
     """A decorator that registers a coroutine as a post-invoke hook.
@@ -2030,12 +2037,10 @@ def after_invoke(coro):
 
     .. versionadded:: 1.4
     """
-
     def decorator(func):
         if isinstance(func, Command):
             func.after_invoke(coro)
         else:
             func.__after_invoke__ = coro
         return func
-
     return decorator

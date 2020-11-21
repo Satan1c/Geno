@@ -24,12 +24,13 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
 
+import itertools
 import copy
 import functools
-import itertools
+import inspect
 import re
-
 import discord.utils
+
 from .core import Group, Command
 from .errors import CommandError
 
@@ -39,7 +40,6 @@ __all__ = (
     'DefaultHelpCommand',
     'MinimalHelpCommand',
 )
-
 
 # help -> shows info of bot on top/bottom and lists subcommands
 # help command -> shows detailed info of command
@@ -80,7 +80,6 @@ class Paginator:
     max_size: :class:`int`
         The maximum amount of codepoints allowed in a page.
     """
-
     def __init__(self, prefix='```', suffix='```', max_size=2000):
         self.prefix = prefix
         self.suffix = suffix
@@ -91,7 +90,7 @@ class Paginator:
         """Clears the paginator to have no pages."""
         if self.prefix is not None:
             self._current_page = [self.prefix]
-            self._count = len(self.prefix) + 1  # prefix + newline
+            self._count = len(self.prefix) + 1 # prefix + newline
         else:
             self._current_page = []
             self._count = 0
@@ -145,7 +144,7 @@ class Paginator:
 
         if self.prefix is not None:
             self._current_page = [self.prefix]
-            self._count = len(self.prefix) + 1  # prefix + newline
+            self._count = len(self.prefix) + 1 # prefix + newline
         else:
             self._current_page = []
             self._count = 0
@@ -156,7 +155,7 @@ class Paginator:
 
     @property
     def pages(self):
-        """class:`list`: Returns the rendered list of pages."""
+        """List[:class:`str`]: Returns the rendered list of pages."""
         # we have more than just the prefix in our current page
         if len(self._current_page) > (0 if self.prefix is None else 1):
             self.close_page()
@@ -166,11 +165,9 @@ class Paginator:
         fmt = '<Paginator prefix: {0.prefix} suffix: {0.suffix} max_size: {0.max_size} count: {0._count}>'
         return fmt.format(self)
 
-
 def _not_overriden(f):
     f.__help_command_not_overriden__ = True
     return f
-
 
 class _HelpCommandImpl(Command):
     def __init__(self, inject, *args, **kwargs):
@@ -246,7 +243,6 @@ class _HelpCommandImpl(Command):
         cog.get_commands = cog.get_commands.__wrapped__
         cog.walk_commands = cog.walk_commands.__wrapped__
         self.cog = None
-
 
 class HelpCommand:
     r"""The base implementation for help command formatting.
@@ -330,6 +326,49 @@ class HelpCommand:
         self._command_impl._eject_cog()
         self._command_impl = None
 
+    def add_check(self, func):
+        """
+        Adds a check to the help command.
+
+        .. versionadded:: 1.4
+
+        Parameters
+        ----------
+        func
+            The function that will be used as a check.
+        """
+
+        if self._command_impl is not None:
+            self._command_impl.add_check(func)
+        else:
+            try:
+                self.command_attrs["checks"].append(func)
+            except KeyError:
+                self.command_attrs["checks"] = [func]
+
+    def remove_check(self, func):
+        """
+        Removes a check from the help command.
+
+        This function is idempotent and will not raise an exception if
+        the function is not in the command's checks.
+
+        .. versionadded:: 1.4
+
+        Parameters
+        ----------
+        func
+            The function to remove from the checks.
+        """
+
+        if self._command_impl is not None:
+            self._command_impl.remove_check(func)
+        else:
+            try:
+                self.command_attrs["checks"].remove(func)
+            except (KeyError, ValueError):
+                pass
+
     def get_bot_mapping(self):
         """Retrieves the bot mapping passed to :meth:`send_bot_help`."""
         bot = self.context.bot
@@ -342,7 +381,7 @@ class HelpCommand:
 
     @property
     def clean_prefix(self):
-        """The cleaned up invoke prefix. i.e. mentions are ``@name`` instead of ``<@id>``."""
+        """:class:`str`: The cleaned up invoke prefix. i.e. mentions are ``@name`` instead of ``<@id>``."""
         user = self.context.guild.me if self.context.guild else self.context.bot.user
         # this breaks if the prefix mention is not the bot itself but I
         # consider this to be an *incredibly* strange use case. I'd rather go
@@ -402,6 +441,11 @@ class HelpCommand:
         """Removes mentions from the string to prevent abuse.
 
         This includes ``@everyone``, ``@here``, member mentions and role mentions.
+
+        Returns
+        -------
+        :class:`str`
+            The string with mentions removed.
         """
 
         def replace(obj, *, transforms=self.MENTION_TRANSFORMS):
@@ -564,6 +608,11 @@ class HelpCommand:
         You can override this method to customise the behaviour.
 
         By default this returns the context's channel.
+
+        Returns
+        -------
+        :class:`.abc.Messageable`
+            The destination where the help command will be output.
         """
         return self.context.channel
 
@@ -820,7 +869,6 @@ class HelpCommand:
         else:
             return await self.send_command_help(cmd)
 
-
 class DefaultHelpCommand(HelpCommand):
     """The implementation of the default help command.
 
@@ -873,13 +921,13 @@ class DefaultHelpCommand(HelpCommand):
         super().__init__(**options)
 
     def shorten_text(self, text):
-        """Shortens text to fit into the :attr:`width`."""
+        """:class:`str`: Shortens text to fit into the :attr:`width`."""
         if len(text) > self.width:
             return text[:self.width - 3] + '...'
         return text
 
     def get_ending_note(self):
-        """Returns help command's ending note. This is mainly useful to override for i18n purposes."""
+        """:class:`str`: Returns help command's ending note. This is mainly useful to override for i18n purposes."""
         command_name = self.invoked_with
         return "Type {0}{1} command for more info on a command.\n" \
                "You can also type {0}{1} category for more info on a category.".format(self.clean_prefix, command_name)
@@ -971,7 +1019,6 @@ class DefaultHelpCommand(HelpCommand):
             self.paginator.add_line(bot.description, empty=True)
 
         no_category = '\u200b{0.no_category}:'.format(self)
-
         def get_category(command, *, no_category=no_category):
             cog = command.cog
             return cog.qualified_name + ':' if cog is not None else no_category
@@ -1024,7 +1071,6 @@ class DefaultHelpCommand(HelpCommand):
             self.paginator.add_line(note)
 
         await self.send_pages()
-
 
 class MinimalHelpCommand(HelpCommand):
     """An implementation of a help command with minimal output.
@@ -1086,11 +1132,14 @@ class MinimalHelpCommand(HelpCommand):
             Use `{prefix}{command_name} [command]` for more info on a command.
             You can also use `{prefix}{command_name} [category]` for more info on a category.
 
+        Returns
+        -------
+        :class:`str`
+            The help command opening note.
         """
         command_name = self.invoked_with
         return "Use `{0}{1} [command]` for more info on a command.\n" \
-               "You can also use `{0}{1} [category]` for more info on a category.".format(self.clean_prefix,
-                                                                                          command_name)
+               "You can also use `{0}{1} [category]` for more info on a category.".format(self.clean_prefix, command_name)
 
     def get_command_signature(self, command):
         return '%s%s %s' % (self.clean_prefix, command.qualified_name, command.signature)
@@ -1099,6 +1148,11 @@ class MinimalHelpCommand(HelpCommand):
         """Return the help command's ending note. This is mainly useful to override for i18n purposes.
 
         The default implementation does nothing.
+
+        Returns
+        -------
+        :class:`str`
+            The help command ending note.
         """
         return None
 
@@ -1208,7 +1262,6 @@ class MinimalHelpCommand(HelpCommand):
             self.paginator.add_line(note, empty=True)
 
         no_category = '\u200b{0.no_category}'.format(self)
-
         def get_category(command, *, no_category=no_category):
             cog = command.cog
             return cog.qualified_name if cog is not None else no_category

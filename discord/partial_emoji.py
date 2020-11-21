@@ -24,13 +24,12 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
 
-from . import utils
 from .asset import Asset
+from . import utils
 
 
 class _EmojiTag:
     __slots__ = ()
-
 
 class PartialEmoji(_EmojiTag):
     """Represents a "partial" emoji.
@@ -87,7 +86,7 @@ class PartialEmoji(_EmojiTag):
         )
 
     def to_dict(self):
-        o = {'name': self.name}
+        o = { 'name': self.name }
         if self.id:
             o['id'] = self.id
         if self.animated:
@@ -125,11 +124,11 @@ class PartialEmoji(_EmojiTag):
         return hash((self.id, self.name))
 
     def is_custom_emoji(self):
-        """Checks if this is a custom non-Unicode emoji."""
+        """:class:`bool`: Checks if this is a custom non-Unicode emoji."""
         return self.id is not None
 
     def is_unicode_emoji(self):
-        """Checks if this is a Unicode emoji."""
+        """:class:`bool`: Checks if this is a Unicode emoji."""
         return self.id is None
 
     def _as_reaction(self):

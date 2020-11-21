@@ -27,8 +27,8 @@ DEALINGS IN THE SOFTWARE.
 import datetime
 
 from .asset import Asset
-from .colour import Colour
 from .enums import ActivityType, try_enum
+from .colour import Colour
 from .partial_emoji import PartialEmoji
 from .utils import _get_as_snowflake
 
@@ -86,7 +86,6 @@ t.ActivityFlags = {
 }
 """
 
-
 class BaseActivity:
     """The base activity that all user-settable activities inherit from.
     A user-settable activity is one that can be used in :meth:`Client.change_presence`.
@@ -118,7 +117,6 @@ class BaseActivity:
         """
         if self._created_at is not None:
             return datetime.datetime.utcfromtimestamp(self._created_at / 1000)
-
 
 class Activity(BaseActivity):
     """Represents an activity in Discord.
@@ -266,7 +264,6 @@ class Activity(BaseActivity):
             return None
         else:
             return Asset.BASE + '/app-assets/{0}/{1}.png'.format(self.application_id, small_image)
-
     @property
     def large_image_text(self):
         """Optional[:class:`str`]: Returns the large image asset hover text of this activity if applicable."""
@@ -390,7 +387,6 @@ class Game(BaseActivity):
     def __hash__(self):
         return hash(self.name)
 
-
 class Streaming(BaseActivity):
     """A slimmed down version of :class:`Activity` that represents a Discord streaming status.
 
@@ -444,7 +440,7 @@ class Streaming(BaseActivity):
         self.name = extra.pop('details', name)
         self.game = extra.pop('state', None)
         self.url = url
-        self.details = extra.pop('details', self.name)  # compatibility
+        self.details = extra.pop('details', self.name) # compatibility
         self.assets = extra.pop('assets', {})
 
     @property
@@ -495,7 +491,6 @@ class Streaming(BaseActivity):
 
     def __hash__(self):
         return hash(self.name)
-
 
 class Spotify:
     """Represents a Spotify listening activity from Discord. This is a special case of
@@ -566,7 +561,7 @@ class Spotify:
 
     def to_dict(self):
         return {
-            'flags': 48,  # SYNC | PLAY
+            'flags': 48, # SYNC | PLAY
             'name': 'Spotify',
             'assets': self._assets,
             'party': self._party,
@@ -655,7 +650,6 @@ class Spotify:
     def party_id(self):
         """:class:`str`: The party ID of the listening party."""
         return self._party.get('id', '')
-
 
 class CustomActivity(BaseActivity):
     """Represents a Custom activity from Discord.

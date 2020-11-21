@@ -27,13 +27,12 @@ DEALINGS IN THE SOFTWARE.
 import asyncio
 import datetime
 
-from .audit_logs import AuditLogEntry
 from .errors import NoMoreItems
+from .utils import DISCORD_EPOCH, time_snowflake, maybe_coroutine
 from .object import Object
-from .utils import time_snowflake, maybe_coroutine
+from .audit_logs import AuditLogEntry
 
 OLDEST_OBJECT = Object(id=0)
-
 
 class _AsyncIterator:
     __slots__ = ()
@@ -90,10 +89,8 @@ class _AsyncIterator:
         else:
             return msg
 
-
 def _identity(x):
     return x
-
 
 class _MappedAsyncIterator(_AsyncIterator):
     def __init__(self, iterator, func):
@@ -104,7 +101,6 @@ class _MappedAsyncIterator(_AsyncIterator):
         # this raises NoMoreItems and will propagate appropriately
         item = await self.iterator.next()
         return await maybe_coroutine(self.func, item)
-
 
 class _FilteredAsyncIterator(_AsyncIterator):
     def __init__(self, iterator, predicate):
@@ -124,7 +120,6 @@ class _FilteredAsyncIterator(_AsyncIterator):
             ret = await maybe_coroutine(pred, item)
             if ret:
                 return item
-
 
 class ReactionIterator(_AsyncIterator):
     def __init__(self, message, emoji, limit=100, after=None):
@@ -162,7 +157,7 @@ class ReactionIterator(_AsyncIterator):
                 self.limit -= retrieve
                 self.after = Object(id=int(data[-1]['id']))
 
-            if self.guild is None:
+            if self.guild is None or isinstance(self.guild, Object):
                 for element in reversed(data):
                     await self.users.put(User(state=self.state, data=element))
             else:
@@ -174,21 +169,20 @@ class ReactionIterator(_AsyncIterator):
                     else:
                         await self.users.put(User(state=self.state, data=element))
 
-
 class HistoryIterator(_AsyncIterator):
     """Iterator for receiving a channel's message history.
 
     The messages endpoint has two behaviours we care about here:
-    If `before` is specified, the messages endpoint returns the `limit`
-    newest messages before `before`, sorted with newest first. For filling over
-    100 messages, update the `before` parameter to the oldest message received.
+    If ``before`` is specified, the messages endpoint returns the `limit`
+    newest messages before ``before``, sorted with newest first. For filling over
+    100 messages, update the ``before`` parameter to the oldest message received.
     Messages will be returned in order by time.
-    If `after` is specified, it returns the `limit` oldest messages after
-    `after`, sorted with newest first. For filling over 100 messages, update the
-    `after` parameter to the newest message received. If messages are not
+    If ``after`` is specified, it returns the ``limit`` oldest messages after
+    ``after``, sorted with newest first. For filling over 100 messages, update the
+    ``after`` parameter to the newest message received. If messages are not
     reversed, they will be out of order (99-0, 199-100, so on)
 
-    A note that if both before and after are specified, before is ignored by the
+    A note that if both ``before`` and ``after`` are specified, ``before`` is ignored by the
     messages endpoint.
 
     Parameters
@@ -206,7 +200,7 @@ class HistoryIterator(_AsyncIterator):
         limit is an even number, this will return at most limit+1 messages.
     oldest_first: Optional[:class:`bool`]
         If set to ``True``, return messages in oldest->newest order. Defaults to
-        True if ``after`` is specified, otherwise ``False``.
+        ``True`` if `after` is specified, otherwise ``False``.
     """
 
     def __init__(self, messageable, limit,
@@ -291,7 +285,7 @@ class HistoryIterator(_AsyncIterator):
         while self._get_retrieve():
             data = await self._retrieve_messages(self.retrieve)
             if len(data) < 100:
-                self.limit = 0  # terminate the infinite loop
+                self.limit = 0 # terminate the infinite loop
 
             if self.reverse:
                 data = reversed(data)
@@ -311,7 +305,7 @@ class HistoryIterator(_AsyncIterator):
         if self._get_retrieve():
             data = await self._retrieve_messages(self.retrieve)
             if len(data) < 100:
-                self.limit = 0  # terminate the infinite loop
+                self.limit = 0 # terminate the infinite loop
 
             if self.reverse:
                 data = reversed(data)
@@ -355,13 +349,13 @@ class HistoryIterator(_AsyncIterator):
             return data
         return []
 
-
 class AuditLogIterator(_AsyncIterator):
     def __init__(self, guild, limit=None, before=None, after=None, oldest_first=None, user_id=None, action_type=None):
         if isinstance(before, datetime.datetime):
             before = Object(id=time_snowflake(before, high=False))
         if isinstance(after, datetime.datetime):
             after = Object(id=time_snowflake(after, high=True))
+
 
         if oldest_first is None:
             self.reverse = after is not None
@@ -379,9 +373,11 @@ class AuditLogIterator(_AsyncIterator):
         self._users = {}
         self._state = guild._state
 
+
         self._filter = None  # entry dict -> bool
 
         self.entries = asyncio.Queue()
+
 
         if self.reverse:
             self._strategy = self._after_strategy
@@ -442,7 +438,7 @@ class AuditLogIterator(_AsyncIterator):
         if self._get_retrieve():
             users, data = await self._strategy(self.retrieve)
             if len(data) < 100:
-                self.limit = 0  # terminate the infinite loop
+                self.limit = 0 # terminate the infinite loop
 
             if self.reverse:
                 data = reversed(data)
@@ -466,16 +462,16 @@ class GuildIterator(_AsyncIterator):
 
     The guilds endpoint has the same two behaviours as described
     in :class:`HistoryIterator`:
-    If `before` is specified, the guilds endpoint returns the `limit`
-    newest guilds before `before`, sorted with newest first. For filling over
-    100 guilds, update the `before` parameter to the oldest guild received.
+    If ``before`` is specified, the guilds endpoint returns the ``limit``
+    newest guilds before ``before``, sorted with newest first. For filling over
+    100 guilds, update the ``before`` parameter to the oldest guild received.
     Guilds will be returned in order by time.
-    If `after` is specified, it returns the `limit` oldest guilds after `after`,
-    sorted with newest first. For filling over 100 guilds, update the `after`
+    If `after` is specified, it returns the ``limit`` oldest guilds after ``after``,
+    sorted with newest first. For filling over 100 guilds, update the ``after``
     parameter to the newest guild received, If guilds are not reversed, they
     will be out of order (99-0, 199-100, so on)
 
-    Not that if both before and after are specified, before is ignored by the
+    Not that if both ``before`` and ``after`` are specified, ``before`` is ignored by the
     guilds endpoint.
 
     Parameters
@@ -489,7 +485,6 @@ class GuildIterator(_AsyncIterator):
     after: Optional[Union[:class:`abc.Snowflake`, :class:`datetime.datetime`]]
         Object after which all guilds must be.
     """
-
     def __init__(self, bot, limit, before=None, after=None):
 
         if isinstance(before, datetime.datetime):
@@ -591,7 +586,6 @@ class GuildIterator(_AsyncIterator):
             self.after = Object(id=int(data[0]['id']))
         return data
 
-
 class MemberIterator(_AsyncIterator):
     def __init__(self, guild, limit=1000, after=None):
 
@@ -636,7 +630,7 @@ class MemberIterator(_AsyncIterator):
                 return
 
             if len(data) < 1000:
-                self.limit = 0  # terminate loop
+                self.limit = 0 # terminate loop
 
             self.after = Object(id=int(data[-1]['user']['id']))
 

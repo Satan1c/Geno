@@ -24,16 +24,13 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
 
-from collections import namedtuple
-
 from .asset import Asset
-from .enums import ChannelType, VerificationLevel, try_enum
-from .mixins import Hashable
-from .object import Object
 from .utils import parse_time, snowflake_time, _get_as_snowflake
+from .object import Object
+from .mixins import Hashable
+from .enums import ChannelType, VerificationLevel, try_enum
 
-
-class PartialInviteChannel(namedtuple('PartialInviteChannel', 'id name type')):
+class PartialInviteChannel:
     """Represents a "partial" invite channel.
 
     This model will be given when the user is not part of the
@@ -67,10 +64,18 @@ class PartialInviteChannel(namedtuple('PartialInviteChannel', 'id name type')):
         The partial channel's type.
     """
 
-    __slots__ = ()
+    __slots__ = ('id', 'name', 'type')
+
+    def __init__(self, **kwargs):
+        self.id = kwargs.pop('id')
+        self.name = kwargs.pop('name')
+        self.type = kwargs.pop('type')
 
     def __str__(self):
         return self.name
+
+    def __repr__(self):
+        return '<PartialInviteChannel id={0.id} name={0.name} type={0.type!r}>'.format(self)
 
     @property
     def mention(self):
@@ -81,7 +86,6 @@ class PartialInviteChannel(namedtuple('PartialInviteChannel', 'id name type')):
     def created_at(self):
         """:class:`datetime.datetime`: Returns the channel's creation time in UTC."""
         return snowflake_time(self.id)
-
 
 class PartialInviteGuild:
     """Represents a "partial" invite guild.
@@ -205,7 +209,6 @@ class PartialInviteGuild:
         """
         return Asset._from_guild_image(self._state, self.id, self.splash, 'splashes', format=format, size=size)
 
-
 class Invite(Hashable):
     r"""Represents a Discord :class:`Guild` or :class:`abc.GuildChannel` invite.
 
@@ -284,7 +287,7 @@ class Invite(Hashable):
 
     __slots__ = ('max_age', 'code', 'guild', 'revoked', 'created_at', 'uses',
                  'temporary', 'max_uses', 'inviter', 'channel', '_state',
-                 'approximate_member_count', 'approximate_presence_count')
+                 'approximate_member_count', 'approximate_presence_count' )
 
     BASE = 'https://discord.gg'
 
@@ -353,8 +356,8 @@ class Invite(Hashable):
 
     def __repr__(self):
         return '<Invite code={0.code!r} guild={0.guild!r} ' \
-               'online={0.approximate_presence_count} ' \
-               'members={0.approximate_member_count}>'.format(self)
+                'online={0.approximate_presence_count} ' \
+                'members={0.approximate_member_count}>'.format(self)
 
     def __hash__(self):
         return hash(self.code)
