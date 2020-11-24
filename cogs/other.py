@@ -46,14 +46,14 @@ class Other(cmd.Cog):
             desc = command.description
             await ctx.send(embed=discord.Embed(title=f"{command.name} help:",
                                                description=f"""
-<> - {"required params" if reg != "russia" else "обязательные параметры"}, [] - {"other params" if reg != "russia"
-                                               else "другие параметры"}
-{"Command usage:" if reg != "russia" else "Использование команды:"} {command.usage}
-{"Command aliases:" if reg != "russia" else "Иные виды использования:"} `{", ".join(command.aliases)}`
+                                                <> - {"required params" if reg != "russia" else "обязательные параметры"}, [] - {"other params" if reg != "russia" else "другие параметры"}
+                            
+                                                {"Command usage:" if reg != "russia" else "Использование команды:"} {command.usage}
+                                                {"Command aliases:" if reg != "russia" else "Иные виды использования:"} `{", ".join(command.aliases)}`
 
-{desc.split(":-:")[0 if reg != "russia" else 1]}
-""",
-                                               colour=discord.Colour.green()))
+                                                {desc.split(":-:")[0 if reg != "russia" else 1]}""",
+
+                                                colour=discord.Colour.green()))
             return
 
         prefix = self.bot.prefix if not ctx.guild else self.config.find_one({"_id": f"{ctx.guild.id}"})['prefix']
@@ -164,7 +164,7 @@ class Other(cmd.Cog):
 
         await ctx.send(embed=em)
 
-    @cmd.command(name="Profile", aliases=['профиль', 'profile'], usage="profile")
+    @cmd.command(name="Profile", aliases=['профиль', 'profile'], usage="profile", hidden=True)
     @cmd.check(checks.is_off)
     async def _profile(self, ctx: cmd.Context):
         activity = f"{str(ctx.author.activities[1].type).split('.')[1]} {ctx.author.activities[1].name}" if "emoji" in dir(ctx.author.activities[0]) else f"{ctx.author.activities[0].emoji} {ctx.author.activities[0].name}"

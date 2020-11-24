@@ -71,14 +71,13 @@ class Tasks(cmd.Cog):
                     await self.twitch.stream_embed(streamer['_id'], res1, res2, channel)
 
         except BaseException as err:
-            print(f"twitch_update: {err}")
+            print("\n", "-"*30, f"[!]Tasks check_twitch error:\n{err}", "-"*30, "\n")
         
         print("twitch")
 
     @loop(hours=6)
     async def db_update(self):
-        coro = self.bot.DataBase(self.bot).create()
-        for i in range(1):
+        for i in [self.bot.DataBase(self.bot).create()]:
             Thread(target=asyncio.run, args=(coro,)).start()
         
         print("db")

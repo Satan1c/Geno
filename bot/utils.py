@@ -20,16 +20,16 @@ from discord.ext import commands as cmd
 from discord.ext.commands import Context
 
 url_rx = re.compile(r'https?://(?:www\.)?.+')
-YTDL_OPTS = {
-    "default_search": "ytsearch",
-    "format": "bestaudio/best",
-    "quiet": True,
-    "no_warnings": True,
-    "extract_flat": "in_queue",
-    "ignoreerrors": True,
-    "forceurl": True,
-    "simulate": True
-    }
+# YTDL_OPTS = {
+#     "default_search": "ytsearch",
+#     "format": "bestaudio/best",
+#     "quiet": True,
+#     "no_warnings": True,
+#     "extract_flat": "in_queue",
+#     "ignoreerrors": True,
+#     "forceurl": True,
+#     "simulate": True
+#     }
 
 
 class Twitch:
@@ -160,7 +160,7 @@ class Utils:
                 role = ctx.guild.get_role(int(r))
 
             except BaseException as err:
-                print("[!] rroles_check:", err)
+                print("\n", "-"*30, f"[!]Utils rroles_check error:\n{err}", "-"*30, "\n")
                 break
 
             if not role:
@@ -180,8 +180,8 @@ class Utils:
                 return video_url
 
             return info
-        except:
-            print("fail 2")
+        except BaseException as err:
+            print("\n", "-"*30, f"[!]Utils get_info error:\n{err}", "-"*30, "\n")
 
     # google api---------------------------------------------------------------------------------------------------
 
@@ -367,7 +367,7 @@ class Utils:
                                                                                     static_format='png',
                                                                                     size=256)))
                     except BaseException as err:
-                        print(err)
+                        print("\n", "-"*30, f"[!]Utils queue error:\n{err}", "-"*30, "\n")
                         pass
 
             if len(embeds):
@@ -401,7 +401,7 @@ class Utils:
         try:
             value = int(value)
         except BaseException as err:
-            print(err)
+            print("\n", "-"*30, f"[!]Utils volume error:\n{err}", "-"*30, "\n")
             r = re.sub(r'[^.0-9]', r'', value)
             value = round(float(r)) if r else None
 
@@ -524,7 +524,12 @@ class Paginator:
 
     async def start(self):
         self.controller = await self.ctx.send(embed=self.begin)
-        await self.controller.add_reaction(self.reactions[2])
+
+        try:
+            await self.controller.add_reaction(self.reactions[2])
+        except BaseException as err:
+            print("\n", "-"*30, f"[!]Paginator start add_reaction error:\n{err}", "-"*30, "\n")
+
         await self.ctx.bot.wait_for('reaction_add', timeout=self.timeout, check=lambda r, u: u.bot is not True)
         await self.call_controller()
 
@@ -540,15 +545,14 @@ class Paginator:
         try:
             await self.controller.clear_reactions()
         except BaseException as err:
-            print(err)
+            print("\n", "-"*30, f"[!]Paginator call_controller clear_reactions error:\n{err}", "-"*30, "\n")
             pass
 
         try:
             for emoji in self.reactions:
                 await self.controller.add_reaction(emoji)
         except BaseException as err:
-            print(err)
-            pass
+            print("\n", "-"*30, f"[!]Paginator call_controller add_reaction error:\n{err}", "-"*30, "\n")
 
         while True:
             try:
@@ -559,7 +563,7 @@ class Paginator:
 
                 response = await self.ctx.bot.wait_for('reaction_add', timeout=self.timeout,
                                                        check=check)
-            except TimeoutError:
+            except TimeoutError as err:
                 break
 
             try:
@@ -590,7 +594,7 @@ class DataBase:
         self.profiles = bot.profiles
 
     async def create(self):
-        await asyncio.gather(self._create_servers())  # , self._create_users())
+        await asyncio.gather(self._create_servers(), self._delete_servers())  # , self._create_users())
 
     async def _create_servers(self):
         arr = [int(i['_id']) for i in self.servers.find()]
@@ -605,38 +609,39 @@ class DataBase:
     
     async def _delete_servers(self):
         arr = [i['_id'] for i in self.servers.find()]
-        delete = [{"_id": i} for i in arr if int(i) not in [i.id for i in self.bot.guilds]]
+        guilds = [str(i.id) for i in self.bot.guilds]
+        delete = [{"_id": i} for i in arr if i not in guilds]
 
         self.servers.delete_many(delete)
 
-    async def __create_users(self):
-        arr = [f"{i['sid']} {i['uid']}" for i in self.profiles.find()]
+    # async def __create_users(self):
+    #     arr = [f"{i['sid']} {i['uid']}" for i in self.profiles.find()]
 
-        raw = [[x for x in i.members if not x.bot] for i in self.bot.guilds]
-        create = [self.models.User(i).get_dict() for x in raw for i in x if f"{i.guild.id} {i.id}" not in arr]
+    #     raw = [[x for x in i.members if not x.bot] for i in self.bot.guilds]
+    #     create = [self.models.User(i).get_dict() for x in raw for i in x if f"{i.guild.id} {i.id}" not in arr]
 
-        if len(create):
-            print("...users creation")
-            self.profiles.insert_many(create)
+    #     if len(create):
+    #         print("...users creation")
+    #         self.profiles.insert_many(create)
 
-        del create, raw, arr
-        print("created: users")
+    #     del create, raw, arr
+    #     print("created: users")
 
-    async def _create_users(self):
-        arr = [f"{i['sid']} {i['uid']}" for i in self.profiles.find()]
-        raw = [[f"{member.guild.id} {member.id}", member] for guild in self.bot.guilds for member in guild.members if
-               not member.bot]
-        if len(arr) == len(raw):
-            return
-        create = [i[1] for i in raw if i[0] not in arr]
-        create = self.models.User.bulk_create(create)
+    # async def _create_users(self):
+    #     arr = [f"{i['sid']} {i['uid']}" for i in self.profiles.find()]
+    #     raw = [[f"{member.guild.id} {member.id}", member] for guild in self.bot.guilds for member in guild.members if
+    #            not member.bot]
+    #     if len(arr) == len(raw):
+    #         return
+    #     create = [i[1] for i in raw if i[0] not in arr]
+    #     create = self.models.User.bulk_create(create)
 
-        if len(create):
-            print("...users creation")
-            self.profiles.insert_many(create)
+    #     if len(create):
+    #         print("...users creation")
+    #         self.profiles.insert_many(create)
 
-        del create, arr
-        print("created: users")
+    #     del create, arr
+    #     print("created: users")
 
     async def create_server(self, guild: discord.Guild):
         i = self.models.Server(guild).get_dict()
@@ -646,22 +651,18 @@ class DataBase:
             self.servers.insert_one(i)
             print(f"created: {i['_id']}")
 
-        for i in guild.members:
-            await self.create_user(i)
+        # for i in guild.members:
+        #     await self.create_user(i)
 
-        del srv, i
+    # async def create_user(self, member: discord.Member):
+    #     if member.bot:
+    #         return
+    #     i = self.models.User(member).get_dict()
+    #     usr = self.servers.find_one({"sid": f"{i['sid']}", "uid": f"{i['uid']}"})
 
-    async def create_user(self, member: discord.Member):
-        if member.bot:
-            return
-        i = self.models.User(member).get_dict()
-        usr = self.servers.find_one({"sid": f"{i['sid']}", "uid": f"{i['uid']}"})
-
-        if not usr:
-            self.profiles.insert_one(i)
-            print(f"created: {i['sid']} | {i['uid']}")
-
-        del i, usr
+    #     if not usr:
+    #         self.profiles.insert_one(i)
+    #         print(f"created: {i['sid']} | {i['uid']}")
 
 
 class EmbedGenerator:

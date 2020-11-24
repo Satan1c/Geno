@@ -18,7 +18,6 @@ intents = discord.Intents.all()
 intents.presences = False
 
 class Geno(cmd.Bot):
-    prefix = "g-"
     def __init__(self):
         super().__init__(command_prefix=self.get_prefix,
                          owner_id=348444859360608256, intents=intents)
@@ -30,7 +29,7 @@ class Geno(cmd.Bot):
         self.servers = client.get_database("servers").get_collection("configs")
 
     async def on_disconnect(self):
-        print(f"[!] {self.user.name} disconnect")
+        print(f"\n[!] {self.user.name} disconnect\n")
 
     def init(self):
         self.twitch = Twitch()
@@ -78,9 +77,10 @@ class Geno(cmd.Bot):
             em.description = "Not a giuld"
 
         try:
+            print("\n\n", "[!] Command error:", "-"*30, err, "-"*30, "\n\n")
             await ctx.send(embed=em)
         except BaseException as err:
-            print(err)
+            print("[!] error send error:", err, "-"*30, "\n\n")
 
     async def on_command(self, ctx: cmd.Context):
         if not ctx.guild:
@@ -88,7 +88,10 @@ class Geno(cmd.Bot):
         try:
             await ctx.message.delete()
         except BaseException as err:
-            print(err)
+            print("\n\n", "-"*30, "[!] command call delete error:", err, "-"*30, "\n\n")
+
+    async def on_error(event_method, *args, **kwargs):
+        print("\n\n", "-"*30, "[!] unknown error:", f"{event_method}\n{args}\n{kwargs}", "-"*30, "\n\n")
 
     async def on_connect(self):
         #return

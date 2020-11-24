@@ -163,7 +163,7 @@ class Music(cmd.Cog):
                     await guild.get_channel(ch).send("Empty voice channel, auto disconnect")
 
         except BaseException as err:
-            print(err)
+            print("\n", "-"*30, f"[!]Music track_hook error:\n{err}", "-"*30, "\n")
 
     async def connect_to(self, guild_id: int, channel_id: str = None):
         """ Connects to the given voicechannel ID. A channel_id of `None` means disconnect. """

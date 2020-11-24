@@ -39,7 +39,7 @@ class Events(cmd.Cog):
             try:
                 await member.edit(deafen=True)
             except BaseException as err:
-                print(err)
+                print("\n", "-"*30, f"[!]Events voice_update error:\n{err}", "-"*30, "\n")
                 pass
 
         if member.id == member.guild.me.id and not after.channel and cfg['now_playing']:
@@ -59,10 +59,8 @@ class Events(cmd.Cog):
                               message=message,
                               guild=message.guild,
                               send=message.channel.send,
-                              prefix="-" if not message.guild else self.config.find_one({"_id": f"{message.guild.id}"})[
-                                  'prefix'])
-            return await self.bot.get_command("Help").callback(ctx=ctx,
-                                                               self=self.bot.get_cog("System"), )
+                              prefix="g-" if not message.guild else self.config.find_one({"_id": f"{message.guild.id}"})['prefix'])
+            return await self.bot.get_command("Help").callback(ctx=ctx, self=self.bot.get_cog("System"))
 
         if message.author.id != self.bot.user.id or not message.guild:
             return

@@ -48,16 +48,22 @@ class Moderation(cmd.Cog):
                              size=256))
 
         user = re.sub(r"[^0-9]", r"", user)
+        us = await self.bot.fetch_user(int(user)) if user and len(user) >= 17 else None
 
         if len(ctx.message.mentions) > 0:
             user = ctx.guild.get_member(int(ctx.message.mentions[0].id))
 
-        elif len(user) == 18:
+        elif us:
             mem = ctx.guild.get_member(int(user))
-            if not mem:
-                user = discord.Object(id=int(user))
+
+            if mem:
+                user = mem
+
+            else:
+                user = discord.Object(id=user.id)
                 if not user:
                     raise cmd.BadArgument("User not found")
+
                 await ctx.guild.ban(user=user, reason=reason, delete_message_days=0)
 
                 bans = await ctx.guild.bans()
@@ -65,19 +71,16 @@ class Moderation(cmd.Cog):
 
                 embed.description = embed.description.format(user=bans, reason=reason)
                 embed.title = "ID Ban"
-
-                m = await ctx.send(embed=embed)
-                await m.delete(delay=120)
-                return
-
-            elif mem:
-                user = mem
+        else:
+            raise cmd.BadArgument("User not found")
 
         if user.id == self.bot.owner_id:
             raise cmd.BadArgument("Can't ban my owner")
 
         await ctx.guild.ban(user, reason=reason, delete_message_days=0)
-        embed.description = embed.description.format(user=str(user), reason=reason)
+
+        if embed.title == "Ban":
+            embed.description = embed.description.format(user=str(user), reason=reason)
 
         await ctx.send(embed=embed)
 
