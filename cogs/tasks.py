@@ -22,12 +22,12 @@ class Tasks(cmd.Cog):
         for i in ls:
             i.start()
 
-    @loop(seconds=3601)
+    @loop(hours=1)
     async def monitors_update(self):
         for i in [[requests.post,
                    [f"https://api.server-discord.com/v2/bots/{self.bot.user.id}/stats",
                     {
-                        "shards": 1,
+                        "shards": self.bot.shard_count or 1,
                         "servers": len(self.bot.guilds)
                         }
                     ],
@@ -46,7 +46,7 @@ class Tasks(cmd.Cog):
         
         print("monitorings")
 
-    @loop(seconds=301)
+    @loop(minutes=10)
     async def check_twitch(self):
         try:
             streamers = [i for i in self.streamers.find()]
