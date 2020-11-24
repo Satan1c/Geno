@@ -602,6 +602,12 @@ class DataBase:
 
         del create, arr
         print("created: servers")
+    
+    async def _delete_servers(self):
+        arr = [i['_id'] for i in self.servers.find()]
+        delete = [{"_id": i} for i in arr if int(i) not in [i.id for i in self.bot.guilds]]
+
+        self.servers.delete_many(delete)
 
     async def __create_users(self):
         arr = [f"{i['sid']} {i['uid']}" for i in self.profiles.find()]

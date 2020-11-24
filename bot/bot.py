@@ -91,7 +91,7 @@ class Geno(cmd.Bot):
             print(err)
 
     async def on_connect(self):
-        return
+        #return
         self.main.update_one({"_id": 0}, {"$set": {"uptime": datetime.now()}})
 
     async def get_prefix(self, message):

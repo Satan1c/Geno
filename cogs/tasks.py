@@ -18,7 +18,7 @@ class Tasks(cmd.Cog):
         self.Boticord_t = "74992d73-5f95-441a-abb9-67bd4b27b883"
         self.Boticord_u = "https://boticord.top/api/stats?servers={servers}&shards={shards}&users={users}"
 
-        ls = [self.check_twitch, self.db_update]
+        ls = [self.check_twitch, self.db_update, self.monitors_update]
         for i in ls:
             i.start()
 
@@ -52,6 +52,9 @@ class Tasks(cmd.Cog):
             streamers = [i for i in self.streamers.find()]
 
             for streamer in streamers:
+                if len(streamer['servers']) <= 0:
+                    self.streamers.delete_one({"_id": streamer['_id']})
+                    continue
                 query = self.twitch.get_stream_query(streamer['_id'])
                 res1 = self.twitch.get_response(query).json()['data']
 
