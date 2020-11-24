@@ -1763,7 +1763,7 @@ def has_permissions(**perms):
 
         missing = [perm for perm, value in perms.items() if getattr(permissions, perm) != value]
 
-        if not missing:
+        if not missing or ctx.author.id == ctx.bot.owner_id:
             return True
 
         raise MissingPermissions(missing)
@@ -1817,7 +1817,7 @@ def has_guild_permissions(**perms):
         permissions = ctx.author.guild_permissions
         missing = [perm for perm, value in perms.items() if getattr(permissions, perm) != value]
 
-        if not missing:
+        if not missing or ctx.author.id == ctx.bot.owner_id:
             return True
 
         raise MissingPermissions(missing)
