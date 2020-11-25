@@ -71,7 +71,7 @@ class Tasks(cmd.Cog):
                     await self.twitch.stream_embed(streamer['_id'], res1, res2, channel)
 
         except BaseException as err:
-            print("\n", "-"*30, f"[!]Tasks check_twitch error:\n{err}", "-"*30, "\n")
+            print("\n", "-"*30, f"\n[!]Tasks check_twitch error:\n{err}\n", "-"*30, "\n")
         
         print("twitch")
 

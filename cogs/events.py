@@ -39,7 +39,7 @@ class Events(cmd.Cog):
             try:
                 await member.edit(deafen=True)
             except BaseException as err:
-                print("\n", "-"*30, f"[!]Events voice_update error:\n{err}", "-"*30, "\n")
+                print("\n", "-"*30, f"\n[!]Events voice_update error:\n{err}\n", "-"*30, "\n")
                 pass
 
         if member.id == member.guild.me.id and not after.channel and cfg['now_playing']:

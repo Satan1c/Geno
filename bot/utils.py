@@ -160,7 +160,7 @@ class Utils:
                 role = ctx.guild.get_role(int(r))
 
             except BaseException as err:
-                print("\n", "-"*30, f"[!]Utils rroles_check error:\n{err}", "-"*30, "\n")
+                print("\n", "-"*30, f"\n[!]Utils rroles_check error:\n{err}\n", "-"*30, "\n")
                 break
 
             if not role:
@@ -181,7 +181,7 @@ class Utils:
 
             return info
         except BaseException as err:
-            print("\n", "-"*30, f"[!]Utils get_info error:\n{err}", "-"*30, "\n")
+            print("\n", "-"*30, f"\n[!]Utils get_info error:\n{err}\n", "-"*30, "\n")
 
     # google api---------------------------------------------------------------------------------------------------
 
@@ -367,7 +367,7 @@ class Utils:
                                                                                     static_format='png',
                                                                                     size=256)))
                     except BaseException as err:
-                        print("\n", "-"*30, f"[!]Utils queue error:\n{err}", "-"*30, "\n")
+                        print("\n", "-"*30, f"\n[!]Utils queue error:\n{err}\n", "-"*30, "\n")
                         pass
 
             if len(embeds):
@@ -401,7 +401,7 @@ class Utils:
         try:
             value = int(value)
         except BaseException as err:
-            print("\n", "-"*30, f"[!]Utils volume error:\n{err}", "-"*30, "\n")
+            print("\n", "-"*30, f"\n[!]Utils volume error:\n{err}\n", "-"*30, "\n")
             r = re.sub(r'[^.0-9]', r'', value)
             value = round(float(r)) if r else None
 
@@ -528,7 +528,8 @@ class Paginator:
         try:
             await self.controller.add_reaction(self.reactions[2])
         except BaseException as err:
-            print("\n", "-"*30, f"[!]Paginator start add_reaction error:\n{err}", "-"*30, "\n")
+            print("\n", "-"*30, f"\n[!]Paginator start add_reaction error:\n{err}\n", "-"*30, "\n")
+            return
 
         await self.ctx.bot.wait_for('reaction_add', timeout=self.timeout, check=lambda r, u: u.bot is not True)
         await self.call_controller()
@@ -545,14 +546,15 @@ class Paginator:
         try:
             await self.controller.clear_reactions()
         except BaseException as err:
-            print("\n", "-"*30, f"[!]Paginator call_controller clear_reactions error:\n{err}", "-"*30, "\n")
+            print("\n", "-"*30, f"\n[!]Paginator call_controller clear_reactions error:\n{err}\n", "-"*30, "\n")
             pass
 
         try:
             for emoji in self.reactions:
                 await self.controller.add_reaction(emoji)
         except BaseException as err:
-            print("\n", "-"*30, f"[!]Paginator call_controller add_reaction error:\n{err}", "-"*30, "\n")
+            print("\n", "-"*30, f"\n[!]Paginator call_controller add_reaction error:\n{err}\n", "-"*30, "\n")
+            return
 
         while True:
             try:

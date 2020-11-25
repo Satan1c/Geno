@@ -77,7 +77,12 @@ class Geno(cmd.Bot):
             em.description = "Not a giuld"
 
         try:
-            print("\n\n", "[!] Command error:", "-"*30, err, "-"*30, "\n\n")
+            print("\n\n", "-"*30, f"[!] Command error:\n"
+                                    f"Name: {ctx.command.name}\n"
+                                    f"Usage: {ctx.message.content}\n"
+                                    f"User: {str(ctx.author)}\n"
+                                    f"Server: {ctx.guild.name}  {ctx.guild.id}\n",
+                                     "-"*30, "\n\n")
             await ctx.send(embed=em)
         except BaseException as err:
             print("[!] error send error:", err, "-"*30, "\n\n")
@@ -88,10 +93,10 @@ class Geno(cmd.Bot):
         try:
             await ctx.message.delete()
         except BaseException as err:
-            print("\n\n", "-"*30, "[!] command call delete error:", err, "-"*30, "\n\n")
+            print("\n\n", "-"*30, f"[!] command call delete error:\n{err}\n", "-"*30, "\n\n")
 
     async def on_error(event_method, *args, **kwargs):
-        print("\n\n", "-"*30, "[!] unknown error:", f"{event_method}\n{args}\n{kwargs}", "-"*30, "\n\n")
+        print("\n\n", "-"*30, f"[!] unknown error:\n{event_method}\n{args}\n{kwargs}\n", "-"*30, "\n\n")
 
     async def on_connect(self):
         #return
