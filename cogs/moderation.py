@@ -60,7 +60,7 @@ class Moderation(cmd.Cog):
                 user = mem
 
             else:
-                user = discord.Object(id=user.id)
+                user = discord.Object(id=user if isinstance(user, str) else user.id)
                 if not user:
                     raise cmd.BadArgument("User not found")
 

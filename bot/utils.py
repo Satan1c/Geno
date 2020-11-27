@@ -596,7 +596,7 @@ class DataBase:
         self.profiles = bot.profiles
 
     async def create(self):
-        await asyncio.gather(self._create_servers(), self._delete_servers())  # , self._create_users())
+        await asyncio.gather(self._create_servers())  # , self._create_users())
 
     async def _create_servers(self):
         arr = [int(i['_id']) for i in self.servers.find()]

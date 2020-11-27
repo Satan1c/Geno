@@ -18,6 +18,7 @@ intents = discord.Intents.all()
 intents.presences = False
 
 class Geno(cmd.Bot):
+    prefix = "g-"
     def __init__(self):
         super().__init__(command_prefix=self.get_prefix,
                          owner_id=348444859360608256, intents=intents)
@@ -77,11 +78,12 @@ class Geno(cmd.Bot):
             em.description = "Not a giuld"
 
         try:
-            print("\n\n", "-"*30, f"[!] Command error:\n"
+            print("\n\n", "-"*30, f"\n[!] Command error:\n"
                                     f"Name: {ctx.command.name}\n"
                                     f"Usage: {ctx.message.content}\n"
                                     f"User: {str(ctx.author)}\n"
-                                    f"Server: {ctx.guild.name}  {ctx.guild.id}\n",
+                                    f"Server: {ctx.guild.name}  {ctx.guild.id}\n"
+                                    f"Error: {err}",
                                      "-"*30, "\n\n")
             await ctx.send(embed=em)
         except BaseException as err:
@@ -90,6 +92,13 @@ class Geno(cmd.Bot):
     async def on_command(self, ctx: cmd.Context):
         if not ctx.guild:
             return
+        
+        print("\n\n", "-"*30, f"\n[+] Command usage:\n"
+                                    f"Name: {ctx.command.name}\n"
+                                    f"Usage: {ctx.message.content}\n"
+                                    f"User: {str(ctx.author)}\n"
+                                    f"Server: {ctx.guild.name}  {ctx.guild.id}\n",
+                                     "-"*30, "\n\n")
         try:
             await ctx.message.delete()
         except BaseException as err:

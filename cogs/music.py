@@ -78,6 +78,8 @@ class Music(cmd.Cog):
                     if not player:
                         return
 
+                    cfg = self.config.find_one({"_id": f"{player.guild_id}"})['music']
+
                     print("\nQueueEndEvent")
                     print(player.guild_id)
                     print(player.channel_id)
@@ -85,7 +87,6 @@ class Music(cmd.Cog):
                     print("QueueEndEvent\n")
 
                     guild_id = int(player.guild_id)
-                    cfg = self.config.find_one({"_id": f"{guild_id}"})['music']
 
                     cfg['queue'] = []
                     cfg['now_playing'] = ""
@@ -170,10 +171,11 @@ class Music(cmd.Cog):
                     print(cfg['last'])
                     print("TrackEndEvent\n")
 
-                    guild = self.bot.get_guild(int(player.guild_id), cfg['last']['message'])
+                    guild = self.bot.get_guild(int(player.guild_id))
 
                     message = await guild.get_channel(int(cfg['last']['channel'])).fetch_message(int(cfg['last']['message']))
-                    await message.delete()
+                    if message:
+                        await message.delete()
 
                     if len(guild.get_channel(int(player.channel_id)).members) <= 1:
                         player.queue.clear()

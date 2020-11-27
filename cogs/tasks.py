@@ -39,7 +39,7 @@ class Tasks(cmd.Cog):
 
                   [self.Boticord_u.format(servers=len(self.bot.guilds),
                                           users=len(self.bot.users),
-                                          shards=self.bot.shard_count),
+                                          shards=self.bot.shard_count or 1),
                    [],
                    [{"headers": {"Authorization": self.Boticord_t}}]]]:
             Thread(target=i[0], args=iter(i[1]), kwargs=i[2][0])
@@ -78,7 +78,7 @@ class Tasks(cmd.Cog):
     @loop(hours=6)
     async def db_update(self):
         for i in [self.bot.DataBase(self.bot).create()]:
-            Thread(target=asyncio.run, args=(coro,)).start()
+            Thread(target=asyncio.run, args=(i,)).start()
         
         print("db")
 
