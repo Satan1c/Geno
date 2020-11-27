@@ -95,15 +95,15 @@ class Music(cmd.Cog):
                 cfg = self.config.find_one({"_id": guild_id})['music']
                 try:
                     guild = self.bot.get_guild(int(guild_id))
-                except:
-                    print("queue end error guild")
 
-                if cfg['now_playing'] and player.is_connected and len(
-                        guild.get_channel(int(player.channel_id)).members) <= 1:
-                    player.queue.clear()
-                    await player.stop()
-                    await self.connect_to(guild_id)
-                    await guild.get_channel(cfg['last']['channel']).send("End of playback, auto disconnect")
+                    ch = guild.get_channel(int(player.channel_id or 1))
+                    if cfg['now_playing'] and ch and player.is_connected and len(ch.members) <= 1:
+                        player.queue.clear()
+                        await player.stop()
+                        await self.connect_to(guild_id)
+                        await guild.get_channel(cfg['last']['channel']).send("End of playback, auto disconnect")
+                except BaseException as err:
+                    print(f"queue end error guild\n{err}")
             except BaseException as err:
                 print("\n", "-" * 30, f"\n[!]Music track_hook queue error:\n{err}\n", "-" * 30, "\n")
 
@@ -113,12 +113,8 @@ class Music(cmd.Cog):
                 if not player:
                     return
 
-                print(1)
-
                 cfg = self.config.find_one({"_id": f"{event.player.guild_id}"})['music']
                 data = self.utils.now_playing(player=player)
-
-                print(2)
 
                 if cfg['now_playing'] == "":
                     cfg['now_playing'] = {}
@@ -131,8 +127,6 @@ class Music(cmd.Cog):
                 cfg['now_playing']['name'] = data['csnipp']['title']
                 cfg['now_playing']['icon'] = data['icon']['url']
                 cfg['now_playing']['url'] = f"https://youtube.com/channel/{data['channel']['items'][0]['id']}"
-
-                print(3)
 
                 self.config.update_one({"_id": f"{player.guild_id}"}, {"$set": {"music": dict(cfg)}})
 
@@ -154,11 +148,10 @@ class Music(cmd.Cog):
                 try:
                     message = await self.bot.get_guild(int(player.guild_id)).get_channel(int(cfg['last']['channel'])).send(
                     embed=em)
-                except:
-                    print("track start error guild")
-
-                cfg['last'] = {"message": f"{message.id}", "channel": f"{message.channel.id}"}
-                self.config.update_one({"_id": f"{player.guild_id}"}, {"$set": {"music": dict(cfg)}})
+                    cfg['last'] = {"message": f"{message.id}", "channel": f"{message.channel.id}"}
+                    self.config.update_one({"_id": f"{player.guild_id}"}, {"$set": {"music": dict(cfg)}})
+                except BaseException as err:
+                    print(f"track start error guild\n{err}")
 
             except BaseException as err:
                 print("\n", "-" * 30, f"\n[!]Music track_hook start error:\n{err}\n", "-" * 30, "\n")
@@ -176,24 +169,26 @@ class Music(cmd.Cog):
 
                 try:
                     guild = self.bot.get_guild(int(player.guild_id))
-                except:
-                    print("track end error guild")
+                
 
-                message = await guild.get_channel(int(cfg['last']['channel'])).fetch_message(int(cfg['last']['message']))
-                if message:
-                    await message.delete()
+                    message = await guild.get_channel(int(cfg['last']['channel'])).fetch_message(int(cfg['last']['message']))
+                    if message:
+                        await message.delete()
 
-                if len(guild.get_channel(int(player.channel_id)).members) <= 1:
-                    player.queue.clear()
-                    await player.stop()
-                    await self.connect_to(guild.id)
+                    ch = guild.get_channel(int(player.channel_id or 1))
+                    if ch and len(ch.members) <= 1:
+                        player.queue.clear()
+                        await player.stop()
+                        await self.connect_to(guild.id)
 
-                    cfg['queue'] = []
-                    cfg['now_playing'] = ""
-                    ch = cfg['last']['channel']
-                    self.config.update_one({"_id": str(player.guild_id)}, {"$set": {"music": dict(cfg)}})
+                        cfg['queue'] = []
+                        cfg['now_playing'] = ""
+                        ch = cfg['last']['channel']
+                        self.config.update_one({"_id": str(player.guild_id)}, {"$set": {"music": dict(cfg)}})
 
-                    await guild.get_channel(ch).send("Empty voice channel, auto disconnect")
+                        await guild.get_channel(ch).send("Empty voice channel, auto disconnect")
+                except BaseException as err:
+                    print(f"track end error guild\n{err}")
 
             except BaseException as err:
                 print("\n", "-" * 30, f"\n[!]Music track_hook end error:\n{err}\n", "-" * 30, "\n")

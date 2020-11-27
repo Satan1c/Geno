@@ -27,8 +27,8 @@ class Geno(cmd.Bot):
                          intents=intents)
                          #case_insensitive=True)
         self.token = config.TOKEN
-        self.prefix = "t-"
-        #self.prefix = "g-"
+        #self.prefix = "t-"
+        self.prefix = "g-"
         self.version = "(v1.0.0)"
         self.main = client.get_database("cfg").get_collection("main")
         self.servers = client.get_database("servers").get_collection("configs")
@@ -69,7 +69,6 @@ class Geno(cmd.Bot):
     async def on_command_error(self, ctx: cmd.Context, err):
         if isinstance(err, cmd.CommandNotFound) or (ctx.command and ctx.command.name == "Help"):
             return
-        # raise err
         s = str(err).split(": ")
         em = discord.Embed(title=f"{ctx.command.name} ERROR",
                            description=f"{s[0]}: {s[-1]}" if len(s) > 1 else s[0],
@@ -112,12 +111,12 @@ class Geno(cmd.Bot):
         print("\n", "-" * 30, f"\n[!] unknown error:\n{event_method}\n{args}\n{kwargs}\n", "-" * 30, "\n")
 
     async def on_connect(self):
-        return
+        #return
         self.main.update_one({"_id": 0}, {"$set": {"uptime": datetime.now()}})
 
     async def get_prefix(self, message):
         prefix = self.prefix
-        return prefix
+        #return prefix
 
         if message.guild:
             prefix = self.servers.find_one({"_id": f"{message.guild.id}"})
