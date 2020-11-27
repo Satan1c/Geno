@@ -72,127 +72,131 @@ class Music(cmd.Cog):
                 raise cmd.CommandInvokeError('You need to be in my voicechannel.')
 
     async def track_hook(self, event):
-            if isinstance(event, lavalink.events.QueueEndEvent):
+        if isinstance(event, lavalink.events.QueueEndEvent):
+            try:
+                player = event.player
+                if not player:
+                    return
+
+                cfg = self.config.find_one({"_id": f"{player.guild_id}"})['music']
+
+                print("\nQueueEndEvent")
+                print(player.guild_id)
+
+                guild_id = int(player.guild_id)
+
+                cfg['queue'] = []
+                cfg['now_playing'] = ""
+
+                self.config.update_one({"_id": f"{guild_id}"}, {"$set": {"music": dict(cfg)}})
+
+                await asyncio.sleep(60)
+
+                cfg = self.config.find_one({"_id": guild_id})['music']
                 try:
-                    player = event.player
-                    if not player:
-                        return
+                    guild = self.bot.get_guild(int(guild_id))
+                except:
+                    print("queue end error guild")
 
-                    cfg = self.config.find_one({"_id": f"{player.guild_id}"})['music']
+                if cfg['now_playing'] and player.is_connected and len(
+                        guild.get_channel(int(player.channel_id)).members) <= 1:
+                    player.queue.clear()
+                    await player.stop()
+                    await self.connect_to(guild_id)
+                    await guild.get_channel(cfg['last']['channel']).send("End of playback, auto disconnect")
+            except BaseException as err:
+                print("\n", "-" * 30, f"\n[!]Music track_hook queue error:\n{err}\n", "-" * 30, "\n")
 
-                    print("\nQueueEndEvent")
-                    print(player.guild_id)
-                    print(player.channel_id)
-                    print(cfg['last'])
-                    print("QueueEndEvent\n")
+        elif isinstance(event, lavalink.TrackStartEvent):
+            try:
+                player = event.player
+                if not player:
+                    return
 
-                    guild_id = int(player.guild_id)
+                print(1)
+
+                cfg = self.config.find_one({"_id": f"{event.player.guild_id}"})['music']
+                data = self.utils.now_playing(player=player)
+
+                print(2)
+
+                if cfg['now_playing'] == "":
+                    cfg['now_playing'] = {}
+                cfg['now_playing']['start'] = datetime.now()
+                cfg['now_playing']['req'] = str(data['req'].id)
+                cfg['now_playing']['title'] = data['title']
+                cfg['now_playing']['tags'] = data['tags'],
+                cfg['now_playing']['video_url'] = player.current.uri
+                cfg['now_playing']['thumbnail'] = data['img']['url']
+                cfg['now_playing']['name'] = data['csnipp']['title']
+                cfg['now_playing']['icon'] = data['icon']['url']
+                cfg['now_playing']['url'] = f"https://youtube.com/channel/{data['channel']['items'][0]['id']}"
+
+                print(3)
+
+                self.config.update_one({"_id": f"{player.guild_id}"}, {"$set": {"music": dict(cfg)}})
+
+                print("\nTrackStartEvent")
+                print(player.guild_id)
+
+                em = discord.Embed(title=cfg['now_playing']['title'],
+                                   description=f"Duration: `{lavalink.format_time(int(player.current.duration))}`"
+                                               f"\nTags: `{cfg['now_playing']['tags'][0]}`",
+                                   url=cfg['now_playing']['video_url'],
+                                   timestamp=datetime.now(),
+                                   colour=discord.Colour.green())
+                em.set_image(url=cfg['now_playing']['thumbnail'])
+                em.set_author(name=cfg['now_playing']['name'], url=cfg['now_playing']['url'],
+                              icon_url=cfg['now_playing']['icon'])
+                em.set_footer(text=f"Requested by: {str(data['req'])}",
+                              icon_url=data['req'].avatar_url_as(format='png', static_format='png', size=256))
+
+                try:
+                    message = await self.bot.get_guild(int(player.guild_id)).get_channel(int(cfg['last']['channel'])).send(
+                    embed=em)
+                except:
+                    print("track start error guild")
+
+                cfg['last'] = {"message": f"{message.id}", "channel": f"{message.channel.id}"}
+                self.config.update_one({"_id": f"{player.guild_id}"}, {"$set": {"music": dict(cfg)}})
+
+            except BaseException as err:
+                print("\n", "-" * 30, f"\n[!]Music track_hook start error:\n{err}\n", "-" * 30, "\n")
+
+        elif isinstance(event, lavalink.TrackEndEvent):
+            try:
+                player = event.player
+                if not player:
+                    return
+
+                cfg = self.config.find_one({"_id": f"{player.guild_id}"})['music']
+
+                print("\nTrackEndEvent")
+                print(player.guild_id)
+
+                try:
+                    guild = self.bot.get_guild(int(player.guild_id))
+                except:
+                    print("track end error guild")
+
+                message = await guild.get_channel(int(cfg['last']['channel'])).fetch_message(int(cfg['last']['message']))
+                if message:
+                    await message.delete()
+
+                if len(guild.get_channel(int(player.channel_id)).members) <= 1:
+                    player.queue.clear()
+                    await player.stop()
+                    await self.connect_to(guild.id)
 
                     cfg['queue'] = []
                     cfg['now_playing'] = ""
+                    ch = cfg['last']['channel']
+                    self.config.update_one({"_id": str(player.guild_id)}, {"$set": {"music": dict(cfg)}})
 
-                    self.config.update_one({"_id": f"{guild_id}"}, {"$set": {"music": dict(cfg)}})
+                    await guild.get_channel(ch).send("Empty voice channel, auto disconnect")
 
-                    await asyncio.sleep(60)
-
-                    cfg = self.config.find_one({"_id": guild_id})['music']
-                    guild = self.bot.get_guild(int(guild_id))
-
-                    if cfg['now_playing'] and player.is_connected and len(
-                            guild.get_channel(int(player.channel_id)).members) <= 1:
-                        player.queue.clear()
-                        await player.stop()
-                        await self.connect_to(guild_id)
-                        await guild.get_channel(cfg['last']['channel']).send("End of playback, auto disconnect")
-                except BaseException as err:
-                    print("\n", "-"*30, f"\n[!]Music track_hook queue error:\n{err}\n", "-"*30, "\n")
-
-            elif isinstance(event, lavalink.TrackStartEvent):
-                try:
-                    player = event.player
-                    if not player:
-                        return
-
-                    cfg = self.config.find_one({"_id": f"{event.player.guild_id}"})['music']
-                    data = self.utils.now_playing(player=player)
-
-                    if cfg['now_playing'] == "":
-                        cfg['now_playing'] = {}
-                    cfg['now_playing']['start'] = datetime.now()
-                    cfg['now_playing']['req'] = str(data['req'].id)
-                    cfg['now_playing']['title'] = data['title']
-                    cfg['now_playing']['tags'] = data['tags'],
-                    cfg['now_playing']['video_url'] = player.current.uri
-                    cfg['now_playing']['thumbnail'] = data['img']['url']
-                    cfg['now_playing']['name'] = data['csnipp']['title']
-                    cfg['now_playing']['icon'] = data['icon']['url']
-                    cfg['now_playing']['url'] = f"https://youtube.com/channel/{data['channel']['items'][0]['id']}"
-
-                    self.config.update_one({"_id": f"{player.guild_id}"}, {"$set": {"music": dict(cfg)}})
-
-                    print("\nTrackStartEvent")
-                    print(player.guild_id)
-                    print(player.current.duration)
-                    print(cfg['last'])
-                    print("TrackStartEvent\n")
-
-                    em = discord.Embed(title=cfg['now_playing']['title'],
-                                       description=f"Duration: `{lavalink.format_time(int(player.current.duration))}`"
-                                                   f"\nTags: `{cfg['now_playing']['tags'][0]}`",
-                                       url=cfg['now_playing']['video_url'],
-                                       timestamp=datetime.now(),
-                                       colour=discord.Colour.green())
-                    em.set_image(url=cfg['now_playing']['thumbnail'])
-                    em.set_author(name=cfg['now_playing']['name'], url=cfg['now_playing']['url'],
-                                  icon_url=cfg['now_playing']['icon'])
-                    em.set_footer(text=f"Requested by: {str(data['req'])}",
-                                  icon_url=data['req'].avatar_url_as(format='png', static_format='png', size=256))
-
-                    message = await self.bot.get_guild(int(player.guild_id)).get_channel(int(cfg['last']['channel'])).send(
-                        embed=em)
-
-                    cfg['last'] = {"message": f"{message.id}", "channel": f"{message.channel.id}"}
-                    self.config.update_one({"_id": f"{player.guild_id}"}, {"$set": {"music": dict(cfg)}})
-
-                except BaseException as err:
-                    print("\n", "-"*30, f"\n[!]Music track_hook start error:\n{err}\n", "-"*30, "\n")
-
-            elif isinstance(event, lavalink.TrackEndEvent):
-                try:
-                    player = event.player
-                    if not player:
-                        return
-
-                    cfg = self.config.find_one({"_id": f"{player.guild_id}"})['music']
-
-                    print("\nTrackEndEvent")
-                    print(player.guild_id)
-                    print(player.channel_id)
-                    print(cfg['last'])
-                    print("TrackEndEvent\n")
-
-                    guild = self.bot.get_guild(int(player.guild_id))
-
-                    message = await guild.get_channel(int(cfg['last']['channel'])).fetch_message(int(cfg['last']['message']))
-                    if message:
-                        await message.delete()
-
-                    if len(guild.get_channel(int(player.channel_id)).members) <= 1:
-                        player.queue.clear()
-                        await player.stop()
-                        await self.connect_to(guild.id)
-
-                        cfg['queue'] = []
-                        cfg['now_playing'] = ""
-                        ch = cfg['last']['channel']
-                        self.config.update_one({"_id": str(player.guild_id)}, {"$set": {"music": dict(cfg)}})
-                        
-                        await guild.get_channel(ch).send("Empty voice channel, auto disconnect")
-
-                except BaseException as err:
-                    print("\n", "-"*30, f"\n[!]Music track_hook end error:\n{err}\n", "-"*30, "\n")
-
-        
+            except BaseException as err:
+                print("\n", "-" * 30, f"\n[!]Music track_hook end error:\n{err}\n", "-" * 30, "\n")
 
     async def connect_to(self, guild_id: int, channel_id: str = None):
         """ Connects to the given voicechannel ID. A channel_id of `None` means disconnect. """

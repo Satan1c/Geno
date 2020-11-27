@@ -15,22 +15,23 @@ class Events(cmd.Cog):
     @cmd.Cog.listener("on_guild_join")
     async def guild_join(self, guild: discord.Guild):
         await self.DB(self.bot).create_server(guild)
+        print(f"\n[+]server join\nName: {guild.name}\nId: {guild.id}\nMembers: {len([i.discriminator for i in guild.members if not i.bot])}\nBots: {len([i.discriminator for i in guild.members if i.bot])}")
         
-    @cmd.Cog.listener("on_member_update")
-    async def member_update(self, before: discord.Member, after: discord.Member):
-        pass
-    
-    @cmd.Cog.listener("on_user_update")
-    async def user_update(self, before: discord.User, after: discord.User):
-        pass
-    
-    @cmd.Cog.listener("on_member_join")
-    async def member_join(self, member: discord.Member):
-        pass
-    
-    @cmd.Cog.listener("on_member_remove")
-    async def member_remove(self, member: discord.Member):
-        pass
+    # @cmd.Cog.listener("on_member_update")
+    # async def member_update(self, before: discord.Member, after: discord.Member):
+    #     pass
+    #
+    # @cmd.Cog.listener("on_user_update")
+    # async def user_update(self, before: discord.User, after: discord.User):
+    #     pass
+    #
+    # @cmd.Cog.listener("on_member_join")
+    # async def member_join(self, member: discord.Member):
+    #     pass
+    #
+    # @cmd.Cog.listener("on_member_remove")
+    # async def member_remove(self, member: discord.Member):
+    #     pass
 
     @cmd.Cog.listener("on_voice_state_update")
     async def voice_update(self, member: discord.Member, before, after):
@@ -46,8 +47,6 @@ class Events(cmd.Cog):
             cfg['queue'] = []
             cfg['now_playing'] = ""
             self.config.update_one({"_id": f"{member.guild.id}"}, {"$set": {"music": dict(cfg)}})
-
-        del cfg
 
     @cmd.Cog.listener("on_message")
     async def message(self, message: discord.Message):

@@ -17,20 +17,21 @@ client = pymongo.MongoClient(config.MONGO)
 intents = discord.Intents.all()
 intents.presences = False
 
+
 class Geno(cmd.Bot):
     prefix = "g-"
+
     def __init__(self):
         super().__init__(command_prefix=self.get_prefix,
-                         owner_id=348444859360608256, intents=intents)
+                         owner_id=348444859360608256,
+                         intents=intents)
+                         #case_insensitive=True)
         self.token = config.TOKEN
-        #self.prefix = "t-"
-        self.prefix = "g-"
+        self.prefix = "t-"
+        #self.prefix = "g-"
         self.version = "(v1.0.0)"
         self.main = client.get_database("cfg").get_collection("main")
         self.servers = client.get_database("servers").get_collection("configs")
-
-    async def on_disconnect(self):
-        print(f"\n[!] {self.user.name} disconnect\n")
 
     def init(self):
         self.twitch = Twitch()
@@ -68,7 +69,7 @@ class Geno(cmd.Bot):
     async def on_command_error(self, ctx: cmd.Context, err):
         if isinstance(err, cmd.CommandNotFound) or (ctx.command and ctx.command.name == "Help"):
             return
-        #raise err
+        # raise err
         s = str(err).split(": ")
         em = discord.Embed(title=f"{ctx.command.name} ERROR",
                            description=f"{s[0]}: {s[-1]}" if len(s) > 1 else s[0],
@@ -78,42 +79,45 @@ class Geno(cmd.Bot):
             em.description = "Not a giuld"
 
         try:
-            print("\n\n", "-"*30, f"\n[!] Command error:\n"
-                                    f"Name: {ctx.command.name}\n"
-                                    f"Usage: {ctx.message.content}\n"
-                                    f"User: {str(ctx.author)}\n"
-                                    f"Server: {ctx.guild.name}  {ctx.guild.id}\n"
-                                    f"Error: {err}",
-                                     "-"*30, "\n\n")
+            print("\n", "-" * 30,
+                  f"\n[!] Command error:\n"
+                  f"Name: {ctx.command.name}\n"
+                  f"Usage: {ctx.message.content}\n"
+                  f"User: {str(ctx.author)}\n"
+                  f"Server: {ctx.guild.name}  {ctx.guild.id}\n"
+                  f"Error: {err}",
+                  "-" * 30, "\n")
             await ctx.send(embed=em)
         except BaseException as err:
-            print("[!] error send error:", err, "-"*30, "\n\n")
+            print(f"[!] error send error:\n{err}", "-" * 30, "\n")
 
     async def on_command(self, ctx: cmd.Context):
         if not ctx.guild:
             return
-        
-        print("\n\n", "-"*30, f"\n[+] Command usage:\n"
-                                    f"Name: {ctx.command.name}\n"
-                                    f"Usage: {ctx.message.content}\n"
-                                    f"User: {str(ctx.author)}\n"
-                                    f"Server: {ctx.guild.name}  {ctx.guild.id}\n",
-                                     "-"*30, "\n\n")
+
+        print("\n", "-" * 30,
+              f"\n[+] Command usage:\n"
+              f"Name: {ctx.command.name}\n"
+              f"Usage: {ctx.message.content}\n"
+              f"User: {str(ctx.author)}\n"
+              f"Server: {ctx.guild.name}  {ctx.guild.id}\n",
+              "-" * 30, "\n")
         try:
             await ctx.message.delete()
         except BaseException as err:
-            print("\n\n", "-"*30, f"[!] command call delete error:\n{err}\n", "-"*30, "\n\n")
+            print("\n", "-" * 30, f"[!] command call delete error:\n{err}\n", "-" * 30, "\n")
 
+    @staticmethod
     async def on_error(event_method, *args, **kwargs):
-        print("\n\n", "-"*30, f"[!] unknown error:\n{event_method}\n{args}\n{kwargs}\n", "-"*30, "\n\n")
+        print("\n", "-" * 30, f"\n[!] unknown error:\n{event_method}\n{args}\n{kwargs}\n", "-" * 30, "\n")
 
     async def on_connect(self):
-        #return
+        return
         self.main.update_one({"_id": 0}, {"$set": {"uptime": datetime.now()}})
 
     async def get_prefix(self, message):
         prefix = self.prefix
-        #return prefix
+        return prefix
 
         if message.guild:
             prefix = self.servers.find_one({"_id": f"{message.guild.id}"})
