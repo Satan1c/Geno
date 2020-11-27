@@ -1,6 +1,7 @@
 import asyncio
 from threading import Thread
 
+import aiohttp
 import requests
 
 from bot.bot import Geno
@@ -24,20 +25,22 @@ class Tasks(cmd.Cog):
 
     @loop(hours=1)
     async def monitors_update(self):
-        for i in [[requests.post,
-                   [f"https://api.server-discord.com/v2/bots/{self.bot.user.id}/stats"],
-                   [{"headers": {"Authorization": f"SDC {self.SDC}"}, "data": {"shards": self.bot.shard_count or 1, "servers": len(self.bot.guilds)}}]],
+        async with aiohttp.ClientSession as session:
+            async with session.post(f"https://api.server-discord.com/v2/bots/{self.bot.user.id}/stats",
+                                    headers={"Authorization": f"SDC {self.SDC}"},
+                                    data={"shards": self.bot.shard_count or 1, "servers": len(self.bot.guilds)}) as res:
+                print(await res.json())
 
-                  [requests.post,
-                   [f"https://discord.boats/api/bot/{self.bot.user.id}"],
-                   [{"headers": {"Authorization": self.Boat}, "data": {"server_count": len(self.bot.guilds)}}]],
+            async with session.post(f"https://discord.boats/api/bot/{self.bot.user.id}",
+                                    headers={"Authorization": self.Boat},
+                                    data={"server_count": len(self.bot.guilds)}) as res:
+                print(await res.json())
 
-                  [requests.get,
-                   [self.Boticord_u.format(servers=len(self.bot.guilds),
-                                          users=len(self.bot.users),
-                                          shards=self.bot.shard_count or 1)],
-                   [{"headers": {"Authorization": self.Boticord_t}}]]]:
-            Thread(target=i[0], args=iter(i[1]), kwargs=i[2][0])
+            async with session.get(self.Boticord_u.format(servers=len(self.bot.guilds),
+                                                          users=len(self.bot.users),
+                                                          shards=self.bot.shard_count or 1),
+                                   headers={"Authorization": self.Boticord_t}) as res:
+                print(await res.json())
         
         print("monitorings")
 
