@@ -8,6 +8,8 @@ from bot.bot import Geno
 from discord.ext import commands as cmd
 from discord.ext.tasks import loop
 
+from config import SDC, Boat
+
 
 class Tasks(cmd.Cog):
     def __init__(self, bot: Geno):
@@ -25,14 +27,14 @@ class Tasks(cmd.Cog):
 
     @loop(hours=1)
     async def monitors_update(self):
-        async with aiohttp.ClientSession as session:
+        async with aiohttp.ClientSession() as session:
             async with session.post(f"https://api.server-discord.com/v2/bots/{self.bot.user.id}/stats",
-                                    headers={"Authorization": f"SDC {self.SDC}"},
+                                    headers={"Authorization": f"SDC {SDC}"},
                                     data={"shards": self.bot.shard_count or 1, "servers": len(self.bot.guilds)}) as res:
                 print(await res.json())
 
             async with session.post(f"https://discord.boats/api/bot/{self.bot.user.id}",
-                                    headers={"Authorization": self.Boat},
+                                    headers={"Authorization": Boat},
                                     data={"server_count": len(self.bot.guilds)}) as res:
                 print(await res.json())
 
