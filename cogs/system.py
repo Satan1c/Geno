@@ -40,7 +40,7 @@ class System(cmd.Cog):
     @cmd.command(name="Test", aliases=['test'], hidden=True)
     @cmd.is_owner()
     @cmd.check(checks.is_off)
-    async def _test(self, ctx: cmd.Context, *, msg: str):
+    async def test_command(self, ctx: cmd.Context, *, msg: str):
         print(msg.strip('<>'))
         msg = msg.strip('<>').split(':')
         msg.pop(0)
@@ -64,7 +64,7 @@ class System(cmd.Cog):
     """)
     @cmd.check(checks.is_off)
     @cmd.has_guild_permissions(manage_messages=True)
-    async def _prefix(self, ctx: cmd.Context, *, prefix: str = Geno.prefix):
+    async def prefix_command(self, ctx: cmd.Context, *, prefix: str = Geno.prefix):
         cfg = self.config.find_one({"_id": f"{ctx.guild.id}"})
         raw = cfg['prefix']
         if str(raw) == str(prefix):
@@ -111,7 +111,7 @@ class System(cmd.Cog):
     @cmd.check(checks.is_off)
     @cmd.has_guild_permissions(manage_channels=True)
     @cmd.bot_has_guild_permissions(manage_channels=True)
-    async def _twitch(self, ctx: cmd.Context, channel: str = None, *, nick: str = None):
+    async def twitch_command(self, ctx: cmd.Context, channel: str = None, *, nick: str = None):
         if channel == "remove":
             if not nick:
                 nick = "satan1clive"
@@ -216,7 +216,7 @@ class System(cmd.Cog):
     @cmd.check(checks.is_off)
     @cmd.has_guild_permissions(manage_channels=True, manage_roles=True)
     @cmd.bot_has_guild_permissions(manage_channels=True, manage_roles=True)
-    async def _reaction_role(self, ctx: cmd.Context, remove: str, message: str, *, roles: str):
+    async def reaction_role_command(self, ctx: cmd.Context, remove: str, message: str, *, roles: str):
         cfg = self.config.find_one({"_id": str(ctx.guild.id)})
         if remove in ["add"]:
             roles = [i.split(" ") for i in roles.split("; ")] \
@@ -296,7 +296,7 @@ class System(cmd.Cog):
     @cmd.guild_only()
     @cmd.check(checks.is_off)
     @cmd.has_guild_permissions(manage_guild=True)
-    async def _disable_command_or_category(self, ctx: cmd.Context, *, target: str):
+    async def disable_command_or_category_command(self, ctx: cmd.Context, *, target: str):
         if not target:
             raise cmd.BadArgument("Give name of category or command alias")
         r = await checks.is_off(ctx)
@@ -358,7 +358,7 @@ class System(cmd.Cog):
     """)
     @cmd.guild_only()
     @cmd.has_guild_permissions(manage_guild=True)
-    async def _enable_command_or_category(self, ctx: cmd.Context, *, target: str):
+    async def enable_command_or_category_command(self, ctx: cmd.Context, *, target: str):
         if not target:
             raise cmd.BadArgument("Give name of category or command alias")
 

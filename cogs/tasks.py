@@ -31,18 +31,18 @@ class Tasks(cmd.Cog):
             async with session.post(f"https://api.server-discord.com/v2/bots/{self.bot.user.id}/stats",
                                     headers={"Authorization": f"SDC {SDC}"},
                                     data={"shards": self.bot.shard_count or 1, "servers": len(self.bot.guilds)}) as res:
-                print(await res.json())
+                print("SDC:", await res.json())
 
             async with session.post(f"https://discord.boats/api/bot/{self.bot.user.id}",
                                     headers={"Authorization": Boat},
                                     data={"server_count": len(self.bot.guilds)}) as res:
-                print(await res.json())
+                print("Boats:", await res.json())
 
             async with session.get(self.Boticord_u.format(servers=len(self.bot.guilds),
                                                           users=len(self.bot.users),
                                                           shards=self.bot.shard_count or 1),
                                    headers={"Authorization": self.Boticord_t}) as res:
-                print(await res.json())
+                print("Boticord:", await res.json())
         
         print("monitorings")
 
@@ -56,7 +56,8 @@ class Tasks(cmd.Cog):
                     self.streamers.delete_one({"_id": streamer['_id']})
                     continue
                 query = self.twitch.get_stream_query(streamer['_id'])
-                res1 = self.twitch.get_response(query).json()['data']
+                res1 = self.twitch.get_response(query)
+                res1 = res1.json()['data']
 
                 if len(res1) < 1 or int(res1[0]['id']) == int(streamer['stream_id']):
                     continue
@@ -64,7 +65,8 @@ class Tasks(cmd.Cog):
                 self.streamers.update_one({"_id": streamer['_id']}, {"$set": {"stream_id": res1['id']}})
 
                 query = self.twitch.get_user_query(streamer['_id'])
-                res2 = self.twitch.get_response(query).json()['data'][0]
+                res2 = self.twitch.get_response(query)
+                res2 = res2.json()['data'][0]
 
                 for server in streamer['servers']:
                     channel = self.bot.get_guild(int(server['id'])).get_channel(int(server['channel']))
@@ -77,9 +79,7 @@ class Tasks(cmd.Cog):
 
     @loop(hours=6)
     async def db_update(self):
-        for i in [self.bot.DataBase(self.bot).create()]:
-            Thread(target=asyncio.run, args=(i,)).start()
-        
+        await self.bot.DataBase(self.bot).create()
         print("db")
 
 

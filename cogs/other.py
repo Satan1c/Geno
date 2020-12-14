@@ -34,11 +34,11 @@ class Other(cmd.Cog):
 
     @cmd.command(name="Help", hidden=True, aliases=['h', 'help', 'commands', 'cmds', 'хелп', 'команды', 'кмд'])
     @cmd.check(checks.is_off)
-    async def _help(self, ctx: cmd.Context, *, command: str = None):
+    async def help_command(self, ctx: cmd.Context, *, command: str = None):
         reg = str(ctx.guild.region if ctx.guild else "en")
         if command:
             cmds = [i for j in self.bot.cogs for i in self.bot.cogs[j].walk_commands()
-                    if not i.hidden and j != "Jishaku" and command.lower() in i.aliases]
+                    if not i.hidden and command.lower() in i.aliases]
             if len(cmds) == 0:
                 raise cmd.BadArgument('Nothing found!')
 
@@ -96,7 +96,7 @@ class Other(cmd.Cog):
     """)
     @cmd.guild_only()
     @cmd.check(checks.is_off)
-    async def _server(self, ctx: cmd.Context):
+    async def server_command(self, ctx: cmd.Context):
         srv = self.config.find_one({"_id": f"{ctx.guild.id}"})
         g = ctx.guild
 
@@ -127,7 +127,7 @@ class Other(cmd.Cog):
     Показывает некотороую информацию про меня
     """)
     @cmd.check(checks.is_off)
-    async def _bot(self, ctx: cmd.Context):
+    async def _bot_command(self, ctx: cmd.Context):
         system = platform.uname()
         proc = psutil.Process()
 
@@ -149,7 +149,7 @@ class Other(cmd.Cog):
     Показывает ссылки связанные с ботом, по типу: приглашение бота, сервер поддержки, смониторинги
     """)
     @cmd.check(checks.is_off)
-    async def _bot_urls(self, ctx: cmd.Context):
+    async def _bot_urls_command(self, ctx: cmd.Context):
         em = discord.Embed(title=f"{ctx.me.name} {self.bot.version}  urls",
                            colour=discord.Colour.green(),
                            timestamp=datetime.now())
@@ -166,7 +166,7 @@ class Other(cmd.Cog):
 
     @cmd.command(name="Profile", aliases=['профиль', 'profile'], usage="profile", hidden=True)
     @cmd.check(checks.is_off)
-    async def _profile(self, ctx: cmd.Context):
+    async def profile_command(self, ctx: cmd.Context):
         activity = f"{str(ctx.author.activities[1].type).split('.')[1]} {ctx.author.activities[1].name}" if "emoji" in dir(ctx.author.activities[0]) else f"{ctx.author.activities[0].emoji} {ctx.author.activities[0].name}"
         custom = f"{ctx.author.activities[0].emoji} {ctx.author.activities[0].name}\n" if "emoji" in dir(ctx.author.activities[0]) else None
 

@@ -22,7 +22,7 @@ class Geno(cmd.Bot):
     prefix = "g-"
 
     def __init__(self):
-        super().__init__(command_prefix=self.get_prefix,
+        super().__init__(cmd.when_mentioned_or(self.get_prefix),
                          owner_id=348444859360608256,
                          intents=intents)
                          #case_insensitive=True)
@@ -88,7 +88,7 @@ class Geno(cmd.Bot):
                   "-" * 30, "\n")
             await ctx.send(embed=em)
         except BaseException as err:
-            print(f"[!] error send error:\n{err}", "-" * 30, "\n")
+            print(f"[!] error send error:\n{err}\n", "-" * 30, "\n")
 
     async def on_command(self, ctx: cmd.Context):
         if not ctx.guild:

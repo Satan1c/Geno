@@ -36,7 +36,7 @@ class Moderation(cmd.Cog):
     @cmd.check(checks.is_off)
     @cmd.bot_has_guild_permissions(ban_members=True)
     @cmd.has_guild_permissions(ban_members=True)
-    async def _ban(self, ctx: cmd.Context, user, *, reason: str = "no reason"):
+    async def ban_command(self, ctx: cmd.Context, user, *, reason: str = "no reason"):
         embed = discord.Embed(title="Ban",
                               description="User: {user}\nReason: {reason}",
                               timestamp=datetime.now(),
@@ -106,7 +106,7 @@ class Moderation(cmd.Cog):
     @cmd.check(checks.is_off)
     @cmd.bot_has_guild_permissions(kick_members=True)
     @cmd.has_guild_permissions(kick_members=True)
-    async def _kick(self, ctx: cmd.Context, user: discord.Member, *, reason: str = "no reason"):
+    async def kick_command(self, ctx: cmd.Context, user: discord.Member, *, reason: str = "no reason"):
         embed = discord.Embed(title="Kick",
                               description=f"User: {user}\nReason: {reason}",
                               timestamp=datetime.now(),

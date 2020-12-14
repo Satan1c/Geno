@@ -222,7 +222,7 @@ class Music(cmd.Cog):
     """)
     @cmd.check(checks.is_off)
     @cmd.guild_only()
-    async def _play(self, ctx: cmd.Context, *, query: str):
+    async def play_command(self, ctx: cmd.Context, *, query: str):
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
         track = None
         query = query.strip('<>')
@@ -292,7 +292,7 @@ class Music(cmd.Cog):
     """)
     @cmd.check(checks.is_off)
     @cmd.guild_only()
-    async def _stop(self, ctx: cmd.Context):
+    async def stop_command(self, ctx: cmd.Context):
         """ Disconnects the player from the voice channel and clears its queue. """
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
 
@@ -322,7 +322,7 @@ class Music(cmd.Cog):
     """)
     @cmd.check(checks.is_off)
     @cmd.guild_only()
-    async def _volume(self, ctx: cmd.Context, value=None):
+    async def volume_command(self, ctx: cmd.Context, value=None):
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
 
         if not player.is_connected:
@@ -354,7 +354,7 @@ class Music(cmd.Cog):
     """)
     @cmd.check(checks.is_off)
     @cmd.guild_only()
-    async def _queue(self, ctx: cmd.Context):
+    async def queue_command(self, ctx: cmd.Context):
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
 
         if not player.is_connected:
@@ -378,7 +378,7 @@ class Music(cmd.Cog):
     """)
     @cmd.check(checks.is_off)
     @cmd.guild_only()
-    async def _skip(self, ctx: cmd.Context):
+    async def skip_command(self, ctx: cmd.Context):
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
 
         if not player.is_connected:
@@ -397,7 +397,7 @@ class Music(cmd.Cog):
     """)
     @cmd.check(checks.is_off)
     @cmd.guild_only()
-    async def _now_playing(self, ctx: cmd.Context):
+    async def now_playing_command(self, ctx: cmd.Context):
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
 
         if not player.is_connected:
@@ -436,7 +436,7 @@ class Music(cmd.Cog):
     """)
     @cmd.check(checks.is_off)
     @cmd.guild_only()
-    async def _pause(self, ctx: cmd.Context):
+    async def pause_command(self, ctx: cmd.Context):
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
 
         if not player.is_connected:
@@ -455,7 +455,7 @@ class Music(cmd.Cog):
     """)
     @cmd.check(checks.is_off)
     @cmd.guild_only()
-    async def _resume(self, ctx: cmd.Context):
+    async def resume_command(self, ctx: cmd.Context):
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
 
         if not player.is_connected:
@@ -474,7 +474,7 @@ class Music(cmd.Cog):
     одключается к вашему голосовому каналу
     """)
     @cmd.guild_only()
-    async def _join(self, ctx: cmd.Context):
+    async def join_command(self, ctx: cmd.Context):
         if not ctx.author.voice:
             raise cmd.BadArgument("You must be in voicechannel to use this command.")
 
