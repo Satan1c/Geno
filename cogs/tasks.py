@@ -1,14 +1,9 @@
-import asyncio
-from threading import Thread
-
 import aiohttp
-import requests
 
 from bot.bot import Geno
+from config import SDC, Boat
 from discord.ext import commands as cmd
 from discord.ext.tasks import loop
-
-from config import SDC, Boat
 
 
 class Tasks(cmd.Cog):
@@ -43,38 +38,38 @@ class Tasks(cmd.Cog):
                                                           shards=self.bot.shard_count or 1),
                                    headers={"Authorization": self.Boticord_t}) as res:
                 print("Boticord:", await res.json())
-        
+
         print("monitorings")
 
     @loop(minutes=10)
     async def check_twitch(self):
         try:
-            streamers = [i for i in self.streamers.find()]
-
-            for streamer in streamers:
+            async for streamer in self.streamers.find():
                 if len(streamer['servers']) <= 0:
-                    self.streamers.delete_one({"_id": streamer['_id']})
+                    await self.streamers.delete_one({"_id": streamer['_id']})
                     continue
+
                 query = self.twitch.get_stream_query(streamer['_id'])
-                res1 = self.twitch.get_response(query)
-                res1 = res1.json()['data']
+                res1 = await self.twitch.get_response(query)
+                res1 = res1['data']
 
                 if len(res1) < 1 or int(res1[0]['id']) == int(streamer['stream_id']):
                     continue
                 res1 = res1[0]
-                self.streamers.update_one({"_id": streamer['_id']}, {"$set": {"stream_id": res1['id']}})
 
                 query = self.twitch.get_user_query(streamer['_id'])
-                res2 = self.twitch.get_response(query)
-                res2 = res2.json()['data'][0]
+                res2 = await self.twitch.get_response(query)
+                res2 = res2['data'][0]
 
                 for server in streamer['servers']:
                     channel = self.bot.get_guild(int(server['id'])).get_channel(int(server['channel']))
                     await self.twitch.stream_embed(streamer['_id'], res1, res2, channel)
 
+                await self.streamers.update_one({"_id": streamer['_id']}, {"$set": {"stream_id": res1['id']}})
+
         except BaseException as err:
-            print("\n", "-"*30, f"\n[!]Tasks check_twitch error:\n{err}\n", "-"*30, "\n")
-        
+            print("\n", "-" * 30, f"\n[!]Tasks check_twitch error:\n{err}\n", "-" * 30, "\n")
+
         print("twitch")
 
     @loop(hours=6)

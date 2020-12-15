@@ -32,9 +32,9 @@ class Other(cmd.Cog):
                      {"D.Boats": "https://discord.boats/bot/648570341974736926"},
                      {"Top-Bots": "https://top-bots.xyz/bot/648570341974736926"})
 
-    @cmd.command(name="Help", hidden=True, aliases=['h', 'help', 'commands', 'cmds', 'хелп', 'команды', 'кмд'])
+    @cmd.command(name="Help", hidden=True, aliases=['h', 'commands', 'cmds', 'хелп', 'команды', 'кмд'])
     @cmd.check(checks.is_off)
-    async def help_command(self, ctx: cmd.Context, *, command: str = None):
+    async def help(self, ctx: cmd.Context, *, command: str = None):
         reg = str(ctx.guild.region if ctx.guild else "en")
         if command:
             cmds = [i for j in self.bot.cogs for i in self.bot.cogs[j].walk_commands()
@@ -53,10 +53,13 @@ class Other(cmd.Cog):
 
                                                 {desc.split(":-:")[0 if reg != "russia" else 1]}""",
 
-                                                colour=discord.Colour.green()))
+                                               colour=discord.Colour.green()))
             return
 
-        prefix = self.bot.prefix if not ctx.guild else self.config.find_one({"_id": f"{ctx.guild.id}"})['prefix']
+        prefix = self.bot.prefix if not ctx.guild else await self.config.find_one({"_id": f"{ctx.guild.id}"})
+        if not isinstance(prefix, str):
+            prefix = prefix['prefix']
+
         em = discord.Embed(colour=discord.Colour.green(),
                            title=f'Commands list',
                            description=f"""prefix: `{prefix}`
@@ -88,7 +91,7 @@ class Other(cmd.Cog):
         p = self.Paginator(ctx, embeds=embeds, begin=em)
         await p.start()
 
-    @cmd.command(name="Server", aliases=['server', 'srv', 'information', 'info', 'сервер', 'инфо', 'информация'],
+    @cmd.command(name="Server", aliases=['srv', 'information', 'info', 'сервер', 'инфо', 'информация'],
                  usage="server", description="""
     Shows short info about server
     :-:
@@ -96,8 +99,8 @@ class Other(cmd.Cog):
     """)
     @cmd.guild_only()
     @cmd.check(checks.is_off)
-    async def server_command(self, ctx: cmd.Context):
-        srv = self.config.find_one({"_id": f"{ctx.guild.id}"})
+    async def server(self, ctx: cmd.Context):
+        srv = await self.config.find_one({"_id": f"{ctx.guild.id}"})
         g = ctx.guild
 
         em = discord.Embed(title=f"{g.name}",
@@ -121,13 +124,13 @@ class Other(cmd.Cog):
 
         del srv
 
-    @cmd.command(name="Bot", aliases=['bot', 'about', 'бот'], usage="bot", description="""
+    @cmd.command(name="Bot", aliases=['about', 'бот'], usage="bot", description="""
     Shows some info about me
     :-:
     Показывает некотороую информацию про меня
     """)
     @cmd.check(checks.is_off)
-    async def _bot_command(self, ctx: cmd.Context):
+    async def info_bot(self, ctx: cmd.Context):
         system = platform.uname()
         proc = psutil.Process()
 
@@ -143,13 +146,13 @@ class Other(cmd.Cog):
                                      data=self).get()
             await ctx.send(embed=em)
 
-    @cmd.command(name="Links", aliases=['urls', 'links', 'bot_urls', 'bot_links'], usage="links", description="""
+    @cmd.command(name="Links", aliases=['urls', 'bot_links'], usage="links", description="""
     Shows connected to bot links, like: bot invite, support server, monitors
     :-:
     Показывает ссылки связанные с ботом, по типу: приглашение бота, сервер поддержки, смониторинги
     """)
     @cmd.check(checks.is_off)
-    async def _bot_urls_command(self, ctx: cmd.Context):
+    async def info_bot_urls(self, ctx: cmd.Context):
         em = discord.Embed(title=f"{ctx.me.name} {self.bot.version}  urls",
                            colour=discord.Colour.green(),
                            timestamp=datetime.now())
@@ -164,19 +167,19 @@ class Other(cmd.Cog):
 
         await ctx.send(embed=em)
 
-    @cmd.command(name="Profile", aliases=['профиль', 'profile'], usage="profile", hidden=True)
-    @cmd.check(checks.is_off)
-    async def profile_command(self, ctx: cmd.Context):
-        activity = f"{str(ctx.author.activities[1].type).split('.')[1]} {ctx.author.activities[1].name}" if "emoji" in dir(ctx.author.activities[0]) else f"{ctx.author.activities[0].emoji} {ctx.author.activities[0].name}"
-        custom = f"{ctx.author.activities[0].emoji} {ctx.author.activities[0].name}\n" if "emoji" in dir(ctx.author.activities[0]) else None
-
-        em = discord.Embed(title=f"{ctx.author.display_name}'s profile", colour=discord.Colour.green())
-        em.add_field(inline=False, name="Status:", value=ctx.author.status)
-        em.add_field(inline=False, name="Activity:", value=f"{custom if custom else ''}{activity} " if ctx.author.activities else"No activity")
-        em.add_field(inline=False, name="Joined:", value=f"{ctx.author.joined_at}")
-        em.add_field(inline=False, name="Roles:", value="\n".join([i.mention for i in ctx.author.roles]) if len(ctx.author.roles) <= 5 else ", ".join([i.mention for i in ctx.author.roles]))
-
-        await ctx.send(embed=em)
+    # @cmd.command(name="Profile", aliases=['профиль', 'profile'], usage="profile")
+    # @cmd.check(checks.is_off)
+    # async def profile_command(self, ctx: cmd.Context):
+    #     activity = f"{str(ctx.author.activities[1].type).split('.')[1]} {ctx.author.activities[1].name}" if "emoji" in dir(ctx.author.activities[0]) else f"{ctx.author.activities[0].emoji} {ctx.author.activities[0].name}"
+    #     custom = f"{ctx.author.activities[0].emoji} {ctx.author.activities[0].name}\n" if "emoji" in dir(ctx.author.activities[0]) else None
+    #
+    #     em = discord.Embed(title=f"{ctx.author.display_name}'s profile", colour=discord.Colour.green())
+    #     em.add_field(inline=False, name="Status:", value=ctx.author.status)
+    #     em.add_field(inline=False, name="Activity:", value=f"{custom if custom else ''}{activity} " if ctx.author.activities else"No activity")
+    #     em.add_field(inline=False, name="Joined:", value=f"{ctx.author.joined_at}")
+    #     em.add_field(inline=False, name="Roles:", value="\n".join([i.mention for i in ctx.author.roles]) if len(ctx.author.roles) <= 5 else ", ".join([i.mention for i in ctx.author.roles]))
+    #
+    #     await ctx.send(embed=em)
 
 
 def setup(bot):

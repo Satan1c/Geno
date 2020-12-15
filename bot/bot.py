@@ -2,7 +2,8 @@
 import os
 from datetime import datetime
 
-import pymongo
+import lavalink
+from motor.motor_asyncio import AsyncIOMotorClient
 
 import config
 import discord
@@ -13,7 +14,6 @@ from .utils import Utils, Paginator, DataBase, EmbedGenerator, Twitch, Checks
 
 IdentifyConfig.browser = 'Discord Android'
 
-client = pymongo.MongoClient(config.MONGO)
 intents = discord.Intents.all()
 intents.presences = False
 
@@ -24,27 +24,34 @@ class Geno(cmd.Bot):
     def __init__(self):
         super().__init__(cmd.when_mentioned_or(self.get_prefix),
                          owner_id=348444859360608256,
-                         intents=intents)
-                         #case_insensitive=True)
+                         intents=intents,
+                         case_insensitive=True)
+        self.client = AsyncIOMotorClient(config.MONGO)
         self.token = config.TOKEN
-        #self.prefix = "t-"
-        self.prefix = "g-"
-        self.version = "(v1.0.0)"
-        self.main = client.get_database("cfg").get_collection("main")
-        self.servers = client.get_database("servers").get_collection("configs")
+        self.prefix = "t-"
+        # self.prefix = "g-"
+        self.version = "(v1.0.1)"
+        self.main = self.client.get_database("cfg").get_collection("main")
+        self.servers = self.client.get_database("servers").get_collection("configs")
 
-    def init(self):
-        self.twitch = Twitch()
+    async def init(self):
+        self.raw_main = await self.main.find_one()
+
+        self.twitch = Twitch(self)
         self.Paginator = Paginator
         self.DataBase = DataBase
         self.EmbedGenerator = EmbedGenerator
         self.models = models
-        self.cmds = client.get_database("servers").get_collection("commands")
-        self.webhooks = client.get_database("servers").get_collection("webhooks")
-        self.profiles = client.get_database("users").get_collection("profiles")
-        self.streamers = client.get_database("servers").get_collection("streamers")
+        self.cmds = self.client.get_database("servers").get_collection("commands")
+        # self.webhooks = self.client.get_database("servers").get_collection("webhooks")
+        self.profiles = self.client.get_database("users").get_collection("profiles")
+        self.streamers = self.client.get_database("servers").get_collection("streamers")
         self.checks = Checks(self)
         self.utils = Utils(self)
+
+        # self.lavalink = lavalink.Client(bot.user.id)
+        # self.lavalink.add_node('localhost', 8080, 'lavalavago', 'eu', 'music-node')
+        # self.add_listener(bot.lavalink.voice_update_handler, 'on_socket_response')
 
         self.remove_command('help')
 
@@ -59,7 +66,7 @@ class Geno(cmd.Bot):
         print('-' * 30)
 
     async def on_ready(self):
-        self.init()
+        await self.init()
         act = discord.Activity(name=f"{self.prefix}help | {self.version}",
                                type=discord.ActivityType.listening)
         await self.change_presence(status=discord.Status.online, activity=act)
@@ -106,20 +113,20 @@ class Geno(cmd.Bot):
         except BaseException as err:
             print("\n", "-" * 30, f"[!] command call delete error:\n{err}\n", "-" * 30, "\n")
 
-    @staticmethod
-    async def on_error(event_method, *args, **kwargs):
-        print("\n", "-" * 30, f"\n[!] unknown error:\n{event_method}\n{args}\n{kwargs}\n", "-" * 30, "\n")
+    # @staticmethod
+    # async def on_error(event_method, *args, **kwargs):
+    #     print("\n", "-" * 30, f"\n[!] unknown error:\n{event_method}\n{args}\n{kwargs}\n", "-" * 30, "\n")
 
     async def on_connect(self):
-        #return
-        self.main.update_one({"_id": 0}, {"$set": {"uptime": datetime.now()}})
+        return
+        await self.main.update_one({"_id": 0}, {"$set": {"uptime": datetime.now()}})
 
     async def get_prefix(self, message):
         prefix = self.prefix
-        #return prefix
+        return prefix
 
         if message.guild:
-            prefix = self.servers.find_one({"_id": f"{message.guild.id}"})
+            prefix = await self.servers.find_one({"_id": f"{message.guild.id}"})
             prefix = prefix['prefix'] if prefix else self.prefix
 
         return prefix

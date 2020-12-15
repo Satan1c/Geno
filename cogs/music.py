@@ -2,14 +2,13 @@
 
 import asyncio
 import re
-import threading
 from datetime import datetime
-from os import system
 
 import lavalink
 
 import discord
 import discord.gateway
+from bot.bot import Geno
 from bot.bot import bot as b
 from discord.ext import commands as cmd
 
@@ -18,15 +17,12 @@ checks = b.checks
 
 
 class Music(cmd.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot: Geno):
         self.bot = bot
         self.config = bot.servers
         self.Paginator = bot.Paginator
         self.utils = bot.utils
         self.models = bot.models
-
-        # for i in range(1):
-        #     threading.Thread(target=system, args=("java -jar s/Lavalink.jar",)).start()
 
         if not hasattr(bot, 'lavalink'):
             bot.lavalink = lavalink.Client(bot.user.id)
@@ -78,7 +74,8 @@ class Music(cmd.Cog):
                 if not player:
                     return
 
-                cfg = self.config.find_one({"_id": f"{player.guild_id}"})['music']
+                cfg = await self.config.find_one({"_id": f"{player.guild_id}"})
+                cfg = cfg['music']
 
                 print("\nQueueEndEvent")
                 print(player.guild_id)
@@ -88,11 +85,12 @@ class Music(cmd.Cog):
                 cfg['queue'] = []
                 cfg['now_playing'] = ""
 
-                self.config.update_one({"_id": f"{guild_id}"}, {"$set": {"music": dict(cfg)}})
+                await self.config.update_one({"_id": f"{guild_id}"}, {"$set": {"music": dict(cfg)}})
 
                 await asyncio.sleep(60)
 
-                cfg = self.config.find_one({"_id": guild_id})['music']
+                cfg = await self.config.find_one({"_id": guild_id})
+                cfg = cfg['music']
                 try:
                     guild = self.bot.get_guild(int(guild_id))
 
@@ -113,7 +111,8 @@ class Music(cmd.Cog):
                 if not player:
                     return
 
-                cfg = self.config.find_one({"_id": f"{event.player.guild_id}"})['music']
+                cfg = await self.config.find_one({"_id": f"{event.player.guild_id}"})
+                cfg = cfg['music']
                 data = self.utils.now_playing(player=player)
 
                 if cfg['now_playing'] == "":
@@ -128,7 +127,7 @@ class Music(cmd.Cog):
                 cfg['now_playing']['icon'] = data['icon']['url']
                 cfg['now_playing']['url'] = f"https://youtube.com/channel/{data['channel']['items'][0]['id']}"
 
-                self.config.update_one({"_id": f"{player.guild_id}"}, {"$set": {"music": dict(cfg)}})
+                await self.config.update_one({"_id": f"{player.guild_id}"}, {"$set": {"music": dict(cfg)}})
 
                 print("\nTrackStartEvent")
                 print(player.guild_id)
@@ -146,10 +145,11 @@ class Music(cmd.Cog):
                               icon_url=data['req'].avatar_url_as(format='png', static_format='png', size=256))
 
                 try:
-                    message = await self.bot.get_guild(int(player.guild_id)).get_channel(int(cfg['last']['channel'])).send(
-                    embed=em)
+                    message = await self.bot.get_guild(int(player.guild_id)).get_channel(
+                        int(cfg['last']['channel'])).send(
+                        embed=em)
                     cfg['last'] = {"message": f"{message.id}", "channel": f"{message.channel.id}"}
-                    self.config.update_one({"_id": f"{player.guild_id}"}, {"$set": {"music": dict(cfg)}})
+                    await self.config.update_one({"_id": f"{player.guild_id}"}, {"$set": {"music": dict(cfg)}})
                 except BaseException as err:
                     print(f"track start error guild\n{err}")
 
@@ -162,16 +162,17 @@ class Music(cmd.Cog):
                 if not player:
                     return
 
-                cfg = self.config.find_one({"_id": f"{player.guild_id}"})['music']
+                cfg = await self.config.find_one({"_id": f"{player.guild_id}"})
+                cfg = cfg['music']
 
                 print("\nTrackEndEvent")
                 print(player.guild_id)
 
                 try:
                     guild = self.bot.get_guild(int(player.guild_id))
-                
 
-                    message = await guild.get_channel(int(cfg['last']['channel'])).fetch_message(int(cfg['last']['message']))
+                    message = await guild.get_channel(int(cfg['last']['channel'])).fetch_message(
+                        int(cfg['last']['message']))
                     if message:
                         await message.delete()
 
@@ -184,7 +185,7 @@ class Music(cmd.Cog):
                         cfg['queue'] = []
                         cfg['now_playing'] = ""
                         ch = cfg['last']['channel']
-                        self.config.update_one({"_id": str(player.guild_id)}, {"$set": {"music": dict(cfg)}})
+                        await self.config.update_one({"_id": str(player.guild_id)}, {"$set": {"music": dict(cfg)}})
 
                         await guild.get_channel(ch).send("Empty voice channel, auto disconnect")
                 except BaseException as err:
@@ -198,7 +199,7 @@ class Music(cmd.Cog):
         ws = self.bot._connection._get_websocket(guild_id)
         await ws.voice_state(str(guild_id), channel_id)
 
-    @cmd.command(name="Play", aliases=['p', 'play', 'п', 'плей', 'играть', 'и'], usage="play `<url | query>`",
+    @cmd.command(name="Play", aliases=['p', 'п', 'плей', 'играть', 'и'], usage="play `<url | query>`",
                  description="""
     Supported platforms: `Youtube, SoundCLoud`
     
@@ -222,13 +223,14 @@ class Music(cmd.Cog):
     """)
     @cmd.check(checks.is_off)
     @cmd.guild_only()
-    async def play_command(self, ctx: cmd.Context, *, query: str):
+    async def play(self, ctx: cmd.Context, *, query: str):
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
         track = None
         query = query.strip('<>')
         services = ['yt', 'sc']
         results = None
-        cfg = self.config.find_one({"_id": f"{ctx.guild.id}"})['music']
+        cfg = await self.config.find_one({"_id": f"{ctx.guild.id}"})
+        cfg = cfg['music']
 
         if not url_rx.match(query):
             for i in services:
@@ -267,7 +269,7 @@ class Music(cmd.Cog):
 
         if not player.is_playing:
             cfg['last'] = {"channel": f"{ctx.channel.id}"}
-            self.config.update_one({"_id": f"{ctx.guild.id}"}, {"$set": {"music": dict(cfg)}})
+            await self.config.update_one({"_id": f"{ctx.guild.id}"}, {"$set": {"music": dict(cfg)}})
             await player.play()
             await player.set_volume(cfg['volume'] * 100)
         else:
@@ -284,7 +286,7 @@ class Music(cmd.Cog):
             await ctx.send(embed=em)
 
     @cmd.command(name="Leave",
-                 aliases=['dc', 'leave', 'l', 'disconnect', 'stop', 'стоп', 'отключится', 'откл', 'д'], usage="stop",
+                 aliases=['dc', 'l', 'disconnect', 'stop', 'стоп', 'отключится', 'откл', 'д'], usage="stop",
                  description="""
     Leaves from voice channel if is in it, and stops the music with cleanup queue
     :-:
@@ -292,7 +294,7 @@ class Music(cmd.Cog):
     """)
     @cmd.check(checks.is_off)
     @cmd.guild_only()
-    async def stop_command(self, ctx: cmd.Context):
+    async def stop(self, ctx: cmd.Context):
         """ Disconnects the player from the voice channel and clears its queue. """
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
 
@@ -306,7 +308,7 @@ class Music(cmd.Cog):
         await player.stop()
         await self.connect_to(ctx.guild.id)
 
-    @cmd.command(name="Volume", aliases=['volume', 'v', 'громкость', 'г'], usage="volume `[value]`",
+    @cmd.command(name="Volume", aliases=['v', 'громкость', 'г'], usage="volume `[value]`",
                  description="""
     value - can be an integer number as percents,
      example: `1`, `100`, `123`, `250`,
@@ -322,7 +324,7 @@ class Music(cmd.Cog):
     """)
     @cmd.check(checks.is_off)
     @cmd.guild_only()
-    async def volume_command(self, ctx: cmd.Context, value=None):
+    async def volume(self, ctx: cmd.Context, value=None):
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
 
         if not player.is_connected:
@@ -331,7 +333,8 @@ class Music(cmd.Cog):
         if not ctx.author.voice or (player.is_connected and ctx.author.voice.channel.id != int(player.channel_id)):
             raise cmd.BadArgument('You\'re not in my voicechannel!')
 
-        cfg = self.config.find_one({"_id": f"{ctx.guild.id}"})['music']
+        cfg = await self.config.find_one({"_id": f"{ctx.guild.id}"})
+        cfg = cfg['music']
 
         raw = int(player.volume)
 
@@ -341,20 +344,20 @@ class Music(cmd.Cog):
 
         await player.set_volume(value)
         cfg['volume'] = round(value / 100, 2)
-        self.config.update_one({"_id": f"{ctx.guild.id}"}, {"$set": {"music": dict(cfg)}})
+        await self.config.update_one({"_id": f"{ctx.guild.id}"}, {"$set": {"music": dict(cfg)}})
         end = player.volume
         em.description = em.description.format(raw=int(raw), end=int(end))
 
         await ctx.send(embed=em)
 
-    @cmd.command(name="Queue", aliases=['q', 'queue', 'очередь', 'о'], usage="queue", description="""
+    @cmd.command(name="Queue", aliases=['q', 'очередь', 'о'], usage="queue", description="""
     Returns ito chat back list of music list
     :-:
     Возвращает в чат список заказамой музыки
     """)
     @cmd.check(checks.is_off)
     @cmd.guild_only()
-    async def queue_command(self, ctx: cmd.Context):
+    async def queue(self, ctx: cmd.Context):
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
 
         if not player.is_connected:
@@ -371,14 +374,14 @@ class Music(cmd.Cog):
             p = self.Paginator(ctx, embeds=embeds)
             await p.call_controller()
 
-    @cmd.command(name="Skip", aliases=['s', 'skip', 'с', 'скип'], usage="skip", description="""
+    @cmd.command(name="Skip", aliases=['s', 'с', 'скип'], usage="skip", description="""
     Skip current track to next in queue
     :-:
     Пропускает текущий трек к следущему в списке
     """)
     @cmd.check(checks.is_off)
     @cmd.guild_only()
-    async def skip_command(self, ctx: cmd.Context):
+    async def skip(self, ctx: cmd.Context):
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
 
         if not player.is_connected:
@@ -389,7 +392,7 @@ class Music(cmd.Cog):
 
         await player.skip()
 
-    @cmd.command(name="Now Playing", aliases=['np', 'now_playing', 'сейчас_играет', 'си'], usage="now_playing",
+    @cmd.command(name="Now Playing", aliases=['np', 'сейчас_играет', 'си'], usage="now_playing",
                  description="""
     Returns into chat back current track info
     :-:
@@ -397,7 +400,7 @@ class Music(cmd.Cog):
     """)
     @cmd.check(checks.is_off)
     @cmd.guild_only()
-    async def now_playing_command(self, ctx: cmd.Context):
+    async def now_playing(self, ctx: cmd.Context):
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
 
         if not player.is_connected:
@@ -406,7 +409,8 @@ class Music(cmd.Cog):
         if not ctx.author.voice or (player.is_connected and ctx.author.voice.channel.id != int(player.channel_id)):
             raise cmd.BadArgument('You\'re not in my voicechannel!')
 
-        data = self.config.find_one({"_id": f"{ctx.guild.id}"})['music']['now_playing']
+        data = await self.config.find_one({"_id": f"{ctx.guild.id}"})
+        data = data['music']['now_playing']
         if data:
             data['req'] = ctx.guild.get_member(int(data['req']))
 
@@ -429,14 +433,14 @@ class Music(cmd.Cog):
 
         await ctx.send(embed=em)
 
-    @cmd.command(name="Pause", aliases=['pause', 'пауза'], usage="pause", description="""
+    @cmd.command(name="Pause", aliases=['пауза'], usage="pause", description="""
     Pausing music playback
     :-:
     тавит музыку на паузу
     """)
     @cmd.check(checks.is_off)
     @cmd.guild_only()
-    async def pause_command(self, ctx: cmd.Context):
+    async def pause(self, ctx: cmd.Context):
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
 
         if not player.is_connected:
@@ -448,14 +452,14 @@ class Music(cmd.Cog):
         if player.is_playing and not player.paused:
             await player.set_pause(True)
 
-    @cmd.command(name="Resume", aliases=['resume', 'продолжить', 'прдлж'], usage="resume", description="""
+    @cmd.command(name="Resume", aliases=['продолжить', 'прдлж'], usage="resume", description="""
     Resume - unpausing music playback
     :-:
     Продолжает - снимает с паузы, проигрывание музыки
     """)
     @cmd.check(checks.is_off)
     @cmd.guild_only()
-    async def resume_command(self, ctx: cmd.Context):
+    async def resume(self, ctx: cmd.Context):
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
 
         if not player.is_connected:
@@ -467,14 +471,14 @@ class Music(cmd.Cog):
         if player.is_playing and player.paused:
             await player.set_pause(False)
 
-    @cmd.command(name="Join", aliases=['join', 'j', 'присоединится', 'джоин', 'дж'], usage="join",
+    @cmd.command(name="Join", aliases=['j', 'присоединится', 'джоин', 'дж'], usage="join",
                  description="""
     Joins to your voice-channel
     :-:
     одключается к вашему голосовому каналу
     """)
     @cmd.guild_only()
-    async def join_command(self, ctx: cmd.Context):
+    async def join(self, ctx: cmd.Context):
         if not ctx.author.voice:
             raise cmd.BadArgument("You must be in voicechannel to use this command.")
 

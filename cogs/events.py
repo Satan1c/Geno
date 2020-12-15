@@ -3,11 +3,12 @@
 import re
 
 import discord
+from bot.bot import Geno
 from discord.ext import commands as cmd
 
 
 class Events(cmd.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot: Geno):
         self.bot = bot
         self.config = bot.servers
         self.DB = bot.DataBase
@@ -15,8 +16,9 @@ class Events(cmd.Cog):
     @cmd.Cog.listener("on_guild_join")
     async def guild_join(self, guild: discord.Guild):
         await self.DB(self.bot).create_server(guild)
-        print(f"\n[+]server join\nName: {guild.name}\nId: {guild.id}\nMembers: {len([i.discriminator for i in guild.members if not i.bot])}\nBots: {len([i.discriminator for i in guild.members if i.bot])}")
-        
+        print(
+            f"\n[+]server join\nName: {guild.name}\nId: {guild.id}\nMembers: {len([i.discriminator for i in guild.members if not i.bot])}\nBots: {len([i.discriminator for i in guild.members if i.bot])}")
+
     # @cmd.Cog.listener("on_member_update")
     # async def member_update(self, before: discord.Member, after: discord.Member):
     #     pass
@@ -33,20 +35,25 @@ class Events(cmd.Cog):
     # async def member_remove(self, member: discord.Member):
     #     pass
 
+    @cmd.Cog.listener("on_guild_remove")
+    async def guild_leave(self, guild: discord.Guild):
+        pass
+
     @cmd.Cog.listener("on_voice_state_update")
     async def voice_update(self, member: discord.Member, before, after):
-        cfg = self.config.find_one({"_id": f"{member.guild.id}"})['music']
+        cfg = await self.config.find_one({"_id": f"{member.guild.id}"})
+        cfg = cfg['music']
         if member.id == self.bot.user.id and after.channel and member.voice and not member.voice.deaf:
             try:
                 await member.edit(deafen=True)
             except BaseException as err:
-                print("\n", "-"*30, f"\n[!]Events voice_update error:\n{err}\n", "-"*30, "\n")
+                print("\n", "-" * 30, f"\n[!]Events voice_update error:\n{err}\n", "-" * 30, "\n")
                 pass
 
         if member.id == member.guild.me.id and not after.channel and cfg['now_playing']:
             cfg['queue'] = []
             cfg['now_playing'] = ""
-            self.config.update_one({"_id": f"{member.guild.id}"}, {"$set": {"music": dict(cfg)}})
+            await self.config.update_one({"_id": f"{member.guild.id}"}, {"$set": {"music": dict(cfg)}})
 
     @cmd.Cog.listener("on_message")
     async def message(self, message: discord.Message):
@@ -58,7 +65,8 @@ class Events(cmd.Cog):
                               message=message,
                               guild=message.guild,
                               send=message.channel.send,
-                              prefix="g-" if not message.guild else self.config.find_one({"_id": f"{message.guild.id}"})['prefix'])
+                              prefix="g-" if not message.guild else
+                              self.config.find_one({"_id": f"{message.guild.id}"})['prefix'])
             return await self.bot.get_command("Help").callback(ctx=ctx, self=self.bot.get_cog("System"))
 
         if message.author.id != self.bot.user.id or not message.guild:
@@ -72,7 +80,7 @@ class Events(cmd.Cog):
     async def reaction_add(self, payload: discord.RawReactionActionEvent):
         if not payload.guild_id: return
 
-        cfg = self.bot.servers.find_one({"_id": str(payload.guild_id)}) if payload.guild_id else None
+        cfg = await self.bot.servers.find_one({"_id": str(payload.guild_id)}) if payload.guild_id else None
 
         if payload.member and payload.member.bot or str(payload.message_id) not in cfg['rroles']: return
 
@@ -88,7 +96,7 @@ class Events(cmd.Cog):
 
     @cmd.Cog.listener("on_raw_reaction_remove")
     async def reaction_remove(self, payload: discord.RawReactionActionEvent):
-        cfg = self.bot.servers.find_one({"_id": str(payload.guild_id)})
+        cfg = await self.bot.servers.find_one({"_id": str(payload.guild_id)})
         if not payload.guild_id or str(payload.message_id) not in cfg['rroles']:
             return
 

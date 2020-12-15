@@ -7,10 +7,9 @@ import re
 import urllib
 from asyncio import TimeoutError
 from datetime import datetime
-from math import floor
 from typing import Union, Tuple
 
-import requests
+import aiohttp
 from dateutil.relativedelta import relativedelta
 from googleapiclient import discovery
 
@@ -20,30 +19,43 @@ from discord.ext import commands as cmd
 from discord.ext.commands import Context
 
 url_rx = re.compile(r'https?://(?:www\.)?.+')
-# YTDL_OPTS = {
-#     "default_search": "ytsearch",
-#     "format": "bestaudio/best",
-#     "quiet": True,
-#     "no_warnings": True,
-#     "extract_flat": "in_queue",
-#     "ignoreerrors": True,
-#     "forceurl": True,
-#     "simulate": True
-#     }
 
 
 class Twitch:
-    def __init__(self):
-        self.client_id = "zoucwv8yjggvgydciwu6vluq20c533"  # https://dev.twitch.tv/console/apps
-        self.token = "4bov40pb2i9d3agv7mltnybiejdu4y"  # https://twitchapps.com/tokengen/  https://dev.twitch.tv/
-        self.url = "https://api.twitch.tv/helix/"
+    def __init__(self, bot):
+        self.bot = bot
+        self.main = bot.raw_main
+        self.client_id = self.main['twitch_id']  # https://dev.twitch.tv/console/apps
+        self.token = self.main['twitch_token']  # https://twitchapps.com/tokengen/  https://dev.twitch.tv/
+        self.client_secret = self.main['twitch_secret']
+        self.url = "https://api.twitch.tv/helix/search/channels?query="
+        self.refresh_url = "https://id.twitch.tv/oauth2/token?grant_type=refresh_token&refresh_token={toke}&client_id={client_id}&client_secret={client_secret}"
 
-    def get_response(self, query):
-        res = requests.get(f"{self.url}{query}",
-                           headers={
-                               "Client-ID": self.client_id, 'Authorization': f'Bearer {self.token}',
-                               "Accept": "application/vnd.v5+json"
-                               })
+    async def get_response(self, query):
+        async with aiohttp.ClientSession() as session:
+            async with session.get(f"{self.url}{query}",
+                                   headers={
+                                       "client-id": self.client_id, 'Authorization': f'Bearer {self.token}',
+                                       "Accept": "application/vnd.v5+json"
+                                   }) as response:
+                res = await response.json()
+            if "data" not in res:
+                if res['status'] == 404:
+                    print("\n", "-" * 30, "[!] Twitch no data")
+                    self.print_response(res)
+                    print("-" * 30, "\n")
+                    res = {"data": []}
+                elif res['status'] == 401:
+                    print("\n", "-" * 30, "[!] Twitch no data")
+                    self.print_response(res)
+                    print("-" * 30, "\n")
+                    async with session.post(self.refresh_url.format(client_id=self.client_id, token=self.token,
+                                                                    client_secret=self.client_secret)) as response:
+                        res = await response.json()
+                        if "refresh_token" in res:
+                            self.main['twitch_token'] = res['refresh_token']
+                            await self.bot.main.update_one({"_id": 0}, {"$set": self.main})
+
         return res
 
     @staticmethod
@@ -68,9 +80,8 @@ class Twitch:
 
     @staticmethod
     def print_response(res):
-        res_json = res.json()
-        print_res = json.dumps(res_json, indent=2)
-        return print(print_res)
+        print_res = json.dumps(res, indent=2)
+        return print(print_res, "\n")
 
 
 class Utils:
@@ -83,38 +94,6 @@ class Utils:
         self.streamers = bot.streamers
         self.dev_key = "AIzaSyAZxekQbiyOvq1fCFNmq6-4VvNwcKQ2Vhs"
         self.dictionary = ["тыс", "млн", "млрд", "бил", "трл", "кдл", "квл", "сек", "сеп", "окт", "нон", "дец"]
-
-    @staticmethod
-    def binary_search(arr: list, item):
-        n = len(arr)
-        a = 0
-        b = n - 1
-
-        while a <= b:
-            mid = floor((a + b) / 2)
-            if arr[mid] < item:
-                a = mid + 1
-            elif arr[mid] > item:
-                b = mid - 1
-            else:
-                return mid
-        return None
-
-    @staticmethod
-    def bubble_sort(arr: list):
-        has_swapped = True
-        num_of_iterations = 0
-
-        while has_swapped:
-            has_swapped = False
-
-            for i in range(len(arr) - num_of_iterations - 1):
-                if arr[i] > arr[i + 1]:
-                    arr[i], arr[i + 1] = arr[i + 1], arr[i]
-                    has_swapped = True
-
-            num_of_iterations += 1
-        return arr
 
     def uptime(self):
         start = self.main.find_one()['uptime']
@@ -160,7 +139,7 @@ class Utils:
                 role = ctx.guild.get_role(int(r))
 
             except BaseException as err:
-                print("\n", "-"*30, f"\n[!]Utils rroles_check error:\n{err}\n", "-"*30, "\n")
+                print("\n", "-" * 30, f"\n[!]Utils rroles_check error:\n{err}\n", "-" * 30, "\n")
                 break
 
             if not role:
@@ -173,15 +152,18 @@ class Utils:
     async def get_info(self, video_url: str, max_results: int = 1) -> str:
         try:
             video_url = urllib.parse.quote(video_url)
-            info = json.loads(requests.get(f"https://geno.glitch.me/youtube/{video_url}").text)
-            info = "https://www.youtube.com" + info[0]['url_suffix'] if info and len(info) else None
+            async with aiohttp.ClientSession() as session:
+                async with session.get(f"https://geno.glitch.me/youtube/{video_url}") as res:
+                    res = await res.text()
+                    info = json.loads(res)
+                    info = "https://www.youtube.com" + info[0]['url_suffix'] if info and len(info) else None
 
-            if not info:
-                return video_url
+                    if not info:
+                        return video_url
 
             return info
         except BaseException as err:
-            print("\n", "-"*30, f"\n[!]Utils get_info error:\n{err}\n", "-"*30, "\n")
+            print("\n", "-" * 30, f"\n[!]Utils get_info error:\n{err}\n", "-" * 30, "\n")
 
     # google api---------------------------------------------------------------------------------------------------
 
@@ -198,7 +180,7 @@ class Utils:
             part="snippet,contentDetails,statistics",
             id=req,
             maxResults=1
-            )
+        )
         response = request.execute()
 
         return response
@@ -269,7 +251,7 @@ class Utils:
             "duration": self.parser(int(track['info']['length']) // 1000, typ="time"),
             "video_url": track['info']['uri']
 
-            } if typ == "yt" else {
+        } if typ == "yt" else {
 
             "name": track['info']['author'],
             "url": f"https://{r[0]}/{r[1]}",
@@ -279,7 +261,7 @@ class Utils:
             "title": track['info']['title'],
             "duration": self.parser(int(track['info']['length']) // 1000, typ="time"),
             "video_url": track['info']['uri']
-            }
+        }
 
     def now_playing(self, player) -> dict:
         if not player.current:
@@ -309,7 +291,7 @@ class Utils:
             "channel": channel,
             "csnipp": csnipp,
             "tags": ", ".join(snipp['tags']) if 'tags' in snipp else "No Tags",
-            }
+        }
 
     async def queue(self, ctx: cmd.Context, player) -> list:
         data = self.now_playing(player)
@@ -367,7 +349,7 @@ class Utils:
                                                                                     static_format='png',
                                                                                     size=256)))
                     except BaseException as err:
-                        print("\n", "-"*30, f"\n[!]Utils queue error:\n{err}\n", "-"*30, "\n")
+                        print("\n", "-" * 30, f"\n[!]Utils queue error:\n{err}\n", "-" * 30, "\n")
                         pass
 
             if len(embeds):
@@ -401,7 +383,7 @@ class Utils:
         try:
             value = int(value)
         except BaseException as err:
-            print("\n", "-"*30, f"\n[!]Utils volume error:\n{err}\n", "-"*30, "\n")
+            print("\n", "-" * 30, f"\n[!]Utils volume error:\n{err}\n", "-" * 30, "\n")
             r = re.sub(r'[^.0-9]', r'', value)
             value = round(float(r)) if r else None
 
@@ -528,7 +510,7 @@ class Paginator:
         try:
             await self.controller.add_reaction(self.reactions[2])
         except BaseException as err:
-            print("\n", "-"*30, f"\n[!]Paginator start add_reaction error:\n{err}\n", "-"*30, "\n")
+            print("\n", "-" * 30, f"\n[!]Paginator start add_reaction error:\n{err}\n", "-" * 30, "\n")
             return
 
         await self.ctx.bot.wait_for('reaction_add', timeout=self.timeout, check=lambda r, u: u.bot is not True)
@@ -546,14 +528,14 @@ class Paginator:
         try:
             await self.controller.clear_reactions()
         except BaseException as err:
-            print("\n", "-"*30, f"\n[!]Paginator call_controller clear_reactions error:\n{err}\n", "-"*30, "\n")
+            print("\n", "-" * 30, f"\n[!]Paginator call_controller clear_reactions error:\n{err}\n", "-" * 30, "\n")
             pass
 
         try:
             for emoji in self.reactions:
                 await self.controller.add_reaction(emoji)
         except BaseException as err:
-            print("\n", "-"*30, f"\n[!]Paginator call_controller add_reaction error:\n{err}\n", "-"*30, "\n")
+            print("\n", "-" * 30, f"\n[!]Paginator call_controller add_reaction error:\n{err}\n", "-" * 30, "\n")
             return
 
         while True:
@@ -596,21 +578,21 @@ class DataBase:
         self.profiles = bot.profiles
 
     async def create(self):
-        await asyncio.gather(self._create_servers())  # , self._create_users())
+        await asyncio.gather(self._create_servers())
 
     async def _create_servers(self):
-        arr = [int(i['_id']) for i in self.servers.find()]
+        arr = [int(i['_id']) async for i in self.servers.find()]
 
         create = [self.models.Server(i).get_dict() for i in self.bot.guilds if i.id not in arr]
         if len(create):
             print("...servers creation")
-            self.servers.insert_many(create)
+            await self.servers.insert_many(create)
 
         del create, arr
         print("created: servers")
-    
+
     async def _delete_servers(self):
-        arr = [i['_id'] for i in self.servers.find()]
+        arr = [i['_id'] async for i in self.servers.find()]
         guilds = [str(i.id) for i in self.bot.guilds]
         delete = [{"_id": i} for i in arr if i not in guilds]
 
@@ -647,10 +629,10 @@ class DataBase:
 
     async def create_server(self, guild: discord.Guild):
         i = self.models.Server(guild).get_dict()
-        srv = self.servers.find_one({"_id": f"{i['_id']}"})
+        srv = await self.servers.find_one({"_id": f"{i['_id']}"})
 
         if not srv:
-            self.servers.insert_one(i)
+            await self.servers.insert_one(i)
             print(f"created: {i['_id']}")
 
         # for i in guild.members:
@@ -734,7 +716,7 @@ class Checks:
         if not ctx.guild:
             return True
 
-        cfg = self.cmds.find_one({"_id": f"{ctx.guild.id}"})
+        cfg = await self.cmds.find_one({"_id": f"{ctx.guild.id}"})
         if not cfg:
             return True
 

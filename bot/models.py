@@ -17,10 +17,10 @@ class Server:
             "queue": [],
             "playlist": [],
             "last": {}
-            }
+        }
         self.rroles = {
             "reaction_remove_msgs": []
-            }
+        }
 
     def get_dict(self) -> dict:
         return {
@@ -28,7 +28,7 @@ class Server:
             "prefix": self.prefix,
             "music": self.music,
             "rroles": self.rroles
-            }
+        }
 
 
 class User:
@@ -44,7 +44,7 @@ class User:
             "uid": self.id,
             "messages": 0,
             "mute_time": self.mute_time
-            }
+        }
 
     @classmethod
     def bulk_create(cls, members: list) -> list:
@@ -55,7 +55,7 @@ class User:
                 "uid": i.id,
                 "messages": 0,
                 "mute_time": None
-                })
+            })
         return res
 
 
@@ -70,7 +70,7 @@ class Streamer:
             "_id": str(self._id),
             "stream_id": str(self.stream_id),
             "servers": list(self.servers)
-            }
+        }
 
 
 class Commands:
@@ -84,4 +84,4 @@ class Commands:
             "_id": self._id,
             "cogs": list(self.cogs),
             "commands": list(self.commands)
-            }
+        }

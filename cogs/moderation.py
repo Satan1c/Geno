@@ -4,6 +4,7 @@ import re
 from datetime import datetime
 
 import discord
+from bot.bot import Geno
 from bot.bot import bot as b
 from discord.ext import commands as cmd
 
@@ -11,10 +12,10 @@ checks = b.checks
 
 
 class Moderation(cmd.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot: Geno):
         self.bot = bot
 
-    @cmd.command(name="Ban", aliases=['ban', 'b', 'бан', 'б'], usage="ban `<user>` `[reason]`", description="""
+    @cmd.command(name="Ban", aliases=['b', 'бан', 'б'], usage="ban `<user>` `[reason]`", description="""
     user - must be user **mention** or **user id**,
      example: <@!348444859360608256>, `348444859360608256`
      
@@ -36,7 +37,7 @@ class Moderation(cmd.Cog):
     @cmd.check(checks.is_off)
     @cmd.bot_has_guild_permissions(ban_members=True)
     @cmd.has_guild_permissions(ban_members=True)
-    async def ban_command(self, ctx: cmd.Context, user, *, reason: str = "no reason"):
+    async def ban(self, ctx: cmd.Context, user, *, reason: str = "no reason"):
         embed = discord.Embed(title="Ban",
                               description="User: {user}\nReason: {reason}",
                               timestamp=datetime.now(),
@@ -84,7 +85,7 @@ class Moderation(cmd.Cog):
 
         await ctx.send(embed=embed)
 
-    @cmd.command(name="Kick", aliases=['kick', 'k', 'кик', 'к'], usage="kick `<user>` `[reason]`", description="""
+    @cmd.command(name="Kick", aliases=['k', 'кик', 'к'], usage="kick `<user>` `[reason]`", description="""
     user - must be user **mention** or **user id**,
      example: <@!348444859360608256>, `348444859360608256`
      
@@ -106,7 +107,7 @@ class Moderation(cmd.Cog):
     @cmd.check(checks.is_off)
     @cmd.bot_has_guild_permissions(kick_members=True)
     @cmd.has_guild_permissions(kick_members=True)
-    async def kick_command(self, ctx: cmd.Context, user: discord.Member, *, reason: str = "no reason"):
+    async def kick(self, ctx: cmd.Context, user: discord.Member, *, reason: str = "no reason"):
         embed = discord.Embed(title="Kick",
                               description=f"User: {user}\nReason: {reason}",
                               timestamp=datetime.now(),

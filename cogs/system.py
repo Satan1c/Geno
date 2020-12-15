@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import json
 import re
 from datetime import datetime
 
@@ -17,7 +16,7 @@ class System(cmd.Cog):
     def __init__(self, bot: Geno):
         self.bot = bot
         self.config = bot.servers
-        self.webhooks = bot.webhooks
+        # self.webhooks = bot.webhooks
         self.commands = bot.cmds
         self.streamers = bot.streamers
         self.profile = bot.profiles
@@ -37,17 +36,7 @@ class System(cmd.Cog):
                      {"D.Boats": "https://discord.boats/bot/648570341974736926"},
                      {"Top-Bots": "https://top-bots.xyz/bot/648570341974736926"})
 
-    @cmd.command(name="Test", aliases=['test'], hidden=True)
-    @cmd.is_owner()
-    @cmd.check(checks.is_off)
-    async def test_command(self, ctx: cmd.Context, *, msg: str):
-        print(msg.strip('<>'))
-        msg = msg.strip('<>').split(':')
-        msg.pop(0)
-        await ctx.send(f"{msg}")
-        print(msg)
-
-    @cmd.command(name="Prefix", aliases=['prefix', 'prf', 'set_prefix', 'set_pref', 'префикс', 'преф'],
+    @cmd.command(name="Prefix", aliases=['prf', 'set_prefix', 'set_pref', 'префикс', 'преф'],
                  usage="prefix `<prefix>`",
                  description=f"""
     prefix - any prefix what you want
@@ -64,13 +53,13 @@ class System(cmd.Cog):
     """)
     @cmd.check(checks.is_off)
     @cmd.has_guild_permissions(manage_messages=True)
-    async def prefix_command(self, ctx: cmd.Context, *, prefix: str = Geno.prefix):
-        cfg = self.config.find_one({"_id": f"{ctx.guild.id}"})
+    async def prefix(self, ctx: cmd.Context, *, prefix: str = Geno.prefix):
+        cfg = await self.config.find_one({"_id": f"{ctx.guild.id}"})
         raw = cfg['prefix']
         if str(raw) == str(prefix):
             raise cmd.BadArgument("New prefix can't be equals old")
 
-        self.config.update_one({"_id": f"{ctx.guild.id}"}, {"$set": {"prefix": prefix}})
+        await self.config.update_one({"_id": f"{ctx.guild.id}"}, {"$set": {"prefix": prefix}})
         await ctx.send(embed=discord.Embed(title="Prefix change",
                                            description=f"From: `{raw}`\nTo: `{prefix}`",
                                            colour=discord.Colour.green(),
@@ -80,7 +69,7 @@ class System(cmd.Cog):
 
         del cfg
 
-    @cmd.command(name="Twitch", aliases=['twitch', 'твитч'], usage="twitch `[channel | \"remove\"]` `<nickname>`",
+    @cmd.command(name="Twitch", aliases=['твитч'], usage="twitch `[channel | \"remove\"]` `<nickname>`",
                  description="""
     channel - can be channel **mention** or **channel id**,
      example: <#648622079779799040>, `648622079779799040`
@@ -111,36 +100,37 @@ class System(cmd.Cog):
     @cmd.check(checks.is_off)
     @cmd.has_guild_permissions(manage_channels=True)
     @cmd.bot_has_guild_permissions(manage_channels=True)
-    async def twitch_command(self, ctx: cmd.Context, channel: str = None, *, nick: str = None):
+    async def twitch(self, ctx: cmd.Context, channel: str = None, *, nick: str = None):
         if channel == "remove":
             if not nick:
                 nick = "satan1clive"
             em = discord.Embed(title="Twitch remove")
-            cfg = self.streamers.find_one({"_id": str(nick)})
+            cfg = await self.streamers.find_one({"_id": str(nick)})
             if not cfg:
                 em.description = f"`{nick}` was not found in announcements"
                 return await ctx.send(embed=em)
             if len(cfg['servers']):
-                arr = self.utils.bubble_sort([int(i['id']) for i in cfg['servers']])
-                index = self.utils.binary_search(arr, ctx.guild.id)
-                arr.pop(index)
+                arr = cfg['servers'].pop(cfg['servers'].index(ctx.guild.id))
                 cfg['servers'] = arr
                 em.description = f"Announcements from channel: `{nick}`"
             else:
                 em.description = f"`{nick}` was not found in announcements"
                 return await ctx.send(embed=em)
 
-            self.streamers.update_one({"_id": nick}, {"$set": dict(cfg)})
+            await self.streamers.update_one({"_id": nick}, {"$set": dict(cfg)})
             return await ctx.send(embed=em)
 
         nick, channel = await self.utils.twitch_nickname(ctx, nick, channel)
 
         query = self.twitch.get_user_query(nick)
-        res2 = self.twitch.get_response(query).json()['data'][0]
-        if not res2:
+        res2 = await self.twitch.get_response(query)
+        res2 = res2['data']
+
+        if len(res2) < 1:
             raise cmd.BadArgument("not found")
 
-        cfg = self.streamers.find_one({"_id": str(nick)})
+        res2 = res2[0]
+        cfg = await self.streamers.find_one({"_id": str(nick)})
 
         if not cfg:
             cfg = self.models.Streamer(nick).get_dict()
@@ -148,24 +138,21 @@ class System(cmd.Cog):
             if ctx.guild.id not in [int(i['id']) for i in cfg['servers'] if i and i['id'] and i['channel']]:
                 cfg['servers'].append({"id": f"{ctx.guild.id}", "channel": f"{channel.id}"})
 
-            self.streamers.insert_one(cfg)
+            await self.streamers.insert_one(cfg)
         else:
             if ctx.guild.id not in [int(i['id']) for i in cfg['servers'] if i and i['id'] and i['channel']]:
                 cfg['servers'].append({"id": f"{ctx.guild.id}", "channel": f"{channel.id}"})
             else:
                 if len(cfg['servers']):
-                    arr = self.utils.bubble_sort([int(i['id']) for i in cfg['servers']])
-                    index = self.utils.binary_search(arr, ctx.guild.id)
-                    arr[index] = {"id": f"{ctx.guild.id}", "channel": f"{channel.id}"}
+                    cfg['servers'][cfg['servers'].index(ctx.guild.id)] = {"id": f"{ctx.guild.id}",
+                                                                          "channel": f"{channel.id}"}
                 else:
                     cfg['servers'].append({"id": f"{ctx.guild.id}", "channel": f"{channel.id}"})
 
-            self.streamers.update_one({"_id": nick}, {"$set": dict(cfg)})
+            await self.streamers.update_one({"_id": nick}, {"$set": dict(cfg)})
         r1 = res2['login']
         r2 = res2['display_name']
         r3 = res2['profile_image_url']
-
-        del cfg, res2
 
         return await channel.send(embed=discord.Embed(title="Streamer announcements add for:",
                                                       description=f"[{r1}](https://twitch.tv/{r2})\n"
@@ -216,8 +203,8 @@ class System(cmd.Cog):
     @cmd.check(checks.is_off)
     @cmd.has_guild_permissions(manage_channels=True, manage_roles=True)
     @cmd.bot_has_guild_permissions(manage_channels=True, manage_roles=True)
-    async def reaction_role_command(self, ctx: cmd.Context, remove: str, message: str, *, roles: str):
-        cfg = self.config.find_one({"_id": str(ctx.guild.id)})
+    async def reaction_roles(self, ctx: cmd.Context, remove: str, message: str, *, roles: str):
+        cfg = await self.config.find_one({"_id": str(ctx.guild.id)})
         if remove in ["add"]:
             roles = [i.split(" ") for i in roles.split("; ")] \
                 if len(re.sub(r'[^;]', r'1', roles.strip())) > 1 else roles.split(" ")
@@ -230,17 +217,28 @@ class System(cmd.Cog):
             for i in roles:
                 r = i[0].strip("<>").split(":")
                 i[0] = r[1] if len(r) > 1 else i[0]
-                cfg['rroles'][message][i[0]] = {"emoji": str(r[2]) if len(r) >= 3 and r[2] != 'None' else None, "roles": []}\
+                cfg['rroles'][message][i[0]] = {"emoji": str(r[2]) if len(r) >= 3 and r[2] != 'None' else None,
+                                                "roles": []} \
                     if i[0] and i[0] not in cfg['rroles'][message] else cfg['rroles'][message][i[0]]
 
                 for role in i[1:]:
                     cfg['rroles'][message][i[0]]["roles"].append(role)
 
                 m = await ctx.channel.fetch_message(int(message))
-                await m.add_reaction(f"<:{i[0]}:{cfg['rroles'][message][i[0]]['emoji']}>" if cfg['rroles'][message][i[0]]['emoji'] is not None else i[0])
+
+                if not m:
+                    for channel in ctx.guild.text_channels:
+                        m = await channel.fetch_message(int(message))
+                        if not m:
+                            continue
+                        break
+
+                await m.add_reaction(
+                    f"<:{i[0]}:{cfg['rroles'][message][i[0]]['emoji']}>" if cfg['rroles'][message][i[0]][
+                                                                                'emoji'] is not None else i[0])
 
             else:
-                self.config.update_one({"_id": str(ctx.guild.id)}, {"$set": dict(cfg)})
+                await self.config.update_one({"_id": str(ctx.guild.id)}, {"$set": dict(cfg)})
 
         elif remove in ["remove"]:
             roles = [i.split(" ") for i in roles.split("; ")] \
@@ -263,9 +261,26 @@ class System(cmd.Cog):
                         else:
                             if len(cfg['rroles'][message][i[0]]['roles']) <= 0:
                                 m = await ctx.channel.fetch_message(int(message))
-                                await m.clear_reaction(f"<:{i[0]}:{cfg['rroles'][message][i[0]]['emoji']}>" if cfg['rroles'][message][i[0]]['emoji'] is not None else i[0])
+
+                                if not m:
+                                    for channel in ctx.guild.text_channels:
+                                        m = await channel.fetch_message(int(message))
+                                        if not m:
+                                            continue
+                                        break
+
+                                await m.clear_reaction(f"<:{i[0]}:{cfg['rroles'][message][i[0]]['emoji']}>" if
+                                                       cfg['rroles'][message][i[0]]['emoji'] is not None else i[0])
                     else:
                         m = await ctx.channel.fetch_message(int(message))
+
+                        if not m:
+                            for channel in ctx.guild.text_channels:
+                                m = await channel.fetch_message(int(message))
+                                if not m:
+                                    continue
+                                break
+
                         await m.clear_reaction(f"<:{i[0]}:{i[0]['emoji']}>" if i[0]['emoji'] is not None else i[0])
 
                     if len(cfg['rroles'][message][i[0]]['roles']) <= 0:
@@ -273,9 +288,9 @@ class System(cmd.Cog):
                         if len(cfg['rroles'][message]) <= 0:
                             cfg['rroles'].pop(message)
 
-                    self.config.update_one({"_id": str(ctx.guild.id)}, {"$set": dict(cfg)})
+                    await self.config.update_one({"_id": str(ctx.guild.id)}, {"$set": dict(cfg)})
 
-    @cmd.command(name="Disable", aliases=['disable', 'отключить'], usage="disable `<category name | command alias>`",
+    @cmd.command(name="Disable", aliases=['отключить'], usage="disable `<category name | command alias>`",
                  description="""
     Category name - must be full name of category
      example: `Music`
@@ -296,20 +311,18 @@ class System(cmd.Cog):
     @cmd.guild_only()
     @cmd.check(checks.is_off)
     @cmd.has_guild_permissions(manage_guild=True)
-    async def disable_command_or_category_command(self, ctx: cmd.Context, *, target: str):
+    async def disable_command_or_category(self, ctx: cmd.Context, *, target: str):
         if not target:
             raise cmd.BadArgument("Give name of category or command alias")
-        r = await checks.is_off(ctx)
-        print(r)
         target = target.split(" ")
         target = [i.lower() for i in target]
 
-        cfg = self.commands.find_one({"_id": f"{ctx.guild.id}"})
+        cfg = await self.commands.find_one({"_id": f"{ctx.guild.id}"})
 
         if not cfg:
             data = self.models.Commands(ctx.guild).get_dict()
-            self.commands.insert_one(dict(data))
-            cfg = self.commands.find_one({"_id": f"{ctx.guild.id}"})
+            await self.commands.insert_one(dict(data))
+            cfg = data
 
         cogs = [i for i in self.bot.cogs if i.lower() in target]
 
@@ -332,13 +345,13 @@ class System(cmd.Cog):
             cfg['commands'].append(cmds[0])
             res = f"Command: {cmds[0]}"
 
-        self.commands.update_one({"_id": f"{ctx.guild.id}"}, {"$set": dict(cfg)})
+        await self.commands.update_one({"_id": f"{ctx.guild.id}"}, {"$set": dict(cfg)})
         await ctx.send(embed=discord.Embed(title="Disable:",
                                            description=res,
                                            colour=discord.Colour.green(),
                                            timestamp=datetime.now()))
 
-    @cmd.command(name="Enable", aliases=['enable', 'включить'], usage="enable `<category name | command alias>`",
+    @cmd.command(name="Enable", aliases=['включить'], usage="enable `<category name | command alias>`",
                  description="""
     Category name - must be full name of category
      example: `Music`
@@ -358,14 +371,14 @@ class System(cmd.Cog):
     """)
     @cmd.guild_only()
     @cmd.has_guild_permissions(manage_guild=True)
-    async def enable_command_or_category_command(self, ctx: cmd.Context, *, target: str):
+    async def enable_command_or_category(self, ctx: cmd.Context, *, target: str):
         if not target:
             raise cmd.BadArgument("Give name of category or command alias")
 
         target = target.split(" ")
         target = [i.lower() for i in target]
 
-        cfg = self.commands.find_one({"_id": f"{ctx.guild.id}"})
+        cfg = await self.commands.find_one({"_id": f"{ctx.guild.id}"})
 
         if not cfg:
             raise cmd.BadArgument("All commands or categories are enabled")
@@ -373,7 +386,7 @@ class System(cmd.Cog):
         cogs = [i for i in self.bot.cogs if i.lower() in target]
 
         cmds = [i.name for j in self.bot.cogs for i in self.bot.cogs[j].walk_commands()
-                if not i.hidden and j not in ["Jishaku", "Enable"] and len([v for v in target if v in i.aliases]) > 0]
+                if not i.hidden and j not in ["Enable"] and len([v for v in target if v in i.aliases]) > 0]
 
         if not cmds and not cogs:
             raise cmd.BadArgument('Nothing found!')
@@ -393,7 +406,7 @@ class System(cmd.Cog):
             res = cfg['commands'].pop(index)
             res = f"Command: {res}"
 
-        self.commands.update_one({"_id": f"{ctx.guild.id}"}, {"$set": dict(cfg)})
+        await self.commands.update_one({"_id": f"{ctx.guild.id}"}, {"$set": dict(cfg)})
         await ctx.send(embed=discord.Embed(title="Enable:",
                                            description=res,
                                            colour=discord.Colour.green(),
