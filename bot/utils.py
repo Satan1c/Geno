@@ -153,9 +153,9 @@ class Utils:
         try:
             video_url = urllib.parse.quote(video_url)
             async with aiohttp.ClientSession() as session:
-                async with session.get(f"https://geno.glitch.me/youtube/{video_url}") as res:
-                    res = await res.text()
-                    info = json.loads(res)
+                async with session.get(f"https://geno.glitch.me/yt/{video_url}") as res:
+                    info = await res.json()
+                    info = [info]
                     info = "https://www.youtube.com" + info[0]['url_suffix'] if info and len(info) else None
 
                     if not info:

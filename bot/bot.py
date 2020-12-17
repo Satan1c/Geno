@@ -28,9 +28,9 @@ class Geno(cmd.Bot):
                          case_insensitive=True)
         self.client = AsyncIOMotorClient(config.MONGO)
         self.token = config.TOKEN
-        self.prefix = "t-"
-        # self.prefix = "g-"
-        self.version = "(v1.0.1)"
+        #self.prefix = "t-"
+        self.prefix = "g-"
+        self.version = "(v1.0.1a)"
         self.main = self.client.get_database("cfg").get_collection("main")
         self.servers = self.client.get_database("servers").get_collection("configs")
 
@@ -118,12 +118,12 @@ class Geno(cmd.Bot):
     #     print("\n", "-" * 30, f"\n[!] unknown error:\n{event_method}\n{args}\n{kwargs}\n", "-" * 30, "\n")
 
     async def on_connect(self):
-        return
+        #return
         await self.main.update_one({"_id": 0}, {"$set": {"uptime": datetime.now()}})
 
     async def get_prefix(self, message):
         prefix = self.prefix
-        return prefix
+        #return prefix
 
         if message.guild:
             prefix = await self.servers.find_one({"_id": f"{message.guild.id}"})
