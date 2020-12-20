@@ -124,7 +124,7 @@ class Other(cmd.Cog):
 
         del srv
 
-    @cmd.command(name="Bot", aliases=['about', 'бот'], usage="bot", description="""
+    @cmd.command(name="Bot info command", aliases=['about', 'бот', 'bot'], usage="bot", description="""
     Shows some info about me
     :-:
     Показывает некотороую информацию про меня
@@ -142,11 +142,11 @@ class Other(cmd.Cog):
             mem = proc.memory_full_info()
             ram = f"`usage volume: {round((mem.vms // 1024) / 1024, 1)}mb`"
 
-            em = self.EmbedGenerator(target="bot", ctx=ctx, system=system, cpu=cpu, ram=ram, platform=platform,
-                                     data=self).get()
+            em = await self.EmbedGenerator.init(target="bot", ctx=ctx, system=system, cpu=cpu, ram=ram, platform=platform,
+                                          data=self)
             await ctx.send(embed=em)
 
-    @cmd.command(name="Links", aliases=['urls', 'bot_links'], usage="links", description="""
+    @cmd.command(name="Links command", aliases=['urls', 'bot_links', 'bot_urls', 'links'], usage="links", description="""
     Shows connected to bot links, like: bot invite, support server, monitors
     :-:
     Показывает ссылки связанные с ботом, по типу: приглашение бота, сервер поддержки, смониторинги

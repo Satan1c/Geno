@@ -61,12 +61,16 @@ class Events(cmd.Cog):
                                                                  f"<@{str(self.bot.user)}>",
                                                                  f"@{str(self.bot.user)}",
                                                                  f"<@{self.bot.user.id}>"]:
+            if not message.guild:
+                prf = self.bot.command_prefix
+            else:
+                prf = await self.config.find_one({"_id": f"{message.guild.id}"})
+                prf = prf['prefix']
             ctx = cmd.Context(bot=self.bot,
                               message=message,
                               guild=message.guild,
                               send=message.channel.send,
-                              prefix="g-" if not message.guild else
-                              self.config.find_one({"_id": f"{message.guild.id}"})['prefix'])
+                              prefix=prf)
             return await self.bot.get_command("Help").callback(ctx=ctx, self=self.bot.get_cog("System"))
 
         if message.author.id != self.bot.user.id or not message.guild:

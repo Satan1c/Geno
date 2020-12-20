@@ -76,6 +76,7 @@ class Geno(cmd.Bot):
     async def on_command_error(self, ctx: cmd.Context, err):
         if isinstance(err, cmd.CommandNotFound) or (ctx.command and ctx.command.name == "Help"):
             return
+        print("\n", "-"*30, "\n", err, "\n", "-"*30, "\n")
         s = str(err).split(": ")
         em = discord.Embed(title=f"{ctx.command.name} ERROR",
                            description=f"{s[0]}: {s[-1]}" if len(s) > 1 else s[0],

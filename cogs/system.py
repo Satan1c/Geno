@@ -110,7 +110,7 @@ class System(cmd.Cog):
                 em.description = f"`{nick}` was not found in announcements"
                 return await ctx.send(embed=em)
             if len(cfg['servers']):
-                arr = cfg['servers'].pop(cfg['servers'].index(ctx.guild.id))
+                arr = cfg['servers'].pop(cfg['servers'].index([i for i in cfg['servers'] if i['id'] == str(ctx.guild.id)][0]))
                 cfg['servers'] = arr
                 em.description = f"Announcements from channel: `{nick}`"
             else:
@@ -144,8 +144,10 @@ class System(cmd.Cog):
                 cfg['servers'].append({"id": f"{ctx.guild.id}", "channel": f"{channel.id}"})
             else:
                 if len(cfg['servers']):
-                    cfg['servers'][cfg['servers'].index(ctx.guild.id)] = {"id": f"{ctx.guild.id}",
-                                                                          "channel": f"{channel.id}"}
+                    cfg['servers'][
+                        cfg['servers'].index([i for i in cfg['servers'] if i['id'] == str(ctx.guild.id)][0])] = {
+                        "id": f"{ctx.guild.id}",
+                        "channel": f"{channel.id}"}
                 else:
                     cfg['servers'].append({"id": f"{ctx.guild.id}", "channel": f"{channel.id}"})
 

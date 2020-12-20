@@ -71,10 +71,12 @@ class Music(cmd.Cog):
         if isinstance(event, lavalink.events.QueueEndEvent):
             try:
                 player = event.player
-                if not player:
+                if not player or not player.guild_id:
                     return
 
                 cfg = await self.config.find_one({"_id": f"{player.guild_id}"})
+                if not cfg:
+                    return
                 cfg = cfg['music']
 
                 print("\nQueueEndEvent")
@@ -93,8 +95,12 @@ class Music(cmd.Cog):
                 cfg = cfg['music']
                 try:
                     guild = self.bot.get_guild(int(guild_id))
-
+                    if not guild:
+                        return
                     ch = guild.get_channel(int(player.channel_id or 1))
+                    if not ch:
+                        return
+
                     if cfg['now_playing'] and ch and player.is_connected and len(ch.members) <= 1:
                         player.queue.clear()
                         await player.stop()

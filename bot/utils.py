@@ -28,33 +28,29 @@ class Twitch:
         self.client_id = self.main['twitch_id']  # https://dev.twitch.tv/console/apps
         self.token = self.main['twitch_token']  # https://twitchapps.com/tokengen/  https://dev.twitch.tv/
         self.client_secret = self.main['twitch_secret']
-        self.url = "https://api.twitch.tv/helix/search/channels?query="
+        self.url = "https://api.twitch.tv/helix/search/"
         self.refresh_url = "https://id.twitch.tv/oauth2/token?grant_type=refresh_token&refresh_token={toke}&client_id={client_id}&client_secret={client_secret}"
 
-    async def get_response(self, query):
-        async with aiohttp.ClientSession() as session:
-            async with session.get(f"{self.url}{query}",
-                                   headers={
-                                       "client-id": self.client_id, 'Authorization': f'Bearer {self.token}',
-                                       "Accept": "application/vnd.v5+json"
-                                   }) as response:
-                res = await response.json()
-            if "data" not in res:
-                if res['status'] == 404:
-                    print("\n", "-" * 30, "[!] Twitch no data")
-                    self.print_response(res)
-                    print("-" * 30, "\n")
-                    res = {"data": []}
-                elif res['status'] == 401:
-                    print("\n", "-" * 30, "[!] Twitch no data")
-                    self.print_response(res)
-                    print("-" * 30, "\n")
-                    async with session.post(self.refresh_url.format(client_id=self.client_id, token=self.token,
-                                                                    client_secret=self.client_secret)) as response:
-                        res = await response.json()
-                        if "refresh_token" in res:
-                            self.main['twitch_token'] = res['refresh_token']
-                            await self.bot.main.update_one({"_id": 0}, {"$set": self.main})
+    async def get_response(self, query, session):
+        async with session.get(f"{self.url}{query}",
+                               headers={
+                                   "Client-Id": self.client_id, 'Authorization': f'Bearer {self.token}',
+                                   "Accept": "application/vnd.v5+json"
+                               }) as response:
+            res = await response.json()
+        if "data" not in res:
+            if res['status'] == 404:
+                res = {"data": []}
+            elif res['status'] == 401:
+                print("\n", "-" * 30, "[!] Twitch no data")
+                self.print_response(res)
+                print("-" * 30, "\n")
+                async with session.post(self.refresh_url.format(client_id=self.client_id, token=self.token,
+                                                                client_secret=self.client_secret)) as response:
+                    res = await response.json()
+                    if "refresh_token" in res:
+                        self.main['twitch_token'] = res['refresh_token']
+                        await self.bot.main.update_one({"_id": 0}, {"$set": self.main})
 
         return res
 
@@ -95,8 +91,9 @@ class Utils:
         self.dev_key = "AIzaSyAZxekQbiyOvq1fCFNmq6-4VvNwcKQ2Vhs"
         self.dictionary = ["тыс", "млн", "млрд", "бил", "трл", "кдл", "квл", "сек", "сеп", "окт", "нон", "дец"]
 
-    def uptime(self):
-        start = self.main.find_one()['uptime']
+    async def uptime(self):
+        start = await self.main.find_one()
+        start = start['uptime']
         t = relativedelta(datetime.now(), start)
         return '{d}d {h}h {m}m {s}s'.format(d=t.days,
                                             h=t.hours,
@@ -596,7 +593,7 @@ class DataBase:
         guilds = [str(i.id) for i in self.bot.guilds]
         delete = [{"_id": i} for i in arr if i not in guilds]
 
-        self.servers.delete_many(delete)
+        await self.servers.delete_many(delete)
 
     # async def __create_users(self):
     #     arr = [f"{i['sid']} {i['uid']}" for i in self.profiles.find()]
@@ -650,7 +647,8 @@ class DataBase:
 
 
 class EmbedGenerator:
-    def __init__(self, target: str, inp: dict = None, **kwargs):
+    @classmethod
+    async def init(cls, target: str, inp: dict = None, **kwargs):
         if not inp:
             inp = {}
         for name, value in kwargs.items():
@@ -668,7 +666,7 @@ class EmbedGenerator:
             embed.set_thumbnail(url=em.image.url)
             embed.set_author(name=f"{str(ctx.author)} add to queue:",
                              icon_url=ctx.author.avatar_url_as(format="png", static_format='png', size=256))
-            self.embed = embed
+            return em
 
         elif target == "bot":
             system = inp['system']
@@ -687,7 +685,8 @@ class EmbedGenerator:
             em.add_field(name="Users:", value=f"`{len([i.id for i in data.bot.users if not i.bot])}`")
             em.add_field(name="Guilds:", value=f"`{len(data.bot.guilds)}`")
             em.add_field(name='\u200b', value="\u200b")
-            em.add_field(name="Up-time:", value=f"`{data.utils.uptime()}`")
+            up = await data.utils.uptime()
+            em.add_field(name="Up-time:", value=f"`{up}`")
             em.add_field(name="Ping:", value=f"`{round(data.bot.latency * 1000, 1)}s`")
             em.add_field(name='\u200b', value="\u200b")
             em.add_field(name="Python version:", value=f"`{platform.python_version()}`")
@@ -698,10 +697,7 @@ class EmbedGenerator:
             em.set_footer(text=str(ctx.author),
                           icon_url=ctx.author.avatar_url_as(format="png", static_format='png', size=256))
 
-            self.embed = em
-
-    def get(self) -> Embed:
-        return self.embed
+            return em
 
 
 class Checks:
