@@ -1,4 +1,4 @@
-from bot.bot import bot
+from bot.client import geno
 
-if __name__ == "__main__":
-    bot.run()
+if __name__ == '__main__':
+    geno.run()

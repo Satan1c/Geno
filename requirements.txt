@@ -4,7 +4,6 @@ pymongo
 datetime
 psutil
 asyncio
-youtube_dl
 google-api-python-client
 PyNaCl
 dnspython
@@ -14,4 +13,6 @@ aiodns
 cchardet
 requests
 websockets
-humanize
+google_trans_new
+motor
+aiohttp

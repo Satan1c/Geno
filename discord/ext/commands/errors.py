@@ -579,7 +579,8 @@ class MissingPermissions(CheckFailure):
             fmt = '{}, and {}'.format(", ".join(missing[:-1]), missing[-1])
         else:
             fmt = ' and '.join(missing)
-        message = 'You are missing {} permission(s) to run this command.'.format(fmt)
+        #message = 'You are missing {} permission(s) to run this command.'.format(fmt)
+        message = 'У вас не хватает прав {} для использования команды.'.format(fmt)
         super().__init__(message, *args)
 
 class BotMissingPermissions(CheckFailure):
@@ -602,7 +603,8 @@ class BotMissingPermissions(CheckFailure):
             fmt = '{}, and {}'.format(", ".join(missing[:-1]), missing[-1])
         else:
             fmt = ' and '.join(missing)
-        message = 'Bot requires {} permission(s) to run this command.'.format(fmt)
+        #message = 'Bot requires {} permission(s) to run this command.'.format(fmt)
+        message = 'Мне не хватает прав {} для выполнения команды.'.format(fmt)
         super().__init__(message, *args)
 
 class BadUnionArgument(UserInputError):
