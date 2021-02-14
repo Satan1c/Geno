@@ -53,8 +53,8 @@ class Music(cmd.Cog):
             permissions = ctx.author.voice.channel.permissions_for(ctx.me)
 
             if not permissions.connect or not permissions.speak:
-                perms = "`CONNECT` и `SPEAK`" if not permissions.connect and not permissions.speak else \
-                    "`CONNECT`" if not permissions.connect and permissions.speak else "`SPEAK`"
+                perms = ["connect", "speak"] if not permissions.connect and not permissions.speak else \
+                    ["connect"] if not permissions.connect and permissions.speak else ["speak"]
                 raise cmd.BotMissingPermissions(perms)
 
             player.store('channel', ctx.channel.id)

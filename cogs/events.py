@@ -31,7 +31,7 @@ class Events(cmd.Cog):
     @cmd.Cog.listener("on_voice_state_update")
     async def voice_update(self, member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
         cfg = await self.config.find_one({"_id": f"{member.guild.id}"})
-        cfg = cfg['music']
+        cfg = cfg['music'] if cfg else {}
         if member.id == self.bot.user.id and after.channel and member.voice and not member.voice.deaf:
             try:
                 await member.edit(deafen=True)

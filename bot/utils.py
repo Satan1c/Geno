@@ -446,9 +446,16 @@ class Paginator:
         try:
             await self.controller.add_reaction(self.reactions[2])
         except:
-            return
-
-        await self.ctx.bot.wait_for('reaction_add', timeout=self.timeout, check=lambda r, u: u.bot is not True)
+            pass
+        
+        try:
+            await self.ctx.bot.wait_for('reaction_add', timeout=self.timeout,
+                                    check=lambda r, u: not u.bot
+                                                       and u.id == self.ctx.author.id
+                                                       and r.emoji in self.reactions
+                                                       and r.message.id == self.controller.id)
+        except TimeoutError:
+            await self.__close_session()
         await self.__call_controller()
 
     async def __call_controller(self, start_page: int = 0):
@@ -459,10 +466,14 @@ class Paginator:
 
         try:
             await self.controller.clear_reactions()
+        except:
+            pass
+
+        try:
             for emoji in self.reactions:
                 await self.controller.add_reaction(emoji)
         except:
-            return
+            pass
 
         while True:
             try:
@@ -474,8 +485,10 @@ class Paginator:
                 break
 
             try:
-                await self.controller.remove_reaction(response[0], response[1])
-
+                try:
+                    await self.controller.remove_reaction(response[0], response[1])
+                except:
+                    pass
                 if response[0].emoji == self.reactions[0]:
                     self.current = self.current - 1 if self.current > 0 else len(self.pages) - 1
                     await self.controller.edit(embed=self.pages[self.current])
@@ -583,9 +596,9 @@ class DataBase:
         self.profiles: Collection = bot.profiles
 
     async def create(self):
-        await asyncio.gather(self._create_servers())
+        await asyncio.gather(self.__create_servers())
 
-    async def _create_servers(self):
+    async def __create_servers(self):
         arr = [int(i['_id']) async for i in self.servers.find()]
 
         create = [self.models.Server(i).get_dict() for i in self.bot.guilds if i.id not in arr]

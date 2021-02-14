@@ -76,7 +76,7 @@ class Other(cmd.Cog):
             cmds = "\n".join(cmds)
             embeds.append(discord.Embed(colour=discord.Colour.green(),
                                         title="Список команд",
-                                        description=f"Префикс: `{prefix}`\nhelp `['использование команды']`"
+                                        description=f"Префикс: `{prefix}`\nhelp `[использование команды]`"
                                                     f" - для помощи по одной команде")
                           .add_field(name=f"{cog}", value=cmds))
         p = self.Paginator(ctx, embeds=embeds, begin=em)

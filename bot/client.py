@@ -58,8 +58,8 @@ class Geno(cmd.Bot):
         print('-' * 30)
 
     async def on_ready(self):
-
         await self.init()
+        await self.DataBase(self).create()
         act = discord.Activity(name=f"{Geno.prefix}help | {Geno.version}",
                                type=discord.ActivityType.listening)
         await self.change_presence(status=discord.Status.online, activity=act)
@@ -69,12 +69,18 @@ class Geno(cmd.Bot):
     async def get_prefix(self, message):
         def when_mentioned_or(*prefixes):
             def inner(bot, msg):
-                return [bot.user.mention, f'{bot.user.mention} ', f'<@!{bot.user.id}> ', f'<@!{bot.user.id}>'] + list(
+                return [bot.user.mention, f'{bot.user.mention} ', f'<@!{bot.user.id}> ', f'<@!{bot.user.id}>',
+                        f'<@{bot.user.id}> ', f'<@{bot.user.id}>',
+                        f'<@&{bot.user.id}> ', f'<@&{bot.user.id}>'] + list(
                     prefixes)
 
             return inner
 
         extras = [Geno.prefix]
+        if message.guild:
+            cfg = await self.servers.find_one({"_id": str(message.guild.id)})
+            if cfg:
+                extras = [cfg['prefix']]
         return when_mentioned_or(*extras)(self, message)
 
     async def on_command_error(self, ctx: cmd.Context, err):
