@@ -1,3 +1,3 @@
-web: java -jar s/Lavalink.jar
+web: cd $HOME/heroku_output/Geno && dotnet ./Geno.dll
 
-worker: python3 main.py
+worker: cd $HOME/heroku_output/Geno && dotnet ./Geno.dll
