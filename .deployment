@@ -1,2 +1,2 @@
 [config]
-project = netcoreapp31
+project = ./bin/Release/netcoreapp3.1

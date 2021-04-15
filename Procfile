@@ -1,1 +1,1 @@
-worker: dotnet ./netcoreapp31/Geno.dll
+worker: dotnet ./bin/Release/netcoreapp3.1
