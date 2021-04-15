@@ -39,8 +39,9 @@ namespace Geno
 
         public async Task RunAsync()
         {
-            #region cfg
 
+            #region cfg
+            /*
             using (var file = new StreamReader("config.json", new UTF8Encoding(false)))
             {
                 var raw = await file.ReadToEndAsync().ConfigureAwait(false);
@@ -49,6 +50,17 @@ namespace Geno
                 token = cfg["token"];
                 mongo = new MongoClient(cfg["mongo"]);
             };
+            */
+
+            defPrefix = "g-";
+
+            //Test
+            token = "NzMxNTE1ODI3NjcyNzExMTk4.XwnLNA.6ECjGt-ZCRvqNGVpy0ehf9Nra1M";
+
+            //Release
+            //token = "NjQ4NTcwMzQxOTc0NzM2OTI2.XdwKMw.vnTwJNSOzT9jhKdtgQgX9sK8Hn4";
+
+            mongo = new MongoClient("mongodb+srv://Geno:Atlas23Game@genodb.wrqdw.mongodb.net/myFirstDatabase?retryWrites=true&w=majority");
 
             #endregion cfg
 
