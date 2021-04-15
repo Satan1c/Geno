@@ -1,6 +1,1 @@
-﻿{
-  "token": "NzMxNTE1ODI3NjcyNzExMTk4.XwnLNA.6ECjGt-ZCRvqNGVpy0ehf9Nra1M",
-  //"token": "NjQ4NTcwMzQxOTc0NzM2OTI2.XdwKMw.vnTwJNSOzT9jhKdtgQgX9sK8Hn4",
-  "mongo": "mongodb+srv://Geno:Atlas23Game@genodb.wrqdw.mongodb.net/myFirstDatabase?retryWrites=true&w=majority",
-  "prefix": "g-"
-}
+﻿{"token":"NzMxNTE1ODI3NjcyNzExMTk4.XwnLNA.6ECjGt-ZCRvqNGVpy0ehf9Nra1M","mongo":"mongodb+srv://Geno:Atlas23Game@genodb.wrqdw.mongodb.net/myFirstDatabase?retryWrites=true&w=majority","prefix":"g-"}
