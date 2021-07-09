@@ -4,6 +4,8 @@ import re
 from datetime import datetime
 
 import discord
+from discord.ext.commands import BucketType
+
 from bot.bot import Geno
 from bot.bot import bot as b
 from discord.ext import commands as cmd
@@ -51,6 +53,7 @@ class System(cmd.Cog):
     
     Изменяет текущий префикс на сервере, на "prefix"
     """)
+    @cmd.cooldown(1, 30, BucketType.guild)
     @cmd.check(checks.is_off)
     @cmd.has_guild_permissions(manage_messages=True)
     async def prefix(self, ctx: cmd.Context, *, prefix: str = Geno.prefix):
@@ -58,6 +61,8 @@ class System(cmd.Cog):
         raw = cfg['prefix']
         if str(raw) == str(prefix):
             raise cmd.BadArgument("New prefix can't be equals old")
+        if len(re.sub(r"[^А-Яа-я -~]+",r' ',prefix)) not in range(1, 10):
+            raise cmd.BadArgument("Prefix length must be between 1 and 10")
 
         await self.config.update_one({"_id": f"{ctx.guild.id}"}, {"$set": {"prefix": prefix}})
         await ctx.send(embed=discord.Embed(title="Prefix change",
@@ -97,6 +102,7 @@ class System(cmd.Cog):
     
     Регистрирует "channel", для автоматических оповещений, о трансляциях на twitch.tv канале "nick"
     """)
+    @cmd.cooldown(1, 5, BucketType.guild)
     @cmd.check(checks.is_off)
     @cmd.has_guild_permissions(manage_channels=True)
     @cmd.bot_has_guild_permissions(manage_channels=True)
@@ -201,6 +207,7 @@ class System(cmd.Cog):
      
     Добавляет "emojis" под "message", и отмечает "roles" как роли по реакциям
     """)
+    @cmd.cooldown(1, 5, BucketType.guild)
     @cmd.guild_only()
     @cmd.check(checks.is_off)
     @cmd.has_guild_permissions(manage_channels=True, manage_roles=True)
@@ -310,6 +317,7 @@ class System(cmd.Cog):
     
     Отключает все команды в "category" или команду "command" на сервере
     """)
+    @cmd.cooldown(1, 5, BucketType.guild)
     @cmd.guild_only()
     @cmd.check(checks.is_off)
     @cmd.has_guild_permissions(manage_guild=True)
@@ -371,6 +379,7 @@ class System(cmd.Cog):
     
     Включает все команды в "category" или команду "command" на сервере
     """)
+    @cmd.cooldown(1, 5, BucketType.guild)
     @cmd.guild_only()
     @cmd.has_guild_permissions(manage_guild=True)
     async def enable_command_or_category(self, ctx: cmd.Context, *, target: str):

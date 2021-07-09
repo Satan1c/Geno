@@ -7,6 +7,8 @@ from datetime import datetime
 import psutil
 
 import discord
+from discord.ext.commands import BucketType
+
 from bot.bot import bot as b
 from discord.ext import commands as cmd
 
@@ -32,7 +34,13 @@ class Other(cmd.Cog):
                      {"D.Boats": "https://discord.boats/bot/648570341974736926"},
                      {"Top-Bots": "https://top-bots.xyz/bot/648570341974736926"})
 
+    @cmd.command()
+    @cmd.bot_has_guild_permissions(ban_members=True)
+    async def test(self, ctx: cmd.Context):
+        await ctx.send("work")
+
     @cmd.command(name="Help", hidden=True, aliases=['h', 'commands', 'cmds', 'хелп', 'команды', 'кмд'])
+    @cmd.cooldown(1, 5, BucketType.guild)
     @cmd.check(checks.is_off)
     async def help(self, ctx: cmd.Context, *, command: str = None):
         reg = str(ctx.guild.region if ctx.guild else "en")
@@ -97,6 +105,7 @@ class Other(cmd.Cog):
     :-:
     Показывает краткую информацию о сервере
     """)
+    @cmd.cooldown(1, 5, BucketType.guild)
     @cmd.guild_only()
     @cmd.check(checks.is_off)
     async def server(self, ctx: cmd.Context):
@@ -129,6 +138,7 @@ class Other(cmd.Cog):
     :-:
     Показывает некотороую информацию про меня
     """)
+    @cmd.cooldown(1, 5, BucketType.guild)
     @cmd.check(checks.is_off)
     async def info_bot(self, ctx: cmd.Context):
         system = platform.uname()
@@ -142,8 +152,9 @@ class Other(cmd.Cog):
             mem = proc.memory_full_info()
             ram = f"`usage volume: {round((mem.vms // 1024) / 1024, 1)}mb`"
 
-            em = await self.EmbedGenerator.init(target="bot", ctx=ctx, system=system, cpu=cpu, ram=ram, platform=platform,
-                                          data=self)
+            em = await self.EmbedGenerator.init(target="bot", ctx=ctx, system=system, cpu=cpu, ram=ram,
+                                                platform=platform,
+                                                data=self)
             await ctx.send(embed=em)
 
     @cmd.command(name="Links command", aliases=['urls', 'bot_links', 'bot_urls', 'links'], usage="links", description="""
@@ -151,6 +162,7 @@ class Other(cmd.Cog):
     :-:
     Показывает ссылки связанные с ботом, по типу: приглашение бота, сервер поддержки, смониторинги
     """)
+    @cmd.cooldown(1, 5, BucketType.guild)
     @cmd.check(checks.is_off)
     async def info_bot_urls(self, ctx: cmd.Context):
         em = discord.Embed(title=f"{ctx.me.name} {self.bot.version}  urls",
@@ -166,21 +178,6 @@ class Other(cmd.Cog):
             em.add_field(name=titles[i], value=f"[Click]({urls[i]})")
 
         await ctx.send(embed=em)
-
-    # @cmd.command(name="Profile", aliases=['профиль', 'profile'], usage="profile")
-    # @cmd.check(checks.is_off)
-    # async def profile_command(self, ctx: cmd.Context):
-    #     activity = f"{str(ctx.author.activities[1].type).split('.')[1]} {ctx.author.activities[1].name}" if "emoji" in dir(ctx.author.activities[0]) else f"{ctx.author.activities[0].emoji} {ctx.author.activities[0].name}"
-    #     custom = f"{ctx.author.activities[0].emoji} {ctx.author.activities[0].name}\n" if "emoji" in dir(ctx.author.activities[0]) else None
-    #
-    #     em = discord.Embed(title=f"{ctx.author.display_name}'s profile", colour=discord.Colour.green())
-    #     em.add_field(inline=False, name="Status:", value=ctx.author.status)
-    #     em.add_field(inline=False, name="Activity:", value=f"{custom if custom else ''}{activity} " if ctx.author.activities else"No activity")
-    #     em.add_field(inline=False, name="Joined:", value=f"{ctx.author.joined_at}")
-    #     em.add_field(inline=False, name="Roles:", value="\n".join([i.mention for i in ctx.author.roles]) if len(ctx.author.roles) <= 5 else ", ".join([i.mention for i in ctx.author.roles]))
-    #
-    #     await ctx.send(embed=em)
-
 
 def setup(bot):
     bot.add_cog(Other(bot))

@@ -4,6 +4,8 @@ import re
 from datetime import datetime
 
 import discord
+from discord.ext.commands import BucketType
+
 from bot.bot import Geno
 from bot.bot import bot as b
 from discord.ext import commands as cmd

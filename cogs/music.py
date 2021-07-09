@@ -8,6 +8,8 @@ import lavalink
 
 import discord
 import discord.gateway
+from discord.ext.commands import BucketType
+
 from bot.bot import Geno
 from bot.bot import bot as b
 from discord.ext import commands as cmd
@@ -32,11 +34,9 @@ class Music(cmd.Cog):
         lavalink.add_event_hook(self.track_hook)
 
     def cog_unload(self):
-        """ Cog unload handler. This removes any event hooks that were registered. """
         self.bot.lavalink._event_hooks.clear()
 
     async def cog_before_invoke(self, ctx):
-        """ Command before-invoke handler. """
         guild_check = ctx.guild is not None
 
         if guild_check:
@@ -45,7 +45,6 @@ class Music(cmd.Cog):
         return guild_check
 
     async def ensure_voice(self, ctx):
-        """ This check ensures that the bot and command author are in the same voicechannel. """
         player = self.bot.lavalink.player_manager.create(ctx.guild.id, endpoint=str(ctx.guild.region))
         should_connect = ctx.command.name in ('Play', 'Join',)
 
@@ -119,7 +118,7 @@ class Music(cmd.Cog):
 
                 cfg = await self.config.find_one({"_id": f"{event.player.guild_id}"})
                 cfg = cfg['music']
-                data = self.utils.now_playing(player=player)
+                data = await self.utils.now_playing(player=player)
 
                 if cfg['now_playing'] == "":
                     cfg['now_playing'] = {}
@@ -201,7 +200,6 @@ class Music(cmd.Cog):
                 print("\n", "-" * 30, f"\n[!]Music track_hook end error:\n{err}\n", "-" * 30, "\n")
 
     async def connect_to(self, guild_id: int, channel_id: str = None):
-        """ Connects to the given voicechannel ID. A channel_id of `None` means disconnect. """
         ws = self.bot._connection._get_websocket(guild_id)
         await ws.voice_state(str(guild_id), channel_id)
 
@@ -227,6 +225,7 @@ class Music(cmd.Cog):
     
     проигрывает или добавляет в очередь - трек, который был задан ссылкой(`url`) или запросом(`query`)
     """)
+    @cmd.cooldown(1, 5, BucketType.guild)
     @cmd.check(checks.is_off)
     @cmd.guild_only()
     async def play(self, ctx: cmd.Context, *, query: str):
@@ -279,7 +278,7 @@ class Music(cmd.Cog):
             await player.play()
             await player.set_volume(cfg['volume'] * 100)
         else:
-            data = self.utils.uploader(track, typ="yt" if "youtube.com" in track['info']['uri'] else "sc")
+            data = await self.utils.uploader(track, typ="yt" if "youtube.com" in track['info']['uri'] else "sc")
             em = discord.Embed(description=f"Duration: `{data['duration']}`\nTags: `{data['tags']}`",
                                timestamp=datetime.now(),
                                colour=discord.Colour.green(),
@@ -298,6 +297,7 @@ class Music(cmd.Cog):
     :-:
     Выходит из голосового канала, если находится в нем, и останавливает музыку с очисткой очереди
     """)
+    @cmd.cooldown(1, 5, BucketType.guild)
     @cmd.check(checks.is_off)
     @cmd.guild_only()
     async def stop(self, ctx: cmd.Context):
@@ -328,6 +328,7 @@ class Music(cmd.Cog):
      
     Изменяет громкость музыки на `value`%
     """)
+    @cmd.cooldown(1, 5, BucketType.guild)
     @cmd.check(checks.is_off)
     @cmd.guild_only()
     async def volume(self, ctx: cmd.Context, value=None):
@@ -361,6 +362,7 @@ class Music(cmd.Cog):
     :-:
     Возвращает в чат список заказамой музыки
     """)
+    @cmd.cooldown(1, 5, BucketType.guild)
     @cmd.check(checks.is_off)
     @cmd.guild_only()
     async def queue(self, ctx: cmd.Context):
@@ -385,6 +387,7 @@ class Music(cmd.Cog):
     :-:
     Пропускает текущий трек к следущему в списке
     """)
+    @cmd.cooldown(1, 5, BucketType.guild)
     @cmd.check(checks.is_off)
     @cmd.guild_only()
     async def skip(self, ctx: cmd.Context):
@@ -404,6 +407,7 @@ class Music(cmd.Cog):
     :-:
     Возвращает в чат информацию о текущем треке
     """)
+    @cmd.cooldown(1, 5, BucketType.guild)
     @cmd.check(checks.is_off)
     @cmd.guild_only()
     async def now_playing(self, ctx: cmd.Context):
@@ -444,6 +448,7 @@ class Music(cmd.Cog):
     :-:
     тавит музыку на паузу
     """)
+    @cmd.cooldown(1, 5, BucketType.guild)
     @cmd.check(checks.is_off)
     @cmd.guild_only()
     async def pause(self, ctx: cmd.Context):
@@ -463,6 +468,7 @@ class Music(cmd.Cog):
     :-:
     Продолжает - снимает с паузы, проигрывание музыки
     """)
+    @cmd.cooldown(1, 5, BucketType.guild)
     @cmd.check(checks.is_off)
     @cmd.guild_only()
     async def resume(self, ctx: cmd.Context):
@@ -483,6 +489,7 @@ class Music(cmd.Cog):
     :-:
     одключается к вашему голосовому каналу
     """)
+    @cmd.cooldown(1, 5, BucketType.guild)
     @cmd.guild_only()
     async def join(self, ctx: cmd.Context):
         if not ctx.author.voice:

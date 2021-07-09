@@ -6,17 +6,16 @@ import os
 import re
 import urllib
 from asyncio import TimeoutError
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Union, Tuple
 
 import aiohttp
-from dateutil.relativedelta import relativedelta
-from googleapiclient import discovery
-
 import discord
+from dateutil.relativedelta import relativedelta
 from discord import Embed, Colour
 from discord.ext import commands as cmd
 from discord.ext.commands import Context
+from googleapiclient import discovery
 
 url_rx = re.compile(r'https?://(?:www\.)?.+')
 
@@ -24,60 +23,76 @@ url_rx = re.compile(r'https?://(?:www\.)?.+')
 class Twitch:
     def __init__(self, bot):
         self.bot = bot
-        self.main = bot.raw_main
+        self.main: dict = bot.raw_main
         self.client_id = self.main['twitch_id']  # https://dev.twitch.tv/console/apps
         self.token = self.main['twitch_token']  # https://twitchapps.com/tokengen/  https://dev.twitch.tv/
         self.client_secret = self.main['twitch_secret']
         self.url = "https://api.twitch.tv/helix/search/"
         self.refresh_url = "https://id.twitch.tv/oauth2/token?grant_type=refresh_token&refresh_token={toke}&client_id={client_id}&client_secret={client_secret}"
 
-    async def get_response(self, query, session):
+    async def get_response(self, query, session) -> dict:
         async with session.get(f"{self.url}{query}",
                                headers={
                                    "Client-Id": self.client_id, 'Authorization': f'Bearer {self.token}',
                                    "Accept": "application/vnd.v5+json"
                                }) as response:
-            res = await response.json()
+            res: dict = await response.json()
+
         if "data" not in res:
+
             if res['status'] == 404:
                 res = {"data": []}
+
             elif res['status'] == 401:
-                print("\n", "-" * 30, "[!] Twitch no data")
+                print("\n[!] Twitch no data")
                 self.print_response(res)
-                print("-" * 30, "\n")
+
                 async with session.post(self.refresh_url.format(client_id=self.client_id, token=self.token,
                                                                 client_secret=self.client_secret)) as response:
                     res = await response.json()
                     if "refresh_token" in res:
                         self.main['twitch_token'] = res['refresh_token']
-                        await self.bot.main.update_one({"_id": 0}, {"$set": self.main})
+                        await self.bot.main_cfg.update_one({"_id": 0}, {"$set": self.main})
 
         return res
 
     @staticmethod
-    async def stream_embed(login, res1, res2, channel):
-        em = discord.Embed(title=f"{res1['title']}", url=f"https://twitch.tv/{login}",
-                           description=f"viewer count: `{res1['viewer_count']}`",
-                           colour=discord.Colour(value=int('6441a5', 16)),
-                           timestamp=datetime.now())
+    async def stream_embed(login, res1, res2, channel) -> discord.Message:
+        em: discord.Embed = discord.Embed(title=f"{res1['title']}", url=f"https://twitch.tv/{login}",
+                                          description=f"viewer count: `{res1['viewer_count']}`",
+                                          colour=discord.Colour(value=int('6441a5', 16)),
+                                          timestamp=datetime.now())
+
         em.set_author(name=f"{res1['user_name']}", url=f"https://twitch.tv/{login}",
                       icon_url=f"{res2['profile_image_url']}")
+
         em.set_image(url=f"{res1['thumbnail_url'].format(width=1920, height=1080)}")
 
-        await channel.send(embed=em)
+        return await channel.send(embed=em)
 
     @staticmethod
-    def get_stream_query(login):
+    def get_stream_query(login) -> str:
         return f"streams?user_login={login}"
 
     @staticmethod
-    def get_user_query(login):
+    def get_user_query(login) -> str:
         return f"users?login={login}"
 
     @staticmethod
     def print_response(res):
         print_res = json.dumps(res, indent=2)
         return print(print_res, "\n")
+
+
+class RateLimitter:
+    def __init__(self, timeout: timedelta):
+        self.timeout = timeout
+        self.last_request = datetime(1, 1, 1)
+
+    async def awaiter(self):
+        diff = datetime.utcnow() - self.last_request
+        if diff > self.timeout:
+            await asyncio.sleep((self.timeout - diff).total_seconds())
 
 
 class Utils:
@@ -89,12 +104,21 @@ class Utils:
         self.config = bot.servers
         self.streamers = bot.streamers
         self.dev_key = "AIzaSyAZxekQbiyOvq1fCFNmq6-4VvNwcKQ2Vhs"
+        self.youtube = discovery.build("youtube", "v3", developerKey=self.dev_key)
         self.dictionary = ["тыс", "млн", "млрд", "бил", "трл", "кдл", "квл", "сек", "сеп", "окт", "нон", "дец"]
 
-    async def uptime(self):
+        self.youtube_limitter = RateLimitter(timedelta(0,
+                                                       0,
+                                                       0,
+                                                       300,
+                                                       0,
+                                                       0,
+                                                       0))
+
+    async def uptime(self) -> str:
         start = await self.main.find_one()
         start = start['uptime']
-        t = relativedelta(datetime.now(), start)
+        t = relativedelta(datetime.utcnow(), start)
         return '{d}d {h}h {m}m {s}s'.format(d=t.days,
                                             h=t.hours,
                                             m=t.minutes,
@@ -162,18 +186,12 @@ class Utils:
         except BaseException as err:
             print("\n", "-" * 30, f"\n[!]Utils get_info error:\n{err}\n", "-" * 30, "\n")
 
-    # google api---------------------------------------------------------------------------------------------------
+    async def search_video(self, req: str = "×I62?564@6§85♦3◘4☻04♣") -> dict:
+        await self.youtube_limitter.awaiter()
 
-    def search_video(self, req: str = "×I62?564@6§85♦3◘4☻04♣") -> dict:
         os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
 
-        api_service_name = "youtube"
-        api_version = "v3"
-
-        youtube = discovery.build(
-            api_service_name, api_version, developerKey=self.dev_key)
-
-        request = youtube.videos().list(
+        request = self.youtube.videos().list(
             part="snippet,contentDetails,statistics",
             id=req,
             maxResults=1
@@ -182,16 +200,13 @@ class Utils:
 
         return response
 
-    def search_channel(self, req: str, usid: bool = False, recurr: bool = False) -> dict:
+    async def search_channel(self, req: str, usid: bool = False, recurr: bool = False) -> dict:
+        await self.youtube_limitter.awaiter()
+
         os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
 
-        api_service_name = "youtube"
-        api_version = "v3"
-
-        youtube = discovery.build(api_service_name, api_version, developerKey=self.dev_key)
-
         if usid:
-            request = youtube.channels().list(part="snippet,contentDetails,statistics", id=f"{req}", maxResults=1)
+            request = self.youtube.channels().list(part="snippet,contentDetails,statistics", id=f"{req}", maxResults=1)
             response = request.execute()
 
             if response['pageInfo']['resultsPerPage'] < 1:
@@ -199,11 +214,11 @@ class Utils:
                 if recurr:
                     raise cmd.BadArgument("Channel not found")
 
-                return self.search_channel(req, False, True)
+                return await self.search_channel(req, recurr=True)
 
             return response
 
-        request = youtube.channels().list(part="snippet,contentDetails,statistics", forUsername=f"{req}", maxResults=1)
+        request = self.youtube.channels().list(part="snippet,contentDetails,statistics", forUsername=f"{req}", maxResults=1)
         response = request.execute()
 
         if response['pageInfo']['resultsPerPage'] < 1:
@@ -211,16 +226,16 @@ class Utils:
             if recurr:
                 raise cmd.BadArgument("Channel not found")
 
-            return self.search_channel(req, True, True)
+            return await self.search_channel(req, True, True)
 
         return response
 
-    def uploader(self, track: dict = None, typ: str = "yt") -> dict:
+    async def uploader(self, track: dict = None, typ: str = "yt") -> dict:
         if typ == "yt":
-            thumb = self.search_video(track['info']['identifier'])
+            thumb = await self.search_video(track['info']['identifier'])
             snippet = thumb['items'][0]['snippet']
 
-            ico = self.search_channel(snippet['channelId'], usid=True)
+            ico = await self.search_channel(snippet['channelId'], usid=True)
             channel_snippet = ico['items'][0]['snippet']
 
             img = snippet['thumbnails']
@@ -260,13 +275,13 @@ class Utils:
             "video_url": track['info']['uri']
         }
 
-    def now_playing(self, player) -> dict:
+    async def now_playing(self, player) -> dict:
         if not player.current:
             player.current = player.queue[0]
-        video = self.search_video(req=player.current.identifier)
+        video = await self.search_video(req=player.current.identifier)
         snipp = video['items'][0]['snippet']
 
-        channel = self.search_channel(req=snipp['channelId'], usid=True)
+        channel = await self.search_channel(req=snipp['channelId'], usid=True)
         csnipp = channel['items'][0]['snippet']
 
         req = self.bot.get_guild(int(player.guild_id)).get_member(int(player.current.requester))
@@ -291,7 +306,7 @@ class Utils:
         }
 
     async def queue(self, ctx: cmd.Context, player) -> list:
-        data = self.now_playing(player)
+        data = await self.now_playing(player)
 
         em = discord.Embed(title="Seems like queue is empty",
                            colour=discord.Colour.green(),
@@ -524,16 +539,14 @@ class Paginator:
 
         try:
             await self.controller.clear_reactions()
-        except BaseException as err:
-            print("\n", "-" * 30, f"\n[!]Paginator call_controller clear_reactions error:\n{err}\n", "-" * 30, "\n")
+        except:
             pass
 
         try:
             for emoji in self.reactions:
                 await self.controller.add_reaction(emoji)
-        except BaseException as err:
-            print("\n", "-" * 30, f"\n[!]Paginator call_controller add_reaction error:\n{err}\n", "-" * 30, "\n")
-            return
+        except:
+            pass
 
         while True:
             try:
@@ -544,13 +557,12 @@ class Paginator:
 
                 response = await self.ctx.bot.wait_for('reaction_add', timeout=self.timeout,
                                                        check=check)
-            except TimeoutError as err:
+            except TimeoutError:
                 break
 
             try:
                 await self.controller.remove_reaction(response[0], response[1])
-            except BaseException as err:
-                print(err)
+            except:
                 pass
 
             if response[0].emoji == self.reactions[0]:
@@ -595,35 +607,6 @@ class DataBase:
 
         await self.servers.delete_many(delete)
 
-    # async def __create_users(self):
-    #     arr = [f"{i['sid']} {i['uid']}" for i in self.profiles.find()]
-
-    #     raw = [[x for x in i.members if not x.bot] for i in self.bot.guilds]
-    #     create = [self.models.User(i).get_dict() for x in raw for i in x if f"{i.guild.id} {i.id}" not in arr]
-
-    #     if len(create):
-    #         print("...users creation")
-    #         self.profiles.insert_many(create)
-
-    #     del create, raw, arr
-    #     print("created: users")
-
-    # async def _create_users(self):
-    #     arr = [f"{i['sid']} {i['uid']}" for i in self.profiles.find()]
-    #     raw = [[f"{member.guild.id} {member.id}", member] for guild in self.bot.guilds for member in guild.members if
-    #            not member.bot]
-    #     if len(arr) == len(raw):
-    #         return
-    #     create = [i[1] for i in raw if i[0] not in arr]
-    #     create = self.models.User.bulk_create(create)
-
-    #     if len(create):
-    #         print("...users creation")
-    #         self.profiles.insert_many(create)
-
-    #     del create, arr
-    #     print("created: users")
-
     async def create_server(self, guild: discord.Guild):
         i = self.models.Server(guild).get_dict()
         srv = await self.servers.find_one({"_id": f"{i['_id']}"})
@@ -631,19 +614,6 @@ class DataBase:
         if not srv:
             await self.servers.insert_one(i)
             print(f"created: {i['_id']}")
-
-        # for i in guild.members:
-        #     await self.create_user(i)
-
-    # async def create_user(self, member: discord.Member):
-    #     if member.bot:
-    #         return
-    #     i = self.models.User(member).get_dict()
-    #     usr = self.servers.find_one({"sid": f"{i['sid']}", "uid": f"{i['uid']}"})
-
-    #     if not usr:
-    #         self.profiles.insert_one(i)
-    #         print(f"created: {i['sid']} | {i['uid']}")
 
 
 class EmbedGenerator:
@@ -682,13 +652,16 @@ class EmbedGenerator:
             em.add_field(name="OS:", value=f"`{system[0]} {system[2]}`")
             em.add_field(name="CPU:", value=f'`{cpu}`')
             em.add_field(name="RAM:", value=ram)
+
             em.add_field(name="Users:", value=f"`{len([i.id for i in data.bot.users if not i.bot])}`")
             em.add_field(name="Guilds:", value=f"`{len(data.bot.guilds)}`")
-            em.add_field(name='\u200b', value="\u200b")
+            em.add_field(name='Shards', value=f"`{len(data.bot.shards)}`")
+
             up = await data.utils.uptime()
             em.add_field(name="Up-time:", value=f"`{up}`")
             em.add_field(name="Ping:", value=f"`{round(data.bot.latency * 1000, 1)}s`")
             em.add_field(name='\u200b', value="\u200b")
+
             em.add_field(name="Python version:", value=f"`{platform.python_version()}`")
             em.add_field(name="Discord.Py version:",
                          value=f"`{discord.version_info[0]}.{discord.version_info[1]}.{discord.version_info[2]}`")
@@ -704,6 +677,12 @@ class Checks:
     def __init__(self, bot):
         self.cmds = bot.cmds
         self.bot = bot
+
+    async def is_owner_in_targets(self, ctx: cmd.Context) -> bool:
+        if ctx.bot.author_id in ctx.message.mentions or ctx.bot.author_id in ctx.message.content:
+            raise cmd.BadArgument("")
+
+        return True
 
     async def is_off(self, ctx: cmd.Context) -> bool:
         if ctx.author.id == self.bot.owner_id:
