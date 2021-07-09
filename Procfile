@@ -1,3 +1,3 @@
-worker: cd $HOME/Geno_Release && dotnet "./Geno.dll"
+web: java -jar s/Lavalink.jar
 
-web: cd $HOME/Geno_Release && dotnet "./Geno.dll"
+worker: pypy3 main.py

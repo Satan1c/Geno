@@ -1,0 +1,37 @@
+server: # REST and WS server
+  port: 8080
+  address: 0.0.0.0
+lavalink:
+  server:
+    password: "lavalavago"
+    sources:
+      youtube: true
+      bandcamp: false
+      soundcloud: true
+      twitch: false
+      vimeo: false
+      mixer: false
+      http: false
+      local: false
+    bufferDurationMs: 400
+    youtubePlaylistLoadLimit: 1
+    youtubeSearchEnabled: true
+    soundcloudSearchEnabled: true
+    gc-warnings: false
+
+metrics:
+  prometheus:
+    enabled: false
+    endpoint: /metrics
+
+sentry:
+  dsn: ""
+logging:
+  file:
+    max-history: 5
+    max-size: 1GB
+  path: ./logs/
+
+  level:
+    root: INFO
+    lavalink: INFO
