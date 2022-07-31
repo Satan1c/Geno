@@ -33,46 +33,40 @@ var discordClient = new DiscordShardedClient(
     }
 );
 
-var commands = new CommandService(
-    new CommandServiceConfig
-    {
-        DefaultRunMode = RunMode.Async,
-        IgnoreExtraArgs = false,
-        LogLevel = LogSeverity.Verbose,
-        ThrowOnError = true,
-        CaseSensitiveCommands = false
-    });
-
-var interactions = new InteractionService(discordClient, new InteractionServiceConfig
-{
-    DefaultRunMode = Discord.Interactions.RunMode.Async,
-    EnableAutocompleteHandlers = true,
-    LogLevel = LogSeverity.Verbose
-});
-
 var service = new ServiceCollection()
     .AddSingleton(discordClient)
-    .AddSingleton(interactions)
-    .AddSingleton(commands)
-    .AddSingleton<CommandHandlingService>()
+    .AddSingleton(new InteractionService(discordClient, new InteractionServiceConfig
+    {
+        DefaultRunMode = Discord.Interactions.RunMode.Async,
+        EnableAutocompleteHandlers = true,
+        LogLevel = LogSeverity.Verbose
+    }))
+    .AddSingleton(new CommandService(
+        new CommandServiceConfig
+        {
+            DefaultRunMode = RunMode.Async,
+            IgnoreExtraArgs = false,
+            LogLevel = LogSeverity.Verbose,
+            ThrowOnError = true,
+            CaseSensitiveCommands = false
+        }))
     .AddSingleton<IMongoClient>(new MongoClient(MongoClientSettings.FromConnectionString(env["Mongo"])))
+    
+    .AddSingleton<CommandHandlingService>()
     .AddSingleton(new SdcConfig {Token = env["Sdc"]})
     .AddSingleton<SdcSharpClient>()
     .AddSingleton<SdcServices>()
     .AddSingleton<ClientEvents>()
     .AddSingleton<GuildEvents>()
+    
     .InitializeSdcServices()
     .BuildServiceProvider();
 
-discordClient.ShardReady += service.GetRequiredService<ClientEvents>().OnReady;
-discordClient.MessageReceived += service.GetRequiredService<GuildEvents>().MessageReceived;
-discordClient.Log += (message =>
-{
-    Console.WriteLine(message.ToString());
-    return Task.CompletedTask;
-});
+service.GetRequiredService<ClientEvents>();
+service.GetRequiredService<GuildEvents>();
 
-await discordClient.LoginAsync(TokenType.Bot, env["Geno"]);
-await discordClient.StartAsync();
+var bot = service.GetRequiredService<DiscordShardedClient>();
+await bot.LoginAsync(TokenType.Bot, env["Geno"]);
+await bot.StartAsync();
 
 await Task.Delay(Timeout.Infinite);

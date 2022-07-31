@@ -1,7 +1,6 @@
-﻿using System.Threading.Tasks;
+﻿
 using Discord;
 using Discord.Interactions;
-using Discord.Rest;
 using Geno.Utils;
 
 namespace Geno.Commands;

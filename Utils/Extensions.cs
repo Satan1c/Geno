@@ -39,14 +39,14 @@ public static class Extensions
         }
         catch
         {
-            role = null;
+            role = null!;
             return false;
         }
     }
 
     internal static bool TryGetInvite(this BaseSocketClient client, string code, out RestInviteMetadata invite)
     {
-        invite = null;
+        invite = null!;
 
         try
         {
@@ -61,7 +61,7 @@ public static class Extensions
     
     internal static bool TryGetGuild(this DiscordRestClient client, ulong id, out RestGuild guild)
     {
-        guild = null;
+        guild = null!;
 
         try
         {
@@ -76,7 +76,7 @@ public static class Extensions
     
     internal static bool TryGetUser(this DiscordRestClient client, ulong id, out RestUser user)
     {
-        user = null;
+        user = null!;
 
         try
         {
@@ -91,7 +91,7 @@ public static class Extensions
 
     internal static bool TryGetGuildUser(this DiscordRestClient client, ulong guildId, ulong userId, out RestGuildUser user)
     {
-        user = null;
+        user = null!;
 
         try
         {

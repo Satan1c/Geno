@@ -13,8 +13,6 @@ public class GuildDocument
     [BsonElement("voices")]
     public IDictionary<string, ulong> Voices { get; set; } = new Dictionary<string, ulong>();
     
-    [BsonElement("category_id")]
-    public ulong CategoryId { get; set; }
-    [BsonElement("voice_id")]
-    public ulong VoiceId { get; set; }
+    [BsonElement("channels")]
+    public IDictionary<string, ulong> Channels { get; set; } = new Dictionary<string, ulong>();
 }

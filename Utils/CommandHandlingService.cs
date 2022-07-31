@@ -50,7 +50,7 @@ public class CommandHandlingService
             var userMessage = rawMessage as SocketUserMessage;
             var prefixEndPosition = 0;
 
-            if (HasPrefixOrMention(userMessage, ref prefixEndPosition))
+            if (HasPrefixOrMention(userMessage!, ref prefixEndPosition))
                 return;
 
             await m_commands.ExecuteAsync(
