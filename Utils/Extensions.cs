@@ -104,7 +104,7 @@ public static class Extensions
         catch { return false; }
     }
     
-    internal static async ValueTask<bool> HasInvite(this SocketUserMessage message,
+    internal static async ValueTask<bool> HasInvite(this IDiscordClient client, SocketUserMessage message,
         bool fetchForValidation = false,
         bool ignoreCurrentServer = false)
     {
@@ -117,7 +117,7 @@ public static class Extensions
             return true;
 
         var inviteId = match.Value.Split("/")[^1];
-        var invite = await Program.DiscordClient.GetInviteAsync(inviteId);
+        var invite = await client.GetInviteAsync(inviteId);
 
         if (invite.Code == null)
             return false;

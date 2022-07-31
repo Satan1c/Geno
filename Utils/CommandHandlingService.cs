@@ -82,7 +82,7 @@ public class CommandHandlingService
 
     private bool HasPrefixOrMention(SocketUserMessage userMessage, ref int prefixEndPosition)
         => !userMessage.HasMentionPrefix(m_client.CurrentUser, ref prefixEndPosition)
-           && !userMessage.HasStringPrefix(Program.DefPrefix, ref prefixEndPosition);
+           && !userMessage.HasStringPrefix("g-", ref prefixEndPosition);
 
     private void RegisterEvents()
     {

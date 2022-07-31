@@ -8,14 +8,20 @@ namespace Geno.Events;
 
 public class GuildEvents
 {
-    public static async Task MessageReceived(SocketMessage message)
+    private readonly IDiscordClient m_client;
+    public GuildEvents(DiscordShardedClient client)
+    {
+        m_client = client;
+    }
+    
+    public async Task MessageReceived(SocketMessage message)
     {
         if (message.Source != MessageSource.User)
             return;
         var userMessage = (message as SocketUserMessage)!;
 
         var isLink = message.HasLink();
-        var isInvite = await userMessage.HasInvite(true, true).ConfigureAwait(false);
+        var isInvite = await m_client.HasInvite(userMessage, true, true).ConfigureAwait(false);
 
         if (!isLink && !isInvite)
             return;

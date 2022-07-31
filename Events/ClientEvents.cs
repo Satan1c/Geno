@@ -8,12 +8,15 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Geno.Events;
 
-public static class ClientEvents
+public class ClientEvents
 {
-    public static async Task OnReady(DiscordSocketClient client)
+    private readonly CommandHandlingService m_handlingService;
+    public ClientEvents(CommandHandlingService handlingService) 
+        => m_handlingService = handlingService;
+
+    public async Task OnReady(DiscordSocketClient client)
     {
-        // Program.Service.GetRequiredService<WorldOfTanksBlitzClient>().InitServices(Service.Accounts);
-        await Program.Service.GetRequiredService<CommandHandlingService>().InitializeAsync();
+        await m_handlingService.InitializeAsync();
         Console.WriteLine("Ready");
     }
 }

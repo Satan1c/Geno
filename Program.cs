@@ -1,6 +1,4 @@
-﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System.Collections;
 using Discord;
 using Discord.Commands;
 using Discord.Interactions;
@@ -14,79 +12,67 @@ using SDC_Sharp.DiscordNet;
 using SDC_Sharp.Types;
 using RunMode = Discord.Commands.RunMode;
 
-namespace Geno;
+var env = ((Hashtable) Environment.GetEnvironmentVariables()).
+    Cast<DictionaryEntry>()
+    .ToDictionary(
+        kvp 
+            => (string) kvp.Key, kvp => (string) kvp.Value!);
 
-public static class Program
-{
-    public const string DefPrefix = "g-";
-
-    internal static readonly DiscordShardedClient DiscordClient = new(
-        new DiscordSocketConfig
-        {
-            AlwaysDownloadUsers = false,
-            AlwaysDownloadDefaultStickers = false,
-            AlwaysResolveStickers = false,
-            GatewayIntents = GatewayIntents.Guilds
-                             | GatewayIntents.GuildMembers
-                             | GatewayIntents.GuildMessages 
-                             | GatewayIntents.GuildVoiceStates,
-            MessageCacheSize = 5,
-            LogLevel = LogSeverity.Verbose
-        }
-    );
-
-    private static readonly CommandService m_commands = new(
-        new CommandServiceConfig
-        {
-            DefaultRunMode = RunMode.Async,
-            IgnoreExtraArgs = false,
-            LogLevel = LogSeverity.Verbose,
-            ThrowOnError = true,
-            CaseSensitiveCommands = false
-        }
-    );
-
-    private static readonly InteractionService m_interactions = new(DiscordClient, new InteractionServiceConfig
+var discordClient = new DiscordShardedClient(
+    new DiscordSocketConfig
     {
-        DefaultRunMode = Discord.Interactions.RunMode.Async,
-        EnableAutocompleteHandlers = true,
+        AlwaysDownloadUsers = false,
+        AlwaysDownloadDefaultStickers = false,
+        AlwaysResolveStickers = false,
+        GatewayIntents = GatewayIntents.Guilds
+                         | GatewayIntents.GuildMembers
+                         | GatewayIntents.GuildMessages
+                         | GatewayIntents.GuildVoiceStates,
+        MessageCacheSize = 5,
         LogLevel = LogSeverity.Verbose
+    }
+);
+
+var commands = new CommandService(
+    new CommandServiceConfig
+    {
+        DefaultRunMode = RunMode.Async,
+        IgnoreExtraArgs = false,
+        LogLevel = LogSeverity.Verbose,
+        ThrowOnError = true,
+        CaseSensitiveCommands = false
     });
 
-    internal static readonly IServiceProvider Service = new ServiceCollection()
-        .AddSingleton(DiscordClient)
-        .AddSingleton(m_interactions)
-        .AddSingleton(m_commands)
-        .AddSingleton<CommandHandlingService>()
-        .AddSingleton<IMongoClient>(new MongoClient(MongoClientSettings.FromConnectionString("mongodb+srv://Geno:Atlas23Game@genodb.wrqdw.mongodb.net/?retryWrites=true&w=majority")))
-        .AddSingleton(new SdcConfig
-        {
-            Token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Ijc1MDQxNTM1MDM0ODM4MjI0OSIsInBlcm1zIjowLCJpYXQiOjE2MDg1ODE0OTl9.M1q0XJ3iQw0lD5g-dgJabOmxU5auhNe_MM0IyuRAcK0"
-        })
-        .AddSingleton<SdcSharpClient>()
-        .AddSingleton<SdcServices>()
-        
-        .InitializeSdcServices()
-        .BuildServiceProvider();
+var interactions = new InteractionService(discordClient, new InteractionServiceConfig
+{
+    DefaultRunMode = Discord.Interactions.RunMode.Async,
+    EnableAutocompleteHandlers = true,
+    LogLevel = LogSeverity.Verbose
+});
 
-    public static async Task Main(string[] args)
-    {
-        DiscordClient.ShardReady += ClientEvents.OnReady;
-        DiscordClient.MessageReceived += GuildEvents.MessageReceived;
-        DiscordClient.Log += Logger;
+var service = new ServiceCollection()
+    .AddSingleton(discordClient)
+    .AddSingleton(interactions)
+    .AddSingleton(commands)
+    .AddSingleton<CommandHandlingService>()
+    .AddSingleton<IMongoClient>(new MongoClient(MongoClientSettings.FromConnectionString(env["Mongo"])))
+    .AddSingleton(new SdcConfig {Token = env["Sdc"]})
+    .AddSingleton<SdcSharpClient>()
+    .AddSingleton<SdcServices>()
+    .AddSingleton<ClientEvents>()
+    .AddSingleton<GuildEvents>()
+    .InitializeSdcServices()
+    .BuildServiceProvider();
 
-        await DiscordClient.LoginAsync(
-            TokenType.Bot,
-            args[0]
-        );
-        await DiscordClient.StartAsync();
+discordClient.ShardReady += service.GetRequiredService<ClientEvents>().OnReady;
+discordClient.MessageReceived += service.GetRequiredService<GuildEvents>().MessageReceived;
+discordClient.Log += (message =>
+{
+    Console.WriteLine(message.ToString());
+    return Task.CompletedTask;
+});
 
-        await Task.Delay(Timeout.Infinite);
-    }
+await discordClient.LoginAsync(TokenType.Bot, env["Geno"]);
+await discordClient.StartAsync();
 
-    private static Task Logger(LogMessage message)
-    {
-        Console.WriteLine(message.ToString());
-        return Task.CompletedTask;
-    }
-}
+await Task.Delay(Timeout.Infinite);
