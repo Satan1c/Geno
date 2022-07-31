@@ -69,7 +69,7 @@ service.GetRequiredService<ClientEvents>();
 service.GetRequiredService<GuildEvents>();
 
 var bot = service.GetRequiredService<DiscordShardedClient>();
-await bot.LoginAsync(TokenType.Bot, env["TEST"]);
+await bot.LoginAsync(TokenType.Bot, env["Geno"]);
 await bot.StartAsync();
 
 await Task.Delay(Timeout.Infinite);
