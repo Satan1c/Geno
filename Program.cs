@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using System.Text;
 using Discord;
 using Discord.Commands;
 using Discord.Interactions;
@@ -11,6 +12,8 @@ using SDC_Sharp;
 using SDC_Sharp.DiscordNet;
 using SDC_Sharp.Types;
 using RunMode = Discord.Commands.RunMode;
+
+Console.OutputEncoding = Encoding.UTF8;
 
 var env = ((Hashtable) Environment.GetEnvironmentVariables()).
     Cast<DictionaryEntry>()
@@ -66,7 +69,7 @@ service.GetRequiredService<ClientEvents>();
 service.GetRequiredService<GuildEvents>();
 
 var bot = service.GetRequiredService<DiscordShardedClient>();
-await bot.LoginAsync(TokenType.Bot, env["Geno"]);
+await bot.LoginAsync(TokenType.Bot, env["TEST"]);
 await bot.StartAsync();
 
 await Task.Delay(Timeout.Infinite);

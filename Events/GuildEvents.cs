@@ -44,28 +44,30 @@ public class GuildEvents
 
         var config = await m_guildConfigs.GetConfig(guildUser.Guild.Id);
         var userId = guildUser.Id.ToString();
-        
-        if (config.Voices.ContainsKey(userId))
-        {
-            if ((after.VoiceChannel != null && after.VoiceChannel.Id != config.Voices[userId]) 
-                || (before.VoiceChannel != null && config.Channels.ContainsKey(before.VoiceChannel.Id.ToString()))) return;
 
+        if (config.Voices.ContainsKey(userId) 
+            && before.VoiceChannel is SocketVoiceChannel beforeChannel 
+            && beforeChannel.Id == config.Voices[userId])
+        {
             await guildUser.Guild
                 .GetChannel(config.Voices[userId])
                 .DeleteAsync();
 
             config.Voices.Remove(userId);
             await m_guildConfigs.SetConfig(config);
-            return;
         }
+        
+        if (after.VoiceChannel is SocketVoiceChannel afterChannel 
+            && config.Channels.ContainsKey(afterChannel.Id.ToString()))
+        {
+            var voice = await guildUser.Guild
+                .CreateVoiceChannelAsync(
+                    $"Party #{config.Voices.Count + 1}",
+                    properties => properties.CategoryId = config.Channels[after.VoiceChannel.Id.ToString()]);
 
-        var voice = await guildUser.Guild
-            .CreateVoiceChannelAsync(
-                $"Party #{config.Voices.Count + 1}",
-                properties => properties.CategoryId = config.Channels[after.VoiceChannel.Id.ToString()]);
-
-        config.Voices[userId] = voice.Id;
-        await m_guildConfigs.SetConfig(config);
-        await guildUser.ModifyAsync(x => x.Channel = voice);
+            config.Voices[userId] = voice.Id;
+            await m_guildConfigs.SetConfig(config);
+            await guildUser.ModifyAsync(x => x.Channel = voice);
+        }
     }
 }
