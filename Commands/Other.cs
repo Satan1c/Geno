@@ -7,6 +7,24 @@ namespace Geno.Commands;
 [Group("other", "other command group")]
 public class Other : InteractionModuleBase<ShardedInteractionContext>
 {
+    [Group("bot", "commands group about bot")]
+    public class BotCommands : InteractionModuleBase<ShardedInteractionContext>
+    {
+        [SlashCommand("ping", "show bot ping")]
+        public async Task PingCommand()
+        {
+            var currentShard = Context.Client.GetShardFor(Context.Guild);
+            var embed = new EmbedBuilder()
+                .WithTitle("Bot shards latency:")
+                .WithDescription(
+                    $"Current server shard:\n`{currentShard.ShardId.ToString()}`: `{currentShard.Latency.ToString()}`ms");
+            foreach (var shard in Context.Client.Shards)
+                embed.AddField($"`{shard.ShardId.ToString()}`:", $"`{shard.Latency.ToString()}`ms", true);
+            await RespondAsync(embed: embed.Build(),
+                allowedMentions: AllowedMentions.None);
+        }
+    }
+
     [Group("fetch", "fetch commands sub group")]
     public class FetchCommands : InteractionModuleBase<ShardedInteractionContext>
     {
