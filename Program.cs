@@ -11,7 +11,9 @@ using MongoDB.Driver;
 using SDC_Sharp;
 using SDC_Sharp.DiscordNet;
 using SDC_Sharp.Types;
-using RunMode = Discord.Commands.RunMode;
+using WargamingApi;
+using WargamingApi.WorldOfTanksBlitz;
+using RunMode = Discord.Interactions.RunMode;
 
 Console.OutputEncoding = Encoding.UTF8;
 
@@ -60,7 +62,8 @@ var service = new ServiceCollection()
     .AddSingleton<SdcServices>()
     .AddSingleton<ClientEvents>()
     .AddSingleton<GuildEvents>()
-    
+    .AddSingleton(new WargamingApiClient("5ea271b8c279f6e11e334046af4cfce1"))
+    .AddSingleton<WorldOfTanksBlitzClient>()
     .InitializeSdcServices()
     .BuildServiceProvider();
 
