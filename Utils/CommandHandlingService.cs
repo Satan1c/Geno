@@ -83,9 +83,34 @@ public class CommandHandlingService
 
     private void RegisterEvents()
     {
-        m_commands.CommandExecuted += CommandExecutedAsync;
-        m_client.MessageReceived += MessageReceivedAsync;
+        /*m_commands.CommandExecuted += CommandExecutedAsync;*/
+        /*m_client.MessageReceived += MessageReceivedAsync;*/
         m_client.InteractionCreated += OnInteractionCreated;
+        m_interactions.SlashCommandExecuted += OnSlashCommandExecuted;
+    }
+
+    private async Task OnSlashCommandExecuted(SlashCommandInfo commandInfo, IInteractionContext context,
+        Discord.Interactions.IResult result)
+    {
+        if (result.Error is not null)
+        {
+            var message = result.Error switch
+            {
+                InteractionCommandError.UnknownCommand => "Unknown command",
+                InteractionCommandError.ConvertFailed => "None ConvertFailed",
+                InteractionCommandError.BadArgs => "Invalid number or arguments",
+                InteractionCommandError.Exception => $"Command exception: {result.ErrorReason}",
+                InteractionCommandError.Unsuccessful => "Command could not be executed",
+                InteractionCommandError.UnmetPrecondition => $"Unmet Precondition: {result.ErrorReason}",
+                InteractionCommandError.ParseFailed => "None ParseFailed",
+                null => "mull",
+                _ => throw new ArgumentOutOfRangeException()
+            };
+
+            await context.Interaction.RespondAsync(message,
+                allowedMentions: AllowedMentions.None,
+                ephemeral: true);
+        }
     }
 
     private async Task OnInteractionCreated(SocketInteraction arg)
