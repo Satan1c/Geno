@@ -9,17 +9,18 @@ namespace Geno.Events;
 public class GuildEvents
 {
     private readonly DiscordShardedClient m_client;
-    private readonly IMongoCollection<GuildDocument> m_guildConfigs;
+    private readonly DatabaseProvider m_databaseProvider;
+
     public GuildEvents(IServiceProvider services)
     {
         m_client = services.GetRequiredService<DiscordShardedClient>();
-        var db = services.GetRequiredService<IMongoClient>().GetDatabase("main");
-        m_guildConfigs = db.GetCollection<GuildDocument>("guilds");
-        
+        m_databaseProvider = services.GetRequiredService<DatabaseProvider>();
+
         m_client.MessageReceived += MessageReceived;
-        m_client.UserVoiceStateUpdated += OnUserVoiceStateUpdated;
+        m_client.UserVoiceStateUpdated += OnDeleteChannel;
+        m_client.UserVoiceStateUpdated += OnCreateChannel;
     }
-    
+
     public async Task MessageReceived(SocketMessage message)
     {
         if (message.Source != MessageSource.User)
@@ -34,18 +35,17 @@ public class GuildEvents
 
         await (userMessage.Author as SocketGuildUser)!.SetTimeOutAsync(TimeSpan.FromSeconds(15));
     }
-    
-    public async Task OnUserVoiceStateUpdated(SocketUser user, SocketVoiceState before, SocketVoiceState after)
+
+    public async Task OnDeleteChannel(SocketUser user, SocketVoiceState before, SocketVoiceState after)
     {
-        if (user is not SocketGuildUser guildUser 
-            || await m_guildConfigs.CountDocumentsAsync(x => x.Id == guildUser.Guild.Id) < 1) 
+        if (user is not SocketGuildUser guildUser || !await m_databaseProvider.HasDocument(guildUser.Guild.Id))
             return;
 
-        var config = await m_guildConfigs.GetConfig(guildUser.Guild.Id);
+        var config = await m_databaseProvider.GetConfig(guildUser.Guild.Id);
         var userId = guildUser.Id.ToString();
 
-        if (config.Voices.ContainsKey(userId) 
-            && before.VoiceChannel is SocketVoiceChannel beforeChannel 
+        if (config.Voices.ContainsKey(userId)
+            && before.VoiceChannel is SocketVoiceChannel beforeChannel
             && beforeChannel.Id == config.Voices[userId])
         {
             await guildUser.Guild
@@ -53,19 +53,27 @@ public class GuildEvents
                 .DeleteAsync();
 
             config.Voices.Remove(userId);
-            await m_guildConfigs.SetConfig(config);
+            await m_databaseProvider.SetConfig(config);
         }
-        
-        if (after.VoiceChannel is SocketVoiceChannel afterChannel 
-            && config.Channels.ContainsKey(afterChannel.Id.ToString()))
+    }
+
+    public async Task OnCreateChannel(SocketUser user, SocketVoiceState before, SocketVoiceState after)
+    {
+        if (user is not SocketGuildUser guildUser || !await m_databaseProvider.HasDocument(guildUser.Guild.Id))
+            return;
+
+        var config = await m_databaseProvider.GetConfig(guildUser.Guild.Id);
+
+        if (after.VoiceChannel is SocketVoiceChannel afterChannel &&
+            config.Channels.ContainsKey(afterChannel.Id.ToString()))
         {
             var voice = await guildUser.Guild
                 .CreateVoiceChannelAsync(
                     $"Party #{config.Voices.Count + 1}",
                     properties => properties.CategoryId = config.Channels[after.VoiceChannel.Id.ToString()]);
 
-            config.Voices[userId] = voice.Id;
-            await m_guildConfigs.SetConfig(config);
+            config.Voices[guildUser.Id.ToString()] = voice.Id;
+            await m_databaseProvider.SetConfig(config);
             await guildUser.ModifyAsync(x => x.Channel = voice);
         }
     }

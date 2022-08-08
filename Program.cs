@@ -1,9 +1,11 @@
 ﻿using System.Collections;
+using System.Diagnostics;
 using System.Text;
 using Discord;
 using Discord.Commands;
 using Discord.Interactions;
 using Discord.WebSocket;
+using Geno.Database;
 using Geno.Events;
 using Geno.Utils;
 using Microsoft.Extensions.DependencyInjection;
@@ -16,6 +18,7 @@ using WargamingApi.WorldOfTanksBlitz;
 using RunMode = Discord.Interactions.RunMode;
 
 Console.OutputEncoding = Encoding.UTF8;
+Process.GetCurrentProcess().MaxWorkingSet = (IntPtr) (500 * 1024);
 
 var env = ((Hashtable) Environment.GetEnvironmentVariables()).Cast<DictionaryEntry>()
     .ToDictionary(
@@ -55,7 +58,8 @@ var service = new ServiceCollection()
             CaseSensitiveCommands = false
         }))
     .AddSingleton<IMongoClient>(new MongoClient(MongoClientSettings.FromConnectionString(env["Mongo"])))
-    
+    .AddSingleton<DatabaseCache>()
+    .AddSingleton<DatabaseProvider>()
     .AddSingleton<CommandHandlingService>()
     .AddSingleton(new SdcConfig {Token = env["Sdc"]})
     .AddSingleton<SdcSharpClient>()

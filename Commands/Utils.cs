@@ -1,23 +1,22 @@
 ﻿using System.Text;
 using Discord;
 using Discord.Interactions;
-using Geno.Types;
-using Geno.Utils;
-using MongoDB.Driver;
+using Geno.Database;
 
 namespace Geno.Commands;
 
 [Group("utils", "utils commands group")]
 public class Utils : InteractionModuleBase<ShardedInteractionContext>
 {
-
     [Group("add", "add commands sub group")]
     public class AddUtils : InteractionModuleBase<ShardedInteractionContext>
     {
-        private readonly IMongoCollection<GuildDocument> m_guildConfigs;
+        private readonly DatabaseProvider m_databaseProvider;
 
-        public AddUtils(IMongoClient mongo)
-            => m_guildConfigs = mongo.GetDatabase("main").GetCollection<GuildDocument>("guilds");
+        public AddUtils(DatabaseProvider databaseProvider)
+        {
+            m_databaseProvider = databaseProvider;
+        }
 
         [SlashCommand("voice_rooms_channel", "sets base voice-rooms channel")]
         [RequireBotPermission(ChannelPermission.ManageChannels)]
@@ -32,10 +31,10 @@ public class Utils : InteractionModuleBase<ShardedInteractionContext>
                 return;
             }
 
-            var config = await m_guildConfigs.GetConfig(Context.Guild.Id);
+            var config = await m_databaseProvider.GetConfig(Context.Guild.Id);
             config.Channels[channel.Id.ToString()] = category.Id;
 
-            await m_guildConfigs.SetConfig(config);
+            await m_databaseProvider.SetConfig(config);
             await RespondAsync("Done",
                 allowedMentions: AllowedMentions.None,
                 ephemeral: true);
@@ -45,10 +44,12 @@ public class Utils : InteractionModuleBase<ShardedInteractionContext>
     [Group("remove", "remove commands sub group")]
     public class RemoveUtils : InteractionModuleBase<ShardedInteractionContext>
     {
-        private readonly IMongoCollection<GuildDocument> m_guildConfigs;
+        private readonly DatabaseProvider m_databaseProvider;
 
-        public RemoveUtils(IMongoClient mongo)
-            => m_guildConfigs = mongo.GetDatabase("main").GetCollection<GuildDocument>("guilds");
+        public RemoveUtils(DatabaseProvider databaseProvider)
+        {
+            m_databaseProvider = databaseProvider;
+        }
 
         [SlashCommand("voice_rooms_channel", "removes base voice-rooms channel")]
         [RequireBotPermission(ChannelPermission.ManageChannels)]
@@ -63,10 +64,10 @@ public class Utils : InteractionModuleBase<ShardedInteractionContext>
                 return;
             }
 
-            var config = await m_guildConfigs.GetConfig(Context.Guild.Id);
+            var config = await m_databaseProvider.GetConfig(Context.Guild.Id);
             config.Channels.Remove(channel.Id.ToString());
 
-            await m_guildConfigs.SetConfig(config);
+            await m_databaseProvider.SetConfig(config);
             await RespondAsync("Done",
                 allowedMentions: AllowedMentions.None,
                 ephemeral: true);
@@ -76,17 +77,19 @@ public class Utils : InteractionModuleBase<ShardedInteractionContext>
     [Group("get", "get commands sub group")]
     public class GetUtils : InteractionModuleBase<ShardedInteractionContext>
     {
-        private readonly IMongoCollection<GuildDocument> m_guildConfigs;
+        private readonly DatabaseProvider m_databaseProvider;
 
-        public GetUtils(IMongoClient mongo)
-            => m_guildConfigs = mongo.GetDatabase("main").GetCollection<GuildDocument>("guilds");
+        public GetUtils(DatabaseProvider databaseProvider)
+        {
+            m_databaseProvider = databaseProvider;
+        }
 
         [SlashCommand("voice_rooms_channel", "gets base voice-rooms channel")]
         [RequireBotPermission(ChannelPermission.ManageChannels)]
         [RequireUserPermission(ChannelPermission.ManageChannels)]
         public async Task GetVoiceChannel()
         {
-            var config = await m_guildConfigs.GetConfig(Context.Guild.Id);
+            var config = await m_databaseProvider.GetConfig(Context.Guild.Id);
             if (config.Channels.Count < 1)
             {
                 await RespondAsync("None",
