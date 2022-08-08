@@ -22,6 +22,9 @@
         <PackageReference Include="RateLimiter" Version="2.2.0" />
         <PackageReference Include="SDC_Sharp" Version="3.0.0" />
         <PackageReference Include="SDC_Sharp.DiscordNet" Version="3.0.0" />
+        <PackageReference Include="WargamingApi" Version="1.0.0" />
+        <PackageReference Include="WargamingApi.Wargaming_Net" Version="1.0.0" />
+        <PackageReference Include="WargamingApi.WorldOfTanksBlitz" Version="1.1.0" />
     </ItemGroup>
 
 </Project>
