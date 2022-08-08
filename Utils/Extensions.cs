@@ -1,5 +1,4 @@
 ﻿using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using Discord;
 using Discord.Rest;
 using Discord.WebSocket;
@@ -24,11 +23,15 @@ public static class Extensions
     //     return ((byte) services & (byte) target) != 0;
     // }
 
-    internal static bool HasLink(this SocketMessage message) 
-        => m_linkRegex.IsMatch(message.Content);
+    internal static bool HasLink(this SocketMessage message)
+    {
+        return m_linkRegex.IsMatch(message.Content);
+    }
 
-    public static string UserTag(this IUser user) 
-        => user.Username + '#' + user.Discriminator;
+    public static string UserTag(this IUser user)
+    {
+        return user.Username + '#' + user.Discriminator;
+    }
 
     internal static bool TryGetRole(this SocketGuild guild, ulong id, out SocketRole role)
     {
@@ -56,9 +59,12 @@ public static class Extensions
             invite = res;
             return true;
         }
-        catch { return false; }
+        catch
+        {
+            return false;
+        }
     }
-    
+
     internal static bool TryGetGuild(this DiscordRestClient client, ulong id, out RestGuild guild)
     {
         guild = null!;
@@ -71,9 +77,12 @@ public static class Extensions
             guild = res;
             return true;
         }
-        catch { return false; }
+        catch
+        {
+            return false;
+        }
     }
-    
+
     internal static bool TryGetUser(this DiscordRestClient client, ulong id, out RestUser user)
     {
         user = null!;
@@ -86,10 +95,14 @@ public static class Extensions
             user = res;
             return true;
         }
-        catch { return false; }
+        catch
+        {
+            return false;
+        }
     }
 
-    internal static bool TryGetGuildUser(this DiscordRestClient client, ulong guildId, ulong userId, out RestGuildUser user)
+    internal static bool TryGetGuildUser(this DiscordRestClient client, ulong guildId, ulong userId,
+        out RestGuildUser user)
     {
         user = null!;
 
@@ -97,13 +110,16 @@ public static class Extensions
         {
             if (client.GetGuildUserAsync(guildId, userId).Result is not RestGuildUser res)
                 return false;
-            
+
             user = res;
             return true;
         }
-        catch { return false; }
+        catch
+        {
+            return false;
+        }
     }
-    
+
     internal static async ValueTask<bool> HasInvite(this IDiscordClient client, SocketUserMessage message,
         bool fetchForValidation = false,
         bool ignoreCurrentServer = false)

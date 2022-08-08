@@ -1,5 +1,4 @@
-﻿
-using Discord;
+﻿using Discord;
 using Discord.Interactions;
 using Geno.Utils;
 
@@ -24,7 +23,7 @@ public class Other : InteractionModuleBase<ShardedInteractionContext>
             }
 
             var embed = new EmbedBuilder().ApplyData(invite);
-        
+
             if (Context.Client.Rest.TryGetGuild(invite.GuildId ?? 0, out var guild))
                 embed = embed.ApplyData(guild);
 
@@ -46,7 +45,7 @@ public class Other : InteractionModuleBase<ShardedInteractionContext>
             }
 
             var embed = new EmbedBuilder().ApplyData(user);
-        
+
             if (Context.Client.Rest.TryGetGuildUser(Context.Guild.Id, user.Id, out var guildUser))
                 embed = embed.ApplyData(guildUser);
 

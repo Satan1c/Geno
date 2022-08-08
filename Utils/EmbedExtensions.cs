@@ -13,7 +13,7 @@ public static class EmbedExtensions
         builder.Author ??= new EmbedAuthorBuilder();
         builder.Author.Name = invite.GuildName;
         builder.Author.Url = $"https://discord.gg/{invite.Code}";
-        
+
         builder.AddField("Inviter", invite.Inviter.ToString())
             .AddField("Is Temporary", invite.IsTemporary.ToString(), true);
 
@@ -56,11 +56,11 @@ public static class EmbedExtensions
     {
         builder.Description ??= "";
         builder.Description += guild.Description;
-        
+
         builder.Author ??= new EmbedAuthorBuilder();
         builder.Author.Name = guild.Name;
         builder.Author.IconUrl = guild.IconUrl;
-        
+
         builder.AddField("Created at", $"<t:{guild.CreatedAt.ToUnixTimeSeconds().ToString()}:R>");
 
         if (!string.IsNullOrEmpty(guild.SplashUrl) && !string.IsNullOrWhiteSpace(guild.SplashUrl))

@@ -1,9 +1,8 @@
 ﻿using Discord;
 using Discord.WebSocket;
-using Geno.Types;
+using Geno.Database;
 using Geno.Utils;
 using Microsoft.Extensions.DependencyInjection;
-using MongoDB.Driver;
 
 namespace Geno.Events;
 

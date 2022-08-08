@@ -15,10 +15,9 @@ using RunMode = Discord.Commands.RunMode;
 
 Console.OutputEncoding = Encoding.UTF8;
 
-var env = ((Hashtable) Environment.GetEnvironmentVariables()).
-    Cast<DictionaryEntry>()
+var env = ((Hashtable) Environment.GetEnvironmentVariables()).Cast<DictionaryEntry>()
     .ToDictionary(
-        kvp 
+        kvp
             => (string) kvp.Key, kvp => (string) kvp.Value!);
 
 var discordClient = new DiscordShardedClient(
@@ -40,14 +39,14 @@ var service = new ServiceCollection()
     .AddSingleton(discordClient)
     .AddSingleton(new InteractionService(discordClient, new InteractionServiceConfig
     {
-        DefaultRunMode = Discord.Interactions.RunMode.Async,
+        DefaultRunMode = RunMode.Async,
         EnableAutocompleteHandlers = true,
         LogLevel = LogSeverity.Verbose
     }))
     .AddSingleton(new CommandService(
         new CommandServiceConfig
         {
-            DefaultRunMode = RunMode.Async,
+            DefaultRunMode = Discord.Commands.RunMode.Async,
             IgnoreExtraArgs = false,
             LogLevel = LogSeverity.Verbose,
             ThrowOnError = true,

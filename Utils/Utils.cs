@@ -1,14 +1,9 @@
-﻿using System;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using Discord.Commands;
-using Discord.WebSocket;
+﻿using Discord.Commands;
 
 namespace Geno.Utils;
 
 public static class Utils
 {
-    
 }
 
 public class TypeReader<T> : TypeReader where T : struct, Enum

@@ -13,8 +13,12 @@ public class Sdc : InteractionModuleBase<ShardedInteractionContext>
     public class MonitoringCommands : InteractionModuleBase<ShardedInteractionContext>
     {
         private readonly MonitoringService m_monitoring;
-        public MonitoringCommands(IServiceProvider provider) => m_monitoring = provider.GetRequiredService<MonitoringService>();
-        
+
+        public MonitoringCommands(IServiceProvider provider)
+        {
+            m_monitoring = provider.GetRequiredService<MonitoringService>();
+        }
+
         [SlashCommand("guild", "show guild info from site")]
         public async Task GetGuild(ulong id)
         {
@@ -32,6 +36,4 @@ public class Sdc : InteractionModuleBase<ShardedInteractionContext>
                 ephemeral: true);
         }
     }
-
-    
 }

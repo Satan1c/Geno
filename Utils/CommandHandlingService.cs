@@ -1,15 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Reflection;
 using Discord;
 using Discord.Commands;
 using Discord.Interactions;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
-using ModuleInfo = Discord.Commands.ModuleInfo;
+using IResult = Discord.Commands.IResult;
 
 namespace Geno.Utils;
 
@@ -37,7 +32,7 @@ public class CommandHandlingService
 
         await m_commands.AddModulesAsync(assembly, m_services);
         await m_interactions.AddModulesAsync(assembly, m_services);
-        await m_interactions.RegisterCommandsGloballyAsync(deleteMissing: true);
+        await m_interactions.RegisterCommandsGloballyAsync(true);
     }
 
     private Task MessageReceivedAsync(SocketMessage rawMessage)
@@ -67,7 +62,7 @@ public class CommandHandlingService
     private static async Task CommandExecutedAsync(
         Optional<CommandInfo> command,
         ICommandContext context,
-        Discord.Commands.IResult result
+        IResult result
     )
     {
         if (!command.IsSpecified)
@@ -81,8 +76,10 @@ public class CommandHandlingService
     }
 
     private bool HasPrefixOrMention(SocketUserMessage userMessage, ref int prefixEndPosition)
-        => !userMessage.HasMentionPrefix(m_client.CurrentUser, ref prefixEndPosition)
-           && !userMessage.HasStringPrefix("g-", ref prefixEndPosition);
+    {
+        return !userMessage.HasMentionPrefix(m_client.CurrentUser, ref prefixEndPosition)
+               && !userMessage.HasStringPrefix("g-", ref prefixEndPosition);
+    }
 
     private void RegisterEvents()
     {
@@ -92,5 +89,7 @@ public class CommandHandlingService
     }
 
     private async Task OnInteractionCreated(SocketInteraction arg)
-        => await m_interactions.ExecuteCommandAsync(new ShardedInteractionContext(m_client, arg), m_services);
+    {
+        await m_interactions.ExecuteCommandAsync(new ShardedInteractionContext(m_client, arg), m_services);
+    }
 }

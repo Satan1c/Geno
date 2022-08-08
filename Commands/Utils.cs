@@ -41,7 +41,7 @@ public class Utils : InteractionModuleBase<ShardedInteractionContext>
                 ephemeral: true);
         }
     }
-    
+
     [Group("remove", "remove commands sub group")]
     public class RemoveUtils : InteractionModuleBase<ShardedInteractionContext>
     {
@@ -72,7 +72,7 @@ public class Utils : InteractionModuleBase<ShardedInteractionContext>
                 ephemeral: true);
         }
     }
-    
+
     [Group("get", "get commands sub group")]
     public class GetUtils : InteractionModuleBase<ShardedInteractionContext>
     {
@@ -94,12 +94,9 @@ public class Utils : InteractionModuleBase<ShardedInteractionContext>
                     ephemeral: true);
                 return;
             }
-            
+
             var txt = new StringBuilder();
-            foreach (var (k, v) in config.Channels)
-            {
-                txt.Append("<#").Append(k).Append('>').Append('\n');
-            }
+            foreach (var (k, v) in config.Channels) txt.Append("<#").Append(k).Append('>').Append('\n');
 
             await RespondAsync(txt.ToString(),
                 allowedMentions: AllowedMentions.None,
