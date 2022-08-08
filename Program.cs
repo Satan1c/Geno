@@ -18,7 +18,6 @@ using WargamingApi.WorldOfTanksBlitz;
 using RunMode = Discord.Interactions.RunMode;
 
 Console.OutputEncoding = Encoding.UTF8;
-Process.GetCurrentProcess().MaxWorkingSet = (IntPtr) (500 * 1024);
 
 var env = ((Hashtable) Environment.GetEnvironmentVariables()).Cast<DictionaryEntry>()
     .ToDictionary(
