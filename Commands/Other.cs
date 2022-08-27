@@ -8,6 +8,7 @@ namespace Geno.Commands;
 public class Other : InteractionModuleBase<ShardedInteractionContext>
 {
     [Group("bot", "commands group about bot")]
+    [EnabledInDm(false)]
     public class BotCommands : InteractionModuleBase<ShardedInteractionContext>
     {
         [SlashCommand("ping", "show bot ping")]
@@ -46,8 +47,7 @@ public class Other : InteractionModuleBase<ShardedInteractionContext>
                 embed = embed.ApplyData(guild);
 
             await RespondAsync(embed: embed.Build(),
-                allowedMentions: AllowedMentions.None,
-                ephemeral: true);
+                allowedMentions: AllowedMentions.None);
         }
 
         [SlashCommand("user", "fetch user information by id")]
@@ -68,8 +68,7 @@ public class Other : InteractionModuleBase<ShardedInteractionContext>
                 embed = embed.ApplyData(guildUser);
 
             await RespondAsync(embed: embed.Build(),
-                allowedMentions: AllowedMentions.None,
-                ephemeral: true);
+                allowedMentions: AllowedMentions.None);
         }
     }
 }

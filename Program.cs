@@ -5,6 +5,7 @@ using Discord;
 using Discord.Commands;
 using Discord.Interactions;
 using Discord.WebSocket;
+using EnkaAPI;
 using Geno.Database;
 using Geno.Events;
 using Geno.Utils;
@@ -67,6 +68,7 @@ var service = new ServiceCollection()
     .AddSingleton<GuildEvents>()
     .AddSingleton(new WargamingApiClient("5ea271b8c279f6e11e334046af4cfce1"))
     .AddSingleton<WorldOfTanksBlitzClient>()
+    .AddSingleton<EnkaApiClient>()
     .InitializeSdcServices()
     .BuildServiceProvider();
 

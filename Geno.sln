@@ -2,6 +2,8 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Geno", "Geno.csproj", "{7F090ADB-0143-48EC-99CE-C77277C49CDD}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WaifuPicsApi", "WaifuPicsApi\WaifuPicsApi.csproj", "{B8C16F8C-C77A-484F-A75E-58177FA303DA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -12,5 +14,9 @@ Global
 		{7F090ADB-0143-48EC-99CE-C77277C49CDD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7F090ADB-0143-48EC-99CE-C77277C49CDD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7F090ADB-0143-48EC-99CE-C77277C49CDD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B8C16F8C-C77A-484F-A75E-58177FA303DA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B8C16F8C-C77A-484F-A75E-58177FA303DA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B8C16F8C-C77A-484F-A75E-58177FA303DA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B8C16F8C-C77A-484F-A75E-58177FA303DA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

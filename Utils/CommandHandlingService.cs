@@ -86,11 +86,10 @@ public class CommandHandlingService
         /*m_commands.CommandExecuted += CommandExecutedAsync;*/
         /*m_client.MessageReceived += MessageReceivedAsync;*/
         m_client.InteractionCreated += OnInteractionCreated;
-        m_interactions.SlashCommandExecuted += OnSlashCommandExecuted;
+        m_interactions.InteractionExecuted += InteractionExecuted;
     }
 
-    private async Task OnSlashCommandExecuted(SlashCommandInfo commandInfo, IInteractionContext context,
-        Discord.Interactions.IResult result)
+    private async Task InteractionExecuted(ICommandInfo commandInfo, IInteractionContext context, Discord.Interactions.IResult result)
     {
         if (result.Error is not null)
         {

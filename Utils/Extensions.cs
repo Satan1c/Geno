@@ -22,6 +22,21 @@ public static class Extensions
     // {
     //     return ((byte) services & (byte) target) != 0;
     // }
+    
+    public static ulong[] GetPerfectRole(this Dictionary<string, ulong[]> roles, string rank)
+    {
+        if (roles.ContainsKey(rank))
+            return roles[rank];
+
+        var keys = roles.Keys;
+        var first = keys.First();
+        var rankByte = byte.Parse(rank);
+
+        return 
+            rankByte >= byte.Parse(first) 
+                ? roles[first] 
+                : roles[keys.Select(x => byte.Parse(x)).FirstOrDefault(i => rankByte >= i).ToString()];
+    }
 
     internal static bool HasLink(this SocketMessage message)
     {
