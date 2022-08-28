@@ -16,7 +16,7 @@ public class GuildEvents
         m_client = services.GetRequiredService<DiscordShardedClient>();
         m_databaseProvider = services.GetRequiredService<DatabaseProvider>();
 
-        m_client.MessageReceived += MessageReceived;
+        //m_client.MessageReceived += MessageReceived;
         m_client.UserVoiceStateUpdated += OnDeleteChannel;
         m_client.UserVoiceStateUpdated += OnCreateChannel;
     }
