@@ -25,15 +25,14 @@ public class Sdc : InteractionModuleBase<ShardedInteractionContext>
             var guild = await m_monitoring.GetGuild(id);
             var embed = new EmbedBuilder()
                 .WithAuthor(guild.Name, guild.Avatar, guild.Url)
-                .WithDescription(string.Join(", ", guild.Tags.Select(x => x.TagsToString())))
-                .AddField("Members", guild.Members.ToString())
-                .AddField("Online", guild.Online.ToString())
-                .AddField("Badge", guild.Badges.BadgeToString())
-                .AddField("Boost", guild.Boost.BoostLevelToString());
+                .WithDescription($"`{(string.Join("`, `", guild.Tags.Select(x => x.TagsToString())))}`")
+                .AddField("Members", $"`{guild.Members.ToString()}`")
+                .AddField("Online", $"`{guild.Online.ToString()}`")
+                .AddField("Badge", $"`{guild.Badges.BadgeToString()}`")
+                .AddField("Boost", $"`{guild.Boost.BoostLevelToString()}`");
 
             await RespondAsync(embed: embed.Build(),
-                allowedMentions: AllowedMentions.None,
-                ephemeral: true);
+                allowedMentions: AllowedMentions.None);
         }
     }
 }

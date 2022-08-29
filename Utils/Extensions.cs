@@ -1,5 +1,6 @@
 ﻿using System.Text.RegularExpressions;
 using Discord;
+using Discord.Interactions;
 using Discord.Rest;
 using Discord.WebSocket;
 
@@ -17,11 +18,17 @@ public static class Extensions
         RegexOptions.Compiled
     );
 
-    // [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    // internal static bool HasMode<T>(this T services, T target)
-    // {
-    //     return ((byte) services & (byte) target) != 0;
-    // }
+    public static ModuleInfo GetTopLevelModule(this ModuleInfo module)
+    {
+        do
+        {
+            if (module.Parent is ModuleInfo info)
+                module = info;
+            
+        } while (!module.IsTopLevelGroup);
+
+        return module;
+    }
     
     public static ulong[] GetPerfectRole(this Dictionary<string, ulong[]> roles, string rank)
     {

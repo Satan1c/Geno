@@ -1,6 +1,5 @@
 ﻿using Discord;
 using Discord.Interactions;
-using Geno.Types;
 using Geno.Utils;
 using Microsoft.Extensions.DependencyInjection;
 using WargamingApi.Types.Enums;
@@ -10,6 +9,7 @@ using WargamingApi.WorldOfTanksBlitz.Services;
 namespace Geno.Commands;
 
 [Group("wg", "wargaming commands group")]
+[EnabledInDm(false)]
 public class Wargaming : InteractionModuleBase<ShardedInteractionContext>
 {
     [Group("blitz", "WoT Blitz commands group")]
@@ -40,15 +40,14 @@ public class Wargaming : InteractionModuleBase<ShardedInteractionContext>
         }
 
         [SlashCommand("account_info", "get account info by id")]
-        public async Task<RuntimeResult> GetAccountInfo(Regions region, string accountId)
+        public async Task GetAccountInfo(Regions region, string accountId)
         {
             var accountIds = accountId.Split(' ').Select(x =>
             {
                 if (long.TryParse(x, out var id))
                     return id;
 
-                throw new ArgumentException($"Provide valid value for {nameof(accountId)}");
-                //return new InteractionResult(InteractionCommandError.BadArgs, $"Provide valid value for {nameof(accountId)}");
+                throw new ArgumentException($"Provide valid value for {nameof(accountId)} (*{x}*)");
             });
 
             var resp = await m_accounts.GetAccountInfo(region, accountIds);
@@ -73,8 +72,6 @@ public class Wargaming : InteractionModuleBase<ShardedInteractionContext>
             }
 
             await RespondAsync(embeds: embeds);
-
-            return new InteractionResult(null, "");
         }
     }
 }

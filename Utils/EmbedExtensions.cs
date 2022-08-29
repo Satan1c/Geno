@@ -5,6 +5,8 @@ namespace Geno.Utils;
 
 public static class EmbedExtensions
 {
+    public const string Empty = "\u200b";
+
     public static EmbedBuilder ApplyData(this EmbedBuilder builder, RestInviteMetadata invite)
     {
         builder.Description ??= "";

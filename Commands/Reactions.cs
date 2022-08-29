@@ -16,9 +16,9 @@ public class Reactions : InteractionModuleBase<SocketInteractionContext>
     [SlashCommand("nsfw", "nsfw images")]
     [EnabledInDm(false)]
     [RequireNsfw]
-    public async Task NsfwCommands(NsfwCategory category)
+    public async Task NsfwCommands(NsfwCategory tag)
     {
-        var img = await m_waifuClient.GetImageAsync(category);
+        var img = await m_waifuClient.GetImageAsync(tag);
         Console.WriteLine(img);
         
         await RespondAsync(embed: new EmbedBuilder()
@@ -29,9 +29,9 @@ public class Reactions : InteractionModuleBase<SocketInteractionContext>
     
     [SlashCommand("sfw", "sfw images")]
     [EnabledInDm(false)]
-    public async Task SfwCommands([Summary("category"), Autocomplete] string categoryString, IUser? user = null)
+    public async Task SfwCommands([Autocomplete] string tag, IUser? user = null)
     {
-        if (!Enum.TryParse<SfwCategory>(categoryString, out var category)) return;
+        if (!Enum.TryParse<SfwCategory>(tag, out var category)) return;
         
         var ctf = GetCategoryFormat(category);
         if (ctf == CategoryFormat.User && user == null)
@@ -43,7 +43,7 @@ public class Reactions : InteractionModuleBase<SocketInteractionContext>
         var embed = new EmbedBuilder();
         var title = ctf switch
         {
-            CategoryFormat.Neutral => categoryString,
+            CategoryFormat.Neutral => tag,
             CategoryFormat.Solo => string.Format(GetStringForCategory(category), $"<@{Context.User.Id.ToString()}>"),
             CategoryFormat.User => string.Format(GetStringForCategory(category), $"<@{Context.User.Id.ToString()}>", $"<@{(user == null ? throw new ArgumentNullException(nameof(user), "user must be provided") : user.Id.ToString())}>"),
             _ => throw new ArgumentOutOfRangeException()
@@ -59,7 +59,7 @@ public class Reactions : InteractionModuleBase<SocketInteractionContext>
             allowedMentions: AllowedMentions.None);
     }
     
-    [AutocompleteCommand("category", "sfw")]
+    [AutocompleteCommand("tag", "sfw")]
     public async Task SfwAutocomplete()
     {
         if (!m_sfwCategories.Any())

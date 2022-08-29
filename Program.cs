@@ -1,8 +1,6 @@
 ﻿using System.Collections;
-using System.Diagnostics;
 using System.Text;
 using Discord;
-using Discord.Commands;
 using Discord.Interactions;
 using Discord.WebSocket;
 using EnkaAPI;
@@ -36,7 +34,8 @@ var discordClient = new DiscordShardedClient(
                          | GatewayIntents.GuildMessages
                          | GatewayIntents.GuildVoiceStates,
         MessageCacheSize = 5,
-        LogLevel = LogSeverity.Verbose
+        LogLevel = LogSeverity.Verbose,
+        LogGatewayIntentWarnings = false
     }
 );
 
@@ -46,17 +45,9 @@ var service = new ServiceCollection()
     {
         DefaultRunMode = RunMode.Async,
         EnableAutocompleteHandlers = true,
-        LogLevel = LogSeverity.Verbose
+        LogLevel = LogSeverity.Verbose,
+        //LocalizationManager = new JsonLocalizationManager(@"C:\projects\C#\Geno\Localizations", "interactions")
     }))
-    .AddSingleton(new CommandService(
-        new CommandServiceConfig
-        {
-            DefaultRunMode = Discord.Commands.RunMode.Async,
-            IgnoreExtraArgs = false,
-            LogLevel = LogSeverity.Verbose,
-            ThrowOnError = true,
-            CaseSensitiveCommands = false
-        }))
     .AddSingleton<IMongoClient>(new MongoClient(MongoClientSettings.FromConnectionString(env["Mongo"])))
     .AddSingleton<DatabaseCache>()
     .AddSingleton<DatabaseProvider>()
@@ -76,7 +67,13 @@ service.GetRequiredService<ClientEvents>();
 service.GetRequiredService<GuildEvents>();
 
 var bot = service.GetRequiredService<DiscordShardedClient>();
+
+#if DEBUG
+await bot.LoginAsync(TokenType.Bot, env["TEST"]);
+#else
 await bot.LoginAsync(TokenType.Bot, env["Geno"]);
+#endif
+
 await bot.StartAsync();
 
 await Task.Delay(Timeout.Infinite);
