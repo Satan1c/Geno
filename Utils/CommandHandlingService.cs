@@ -1,7 +1,6 @@
 ﻿using System.Reflection;
 using Discord;
 using Discord.Interactions;
-using Discord.Extensions.Interactions;
 using Discord.WebSocket;
 using Geno.Errors;
 using Microsoft.Extensions.DependencyInjection;
@@ -51,7 +50,7 @@ public class CommandHandlingService
 
     private async Task OnInteractionCreated(SocketInteraction arg)
     {
-        //await m_interactions.ExecuteCommandAsync(new ShardedInteractionContext(m_client, arg), m_services);
-        await m_interactions.ExecuteCommandAsync(arg.CreateGenericContext(m_client), m_services);
+        await m_interactions.ExecuteCommandAsync(new ShardedInteractionContext(m_client, arg), m_services);
+        //await m_interactions.ExecuteCommandAsync(arg.CreateGenericContext(m_client), m_services);
     }
 }

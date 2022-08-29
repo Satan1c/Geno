@@ -21,7 +21,7 @@ public class UtilsErrors : IErrorResolver
     {
         return commandMethodName switch
         {
-            nameof(Commands.Utils.AddUtils.AddVoiceChannel) => result.Error switch
+            nameof(Commands.Utils.SetUtils.RankInfo) => result.Error switch
             {
                 InteractionCommandError.UnknownCommand => "Unknown command",
                 InteractionCommandError.ConvertFailed => "None ConvertFailed",
