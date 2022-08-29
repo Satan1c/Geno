@@ -33,5 +33,6 @@ public class ClientEvents
         m_blitzClient.InitServices(Service.All);
         await m_handlingService.InitializeAsync();
         Console.WriteLine("Ready");
+        GC.Collect();
     }
 }
