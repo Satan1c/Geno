@@ -114,6 +114,7 @@ public class CommandHandlingService
 
     private async Task OnInteractionCreated(SocketInteraction arg)
     {
-        await m_interactions.ExecuteCommandAsync(new ShardedInteractionContext(m_client, arg), m_services);
+        //await m_interactions.ExecuteCommandAsync(new ShardedInteractionContext(m_client, arg), m_services);
+        await m_interactions.ExecuteCommandAsync(arg.CreateGenericContext(m_client), m_services);
     }
 }
