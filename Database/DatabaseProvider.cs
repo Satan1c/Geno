@@ -5,73 +5,69 @@ namespace Geno.Database;
 
 public class DatabaseProvider
 {
-    private readonly DatabaseCache m_cache;
+	private readonly DatabaseCache m_cache;
 
-    private readonly IMongoClient m_client;
+	private readonly IMongoCollection<GuildDocument> m_guildConfigs;
 
-    private readonly IMongoCollection<GuildDocument> m_guildConfigs;
+	public DatabaseProvider(IMongoClient client, DatabaseCache cache)
+	{
+		m_cache = cache;
+		var mainDb = client.GetDatabase("main");
+		m_guildConfigs = mainDb.GetCollection<GuildDocument>("guilds");
+	}
 
-    private readonly IMongoDatabase m_mainDb;
+	public async Task<bool> HasDocument(ulong id)
+	{
+		if (m_cache.HasDocument(id))
+			return true;
 
-    public DatabaseProvider(IMongoClient client, DatabaseCache cache)
-    {
-        m_cache = cache;
-        m_client = client;
-        m_mainDb = m_client.GetDatabase("main");
-        m_guildConfigs = m_mainDb.GetCollection<GuildDocument>("guilds");
-    }
+		if (await m_guildConfigs.CountDocumentsAsync(x => x.Id == id) < 1) return false;
 
-    public async Task<bool> HasDocument(ulong id)
-    {
-        if (m_cache.HasDocument(id))
-            return true;
+		m_cache.SetDocument((await m_guildConfigs.FindAsync(x => x.Id == id)).First());
+		return true;
+	}
 
-        if (await m_guildConfigs.CountDocumentsAsync(x => x.Id == id) < 1) return false;
+	public async Task<GuildDocument> GetConfig(ulong id)
+	{
+		if (m_cache.TryGetDocument(id, out var document))
+			return document;
 
-        m_cache.SetDocument((await m_guildConfigs.FindAsync(x => x.Id == id)).First());
-        return true;
-    }
+		m_cache.SetDocument(id, await FindOrInsertOne(m_guildConfigs, x => x.Id == id, new GuildDocument
+		{
+			Id = id
+		}));
 
-    public async Task<GuildDocument> GetConfig(ulong id)
-    {
-        if (m_cache.TryGetDocument(id, out var document))
-            return document;
+		return await GetConfig(id);
+	}
 
-        m_cache.SetDocument(id, await FindOrInsertOne(m_guildConfigs, x => x.Id == id, new GuildDocument
-        {
-            Id = id
-        }));
+	public async Task SetConfig(GuildDocument document)
+	{
+		m_cache.SetDocument(document);
+		await InsertOrReplaceOne(m_guildConfigs, x => x.Id == document.Id, document);
+	}
 
-        return await GetConfig(id);
-    }
+	private static async Task InsertOrReplaceOne<TDocument>(IMongoCollection<TDocument> collection,
+		Expression<Func<TDocument, bool>> filter, TDocument document)
+	{
+		if (await collection.CountDocumentsAsync(filter) < 1)
+			await collection.InsertOneAsync(document);
+		else
+			await collection.ReplaceOneAsync(filter, document);
+	}
 
-    public async Task SetConfig(GuildDocument document)
-    {
-        m_cache.SetDocument(document);
-        await InsertOrReplaceOne(m_guildConfigs, x => x.Id == document.Id, document);
-    }
+	private static async Task<TDocument> FindOrInsertOne<TDocument>(IMongoCollection<TDocument> collection,
+		Expression<Func<TDocument, bool>> filter, TDocument document)
+	{
+		return (await FindOrInsert(collection, filter, document)).First();
+	}
 
-    private static async Task InsertOrReplaceOne<TDocument>(IMongoCollection<TDocument> collection,
-        Expression<Func<TDocument, bool>> filter, TDocument document)
-    {
-        if (await collection.CountDocumentsAsync(filter) < 1)
-            await collection.InsertOneAsync(document);
-        else
-            await collection.ReplaceOneAsync(filter, document);
-    }
+	private static async Task<IAsyncCursor<TDocument>> FindOrInsert<TDocument>(IMongoCollection<TDocument> collection,
+		Expression<Func<TDocument, bool>> filter, TDocument document)
+	{
+		if (await collection.CountDocumentsAsync(filter) > 0)
+			return await collection.FindAsync(filter);
 
-    private static async Task<TDocument> FindOrInsertOne<TDocument>(IMongoCollection<TDocument> collection,
-        Expression<Func<TDocument, bool>> filter, TDocument document)
-    {
-        return (await FindOrInsert(collection, filter, document)).First();
-    }
-
-    private static async Task<IAsyncCursor<TDocument>> FindOrInsert<TDocument>(IMongoCollection<TDocument> collection,
-        Expression<Func<TDocument, bool>> filter, TDocument document)
-    {
-        if (await collection.CountDocumentsAsync(filter) > 0) return await collection.FindAsync(filter);
-
-        await collection.InsertOneAsync(document);
-        return await collection.FindAsync(filter);
-    }
+		await collection.InsertOneAsync(document);
+		return await collection.FindAsync(filter);
+	}
 }

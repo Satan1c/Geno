@@ -2,39 +2,29 @@
 
 public class DatabaseCache
 {
-    private Dictionary<ulong, GuildDocument> m_guildDocuments = new();
+	private readonly Dictionary<ulong, GuildDocument> m_guildDocuments = new();
 
-    public DatabaseCache()
-    {
-        _ = Task.Run(async () =>
-        {
-            await Task.Delay(TimeSpan.FromHours(6));
+	public bool HasDocument(ulong id)
+	{
+		return m_guildDocuments.ContainsKey(id);
+	}
 
-            m_guildDocuments = new Dictionary<ulong, GuildDocument>();
-        });
-    }
+	public bool TryGetDocument(ulong id, out GuildDocument document)
+	{
+		document = null!;
+		if (!m_guildDocuments.ContainsKey(id)) return false;
 
-    public bool HasDocument(ulong id)
-    {
-        return m_guildDocuments.ContainsKey(id);
-    }
+		document = m_guildDocuments[id];
+		return true;
+	}
 
-    public bool TryGetDocument(ulong id, out GuildDocument document)
-    {
-        document = null!;
-        if (!m_guildDocuments.ContainsKey(id)) return false;
+	public void SetDocument(GuildDocument document)
+	{
+		SetDocument(document.Id, document);
+	}
 
-        document = m_guildDocuments[id];
-        return true;
-    }
-
-    public void SetDocument(GuildDocument document)
-    {
-        SetDocument(document.Id, document);
-    }
-
-    public void SetDocument(ulong id, GuildDocument document)
-    {
-        m_guildDocuments[id] = document;
-    }
+	public void SetDocument(ulong id, GuildDocument document)
+	{
+		m_guildDocuments[id] = document;
+	}
 }

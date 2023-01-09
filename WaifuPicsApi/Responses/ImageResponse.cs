@@ -4,5 +4,5 @@ namespace WaifuPicsApi.Responses;
 
 public class ImageResponse
 {
-    [JsonProperty("url")] public string Url { get; set; } = "";
+	[JsonProperty("url")] public string Url { get; set; } = "";
 }

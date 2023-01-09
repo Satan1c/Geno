@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using System.Text;
+﻿using System.Text;
 using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
@@ -12,56 +11,55 @@ using MongoDB.Driver;
 using SDC_Sharp;
 using SDC_Sharp.DiscordNet;
 using SDC_Sharp.Types;
-using WargamingApi;
-using WargamingApi.WorldOfTanksBlitz;
-using RunMode = Discord.Interactions.RunMode;
+using Serilog;
 
 Console.OutputEncoding = Encoding.UTF8;
 
-var env = ((Hashtable) Environment.GetEnvironmentVariables()).Cast<DictionaryEntry>()
-    .ToDictionary(
-        kvp
-            => (string) kvp.Key, kvp => (string) kvp.Value!);
+var env = Utils.GetEnv();
 
-var discordClient = new DiscordShardedClient(
-    new DiscordSocketConfig
-    {
-        AlwaysDownloadUsers = false,
-        AlwaysDownloadDefaultStickers = false,
-        AlwaysResolveStickers = false,
-        GatewayIntents = GatewayIntents.Guilds
-                         | GatewayIntents.GuildMembers
-                         | GatewayIntents.GuildMessages
-                         | GatewayIntents.GuildVoiceStates,
-        MessageCacheSize = 5,
-        LogLevel = LogSeverity.Verbose,
-        LogGatewayIntentWarnings = false
-    }
-);
-
-var service = new ServiceCollection()
-    .AddSingleton(discordClient)
-    .AddSingleton(new InteractionService(discordClient, new InteractionServiceConfig
-    {
-        DefaultRunMode = RunMode.Async,
-        EnableAutocompleteHandlers = true,
-        LogLevel = LogSeverity.Verbose,
-        //LocalizationManager = new JsonLocalizationManager(@"C:\projects\C#\Geno\Localizations", "interactions")
-    }))
-    .AddSingleton<IMongoClient>(new MongoClient(MongoClientSettings.FromConnectionString(env["Mongo"])))
-    .AddSingleton<DatabaseCache>()
-    .AddSingleton<DatabaseProvider>()
-    .AddSingleton<CommandHandlingService>()
-    .AddSingleton(new SdcConfig {Token = env["Sdc"]})
-    .AddSingleton<SdcSharpClient>()
-    .AddSingleton<SdcServices>()
-    .AddSingleton<ClientEvents>()
-    .AddSingleton<GuildEvents>()
-    .AddSingleton(new WargamingApiClient("5ea271b8c279f6e11e334046af4cfce1"))
-    .AddSingleton<WorldOfTanksBlitzClient>()
-    .AddSingleton<EnkaApiClient>()
-    .InitializeSdcServices()
-    .BuildServiceProvider();
+await using var service = new ServiceCollection()
+	.AddSingleton(new DiscordSocketConfig
+	{
+		AlwaysDownloadUsers = false,
+		AlwaysDownloadDefaultStickers = false,
+		AlwaysResolveStickers = false,
+		GatewayIntents = GatewayIntents.Guilds
+		                 | GatewayIntents.GuildMembers
+		                 | GatewayIntents.GuildMessages
+		                 | GatewayIntents.GuildVoiceStates,
+		MessageCacheSize = 5,
+		LogLevel = LogSeverity.Verbose,
+		LogGatewayIntentWarnings = false
+	})
+	.AddSingleton<DiscordShardedClient>()
+	.AddSingleton<ILogger>(new LoggerConfiguration()
+		.Enrich.FromLogContext()
+		.MinimumLevel.Verbose()
+		.WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u4}]\t{Message:lj}{NewLine}{Exception}")
+		.CreateLogger()
+	)
+	.AddSingleton(new InteractionServiceConfig
+	{
+		DefaultRunMode = RunMode.Async,
+		EnableAutocompleteHandlers = true,
+		LogLevel = LogSeverity.Verbose,
+		UseCompiledLambda = true,
+		LocalizationManager = new JsonLocalizationManager(@"C:\projects\C#\Geno\Localizations", "interactions")
+	})
+	.AddSingleton<InteractionService>()
+	.AddSingleton(MongoClientSettings.FromConnectionString(env["Mongo"]))
+	.AddSingleton<IMongoClient, MongoClient>()
+	.AddSingleton<DatabaseCache>()
+	.AddSingleton<DatabaseProvider>()
+	.AddSingleton<CommandHandlingService>()
+	.AddSingleton(new SdcConfig { Token = env["Sdc"] })
+	.AddSingleton<SdcSharpClient>()
+	.AddSingleton<SdcServices>()
+	.AddSingleton<ClientEvents>()
+	.AddSingleton<GuildEvents>()
+	.AddSingleton<EnkaApiClient>()
+	.InitializeSdcServices()
+	.BuildServiceProvider();
 
 service.GetRequiredService<ClientEvents>();
 service.GetRequiredService<GuildEvents>();
@@ -75,5 +73,4 @@ await bot.LoginAsync(TokenType.Bot, env["Geno"]);
 #endif
 
 await bot.StartAsync();
-
 await Task.Delay(Timeout.Infinite);
