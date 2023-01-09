@@ -1,38 +1,77 @@
 ﻿using Discord;
 using Discord.Interactions;
-using Microsoft.Extensions.DependencyInjection;
+using Geno.Responses;
 using SDC_Sharp.DiscordNet.Services;
-using SDC_Sharp.Types;
+using SDC_Sharp.DiscordNet.Types;
 
 namespace Geno.Commands;
 
 [Group("sdc", "sdc monitoring commands group")]
 public class Sdc : InteractionModuleBase<ShardedInteractionContext>
 {
-    [Group("monitoring", "servers monitoring commands group")]
-    public class MonitoringCommands : InteractionModuleBase<ShardedInteractionContext>
-    {
-        private readonly MonitoringService m_monitoring;
+	[Group("monitoring", "servers monitoring commands group")]
+	public class MonitoringCommands : InteractionModuleBase<ShardedInteractionContext>
+	{
+		private readonly MonitoringService m_monitoring;
 
-        public MonitoringCommands(IServiceProvider provider)
-        {
-            m_monitoring = provider.GetRequiredService<MonitoringService>();
-        }
+		public MonitoringCommands(MonitoringService monitoring)
+		{
+			m_monitoring = monitoring;
+		}
 
-        [SlashCommand("guild", "show guild info from site")]
-        public async Task GetGuild(ulong id)
-        {
-            var guild = await m_monitoring.GetGuild(id);
-            var embed = new EmbedBuilder()
-                .WithAuthor(guild.Name, guild.Avatar, guild.Url)
-                .WithDescription($"`{(string.Join("`, `", guild.Tags.Select(x => x.TagsToString())))}`")
-                .AddField("Members", $"`{guild.Members.ToString()}`")
-                .AddField("Online", $"`{guild.Online.ToString()}`")
-                .AddField("Badge", $"`{guild.Badges.BadgeToString()}`")
-                .AddField("Boost", $"`{guild.Boost.BoostLevelToString()}`");
+		[SlashCommand("guild_info", "show guild info from site")]
+		public async Task GetGuild(ulong guildId)
+		{
+			//var id = ulong.Parse(guildId);
+			var id = guildId;
+			var guild = await m_monitoring.GetGuild(id, true);
+			await Context.GuildInfo(guild);
+		}
 
-            await RespondAsync(embed: embed.Build(),
-                allowedMentions: AllowedMentions.None);
-        }
-    }
+		[SlashCommand("guild_rates", "show guild info from site")]
+		public async Task GetGuildRates(ulong guildId)
+		{
+			//var id = ulong.Parse(guildId);
+			var id = guildId;
+			var rates = await m_monitoring.GetGuildRates(id, true);
+			var guild = await m_monitoring.GetGuild(id, true);
+			await Context.GuildRatesInfo(guild, rates);
+		}
+	}
+
+	[Group("nika", "servers monitoring commands group")]
+	public class NikaCommands : InteractionModuleBase<ShardedInteractionContext>
+	{
+		private readonly BlacklistService m_blacklistService;
+
+		public NikaCommands(BlacklistService blacklistService)
+		{
+			m_blacklistService = blacklistService;
+		}
+
+		[SlashCommand("warns", "show guild info from site")]
+		public async Task GetWarns(IUser user)
+		{
+			UserWarns warns;
+			var id = user.Id;
+
+			try
+			{
+				warns = await m_blacklistService.GetWarns(id, true);
+				await Context.WarnsInfo(warns);
+			}
+			catch
+			{
+				warns = new UserWarns
+				{
+					Id = user.Id,
+					User = user,
+					Type = "user",
+					Warns = 0
+				};
+			}
+
+			await Context.WarnsInfo(warns);
+		}
+	}
 }

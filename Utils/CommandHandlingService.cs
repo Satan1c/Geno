@@ -26,29 +26,33 @@ public class CommandHandlingService
 	{
 		RegisterEvents();
 
-        var assembly = Assembly.GetEntryAssembly()!;
-        await m_interactions.AddModulesAsync(assembly, m_services);
-        await m_interactions.RegisterCommandsGloballyAsync();
-        
-        ErrorResolver.Init(assembly);
-    }
+		var assembly = Assembly.GetEntryAssembly()!;
 
-    private void RegisterEvents()
-    {
-        m_client.InteractionCreated += OnInteractionCreated;
-        m_interactions.InteractionExecuted += InteractionExecuted;
-    }
+		m_interactions.AddTypeConverter<ulong>(new UlongTypeConverter());
 
-    private async Task InteractionExecuted(ICommandInfo commandInfo, IInteractionContext context, Discord.Interactions.IResult result)
-    {
-        if (result.Error is not null)
-        {
-            var message = ErrorResolver.Resolve(result, commandInfo, context);
-            await context.Interaction.RespondAsync(message,
-                allowedMentions: AllowedMentions.None,
-                ephemeral: true);
-        }
-    }
+		await m_interactions.AddModulesAsync(assembly, m_services);
+		await m_interactions.RegisterCommandsGloballyAsync();
+
+		ErrorResolver.Init(assembly);
+	}
+
+	private void RegisterEvents()
+	{
+		m_client.InteractionCreated += OnInteractionCreated;
+		m_interactions.InteractionExecuted += InteractionExecuted;
+		m_interactions.Log += ClientEvents.OnLog;
+	}
+
+	private async Task InteractionExecuted(ICommandInfo commandInfo, IInteractionContext context, IResult result)
+	{
+		if (result.Error is not null)
+		{
+			var embed = ErrorResolver.Resolve(result, commandInfo, context);
+			await context.Interaction.RespondAsync(embed: embed.Build(),
+				allowedMentions: AllowedMentions.None,
+				ephemeral: true);
+		}
+	}
 
 	private async Task OnInteractionCreated(SocketInteraction arg)
 	{
