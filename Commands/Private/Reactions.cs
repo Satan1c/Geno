@@ -2,13 +2,14 @@
 using Discord.Interactions;
 using Discord.WebSocket;
 using Geno.Events;
+using Geno.Utils;
 using WaifuPicsApi;
 using WaifuPicsApi.Enums;
 
 namespace Geno.Commands.Private;
 
 [Group("img", "images group")]
-[EnabledInDm(false)]
+[Private(Category.Reactions)]
 public class Reactions : InteractionModuleBase<ShardedInteractionContext>
 {
 	private readonly WaifuClient m_waifuClient = new();

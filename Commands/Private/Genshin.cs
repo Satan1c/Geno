@@ -9,7 +9,7 @@ using Geno.Utils;
 namespace Geno.Commands.Private;
 
 [Group("genshin", "genshin commands")]
-[DontAutoRegister]
+[Private(Category.Genshin)]
 public class Genshin : InteractionModuleBase<ShardedInteractionContext>
 {
 	private readonly DatabaseProvider m_databaseProvider;
