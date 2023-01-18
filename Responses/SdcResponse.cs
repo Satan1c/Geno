@@ -10,15 +10,6 @@ namespace Geno.Responses;
 
 public static class SdcResponse
 {
-	private static async Task Resolve(this ShardedInteractionContext context, EmbedBuilder embed,
-		bool ephemeral = false)
-	{
-		await context.Interaction.RespondAsync(embed: embed.Build(),
-			allowedMentions: AllowedMentions.None,
-			ephemeral: ephemeral
-		);
-	}
-
 	public static async Task GuildInfo(this ShardedInteractionContext context, Guild guild)
 	{
 		var embed = context.GetLocale() switch
@@ -29,7 +20,8 @@ public static class SdcResponse
 				.AddField("Участников", $"`{guild.Members.ToString()}`")
 				.AddField("Онлайн", $"`{guild.Online.ToString()}`")
 				.AddField("Значки", $"`{guild.Badges.BadgeToString()}`")
-				.AddField("Уровень буста", $"`{guild.Boost.BoostLevelToString()}`"),
+				.AddField("Уровень буста", $"`{guild.Boost.BoostLevelToString()}`")
+				.AddField("Есть ли бот на сервере", $"`{(guild.IsBotOnServer ? "Да" : "Нет")}`"),
 			_ => new EmbedBuilder()
 				.WithAuthor(guild.Name, guild.Avatar, guild.Url)
 				.WithDescription($"`{string.Join("`, `", guild.Tags.Select(x => x.TagsToString()))}`")
@@ -37,9 +29,10 @@ public static class SdcResponse
 				.AddField("Online", $"`{guild.Online.ToString()}`")
 				.AddField("Badge", $"`{guild.Badges.BadgeToString()}`")
 				.AddField("Boost", $"`{guild.Boost.BoostLevelToString()}`")
+				.AddField("Is bot on server", $"`{(guild.IsBotOnServer ? "Yes" : "No")}`")
 		};
 
-		await context.Resolve(embed);
+		await context.Respond(embed);
 	}
 
 	public static async Task WarnsInfo(this ShardedInteractionContext context, UserWarns warns)
@@ -51,24 +44,31 @@ public static class SdcResponse
 				.WithDescription(warns.Warns.ToString())
 		};
 
-		await context.Resolve(embed);
+		await context.Respond(embed);
 	}
 
-	public static async Task GuildRatesInfo(this ShardedInteractionContext context, Guild guild,
-		IDictionary<User, Rate> rates)
+	public static async Task GuildRatesInfo(this ShardedInteractionContext context,
+		Task<Guild> guildTask,
+		Task<Dictionary<User, Rate>> ratesTask)
 	{
+		await context.Interaction.DeferAsync();
+
+		var guild = await guildTask;
+		
 		var embed = context.GetLocale() switch
 		{
 			_ => new EmbedBuilder()
 				.WithAuthor(guild.Name, guild.Avatar, guild.Url)
 		};
 
+		var rates = await ratesTask;
+
 		foreach (var (k, v) in rates)
 		{
-			var user = k.Instance!;
-			embed.AddField($"`{user.Username}`#`{user.Discriminator}`", v.RateToString());
+			var user = k.Instance;
+			embed.AddField($"`{user?.Username ?? "unknown"}`#`{user?.Discriminator ?? "unknown"}`", v.RateToString());
 		}
 
-		await context.Resolve(embed);
+		await context.Respond(embed, false, true);
 	}
 }
