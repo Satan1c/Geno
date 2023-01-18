@@ -27,7 +27,7 @@
         <PackageReference Include="Discord.Net.WebSocket" Version="3.9.0" />
         <PackageReference Include="EnkaAPI" Version="0.1.0" />
         <PackageReference Include="Microsoft.CodeAnalysis" Version="4.4.0" />
-        <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="3.3.4-beta1.22518.1">
+        <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="3.3.4">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
@@ -57,6 +57,10 @@
 
     <ItemGroup>
         <ProjectReference Include="WaifuPicsApi\WaifuPicsApi.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Content Include="bin\Localizations\interactions.ru.json" />
     </ItemGroup>
 
 </Project>
