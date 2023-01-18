@@ -1,5 +1,6 @@
 ﻿using System.Text;
 using Discord;
+using Discord.Extensions;
 using Discord.Interactions;
 using Discord.WebSocket;
 using EnkaAPI;
@@ -14,11 +15,53 @@ public class Genshin : InteractionModuleBase<ShardedInteractionContext>
 {
 	private readonly DatabaseProvider m_databaseProvider;
 	private readonly EnkaApiClient m_enkaApiClient;
+	
+	private const string m_baseLink = "https://genshin.hoyoverse.com/en/gift?code=";
 
 	public Genshin(DatabaseProvider databaseProvider, EnkaApiClient enkaApiClient)
 	{
 		m_databaseProvider = databaseProvider;
 		m_enkaApiClient = enkaApiClient;
+	}
+
+	[MessageCommand("Make code links")]
+	public async Task MakeCodeLinks(IMessage message)
+	{
+		await DeferAsync();
+		
+		var codes = message.Content.Split('\n');
+		CreateLinks(codes, out var links, out _);
+
+		var components = new ComponentBuilder();
+		
+		for (byte i = 0; i < links.Length; i++)
+			components
+				.AddRow(
+					new ActionRowBuilder()
+						.WithButton(codes[i], style: ButtonStyle.Link, url: links[i]));
+
+		await ModifyOriginalResponseAsync(x =>
+		{
+			x.Embed = new EmbedBuilder().WithDescription("Кодеки:").Build();
+			x.Components = components.Build();
+		});
+	}
+
+	private static void CreateLinks(in string[] codes, out string[] links, out string[] contents)
+	{
+		var linksRaw = new LinkedList<string>();
+		var contentsRaw = new LinkedList<string>();
+
+		foreach (var c in codes)
+		{
+			var link = m_baseLink + c;
+			
+			linksRaw.AddLast(link);
+			contentsRaw.AddLast($"[{c}]({link})");
+		}
+
+		links = linksRaw.ToArray();
+		contents = contentsRaw.ToArray();
 	}
 
 	[MessageCommand("Rank info")]
