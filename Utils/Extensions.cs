@@ -25,6 +25,11 @@ public static class Extensions
 		RegexOptions.Compiled | RegexOptions.Singleline
 	);
 
+	public static bool HasCategory(this Category target, Category categories)
+	{
+		return ((byte)target & (byte)categories) != 0;
+	}
+
 	public static UserLocales GetLocale(this IInteractionContext context)
 	{
 		return JsonConvert.DeserializeObject<UserLocales>(JsonConvert.SerializeObject(context.Interaction.UserLocale));
