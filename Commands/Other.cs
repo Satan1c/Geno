@@ -23,30 +23,25 @@ public class Other : InteractionModuleBase<ShardedInteractionContext>
 		[SlashCommand("stats", "show bot stats")]
 		public async Task PingCommand()
 		{
-			var embed = new EmbedBuilder().WithTitle("Bot stats:");
-
+			var embed = new EmbedBuilder().WithTitle("Bot stats");
 			var process = Process.GetCurrentProcess();
+			var ram = ((short)(process.WorkingSet64 / 1024 / 1024)).ToString();
+			var uptime = DateTime.UtcNow - process.StartTime;
+			var uptimeString = string.Format(
+				(uptime.Days > 0 ? "`{0:D1}`d " : "") +
+				(uptime.Hours > 0 ? "`{1:D1}`h " : "") +
+				(uptime.Minutes > 0 ? "`{2:D1}`m " : "") +
+				(uptime.Seconds > 0 ? "`{3:D1}`s" : "`0`s"),
+				uptime.Days.ToString(),
+				uptime.Hours.ToString(),
+				uptime.Minutes.ToString(),
+				uptime.Seconds.ToString()
+			);
 
-			{
-				var ram = ((short)(process.WorkingSet64 / 1024 / 1024)).ToString();
-				var maxRam = ((short)(process.MaxWorkingSet / 1024 / 1024)).ToString();
-				var uptime = DateTime.UtcNow - process.StartTime;
-				var uptimeString = string.Format(
-					(uptime.Days > 0 ? "`{0:D1}`d " : "") +
-					(uptime.Hours > 0 ? "`{1:D1}`h " : "") +
-					(uptime.Minutes > 0 ? "`{2:D1}`m " : "") +
-					(uptime.Seconds > 0 ? "`{3:D1}`s" : "`0`s"),
-					uptime.Days.ToString(),
-					uptime.Hours.ToString(),
-					uptime.Minutes.ToString(),
-					uptime.Seconds.ToString()
-				);
-
-				embed.AddField("Servers: ", m_client.Shards.Select(x => x.Guilds.Count).Sum().ToString())
-					.AddField("RAM usage:", $"`{ram}`/`{maxRam}` mb", true)
-					.AddField("UP time:", uptimeString, true)
-					.AddEmpty(1);
-			}
+			embed.AddField("Servers: ", $"`{m_client.Shards.Select(x => x.Guilds.Count).Sum().ToString()}`", true)
+				.AddField("RAM usage:", $"`{ram}`mb", true)
+				.AddField("UP time:", uptimeString, true)
+				.AddEmpty(1);
 
 			if (Context.Guild is { } guild)
 			{
