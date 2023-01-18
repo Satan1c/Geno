@@ -15,6 +15,7 @@ using Serilog;
 
 Console.OutputEncoding = Encoding.UTF8;
 
+var localizations = Path.GetFullPath("../../", AppDomain.CurrentDomain.BaseDirectory) + "/Localizations";
 var env = Utils.GetEnv();
 
 await using var service = new ServiceCollection()
@@ -44,7 +45,7 @@ await using var service = new ServiceCollection()
 		EnableAutocompleteHandlers = true,
 		LogLevel = LogSeverity.Verbose,
 		UseCompiledLambda = true,
-		LocalizationManager = new JsonLocalizationManager(@"C:\projects\C#\Geno\Localizations", "interactions")
+		LocalizationManager = new JsonLocalizationManager(localizations, "interactions")
 	})
 	.AddSingleton<InteractionService>()
 	.AddSingleton(MongoClientSettings.FromConnectionString(env["Mongo"]))
