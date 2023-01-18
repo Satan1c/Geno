@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System.Collections.ObjectModel;
+using System.Reflection;
 using Discord;
 using Discord.Extensions.Interactions;
 using Discord.Interactions;
@@ -78,18 +79,29 @@ public class CommandHandlingService
 	private void RegisterEvents()
 	{
 		m_client.InteractionCreated += OnInteractionCreated;
-		m_interactions.InteractionExecuted += InteractionExecuted;
-		m_interactions.Log += ClientEvents.OnLog;
+		Interactions.InteractionExecuted += InteractionExecuted;
+		Interactions.Log += ClientEvents.OnLog;
 	}
 
 	private async Task InteractionExecuted(ICommandInfo commandInfo, IInteractionContext context, IResult result)
 	{
 		if (result.Error is not null)
 		{
-			var embed = ErrorResolver.Resolve(result, commandInfo, context);
-			await context.Interaction.RespondAsync(embed: embed.Build(),
-				allowedMentions: AllowedMentions.None,
-				ephemeral: true);
+			var embed = ErrorResolver.Resolve(result, commandInfo, context).Build()!;
+			try
+			{
+				await context.Interaction.RespondAsync(embed: embed,
+					allowedMentions: AllowedMentions.None,
+					ephemeral: true);
+			}
+			catch (Exception e)
+			{
+				await context.Interaction.ModifyOriginalResponseAsync(x =>
+				{
+					x.Embed = embed;
+					x.AllowedMentions = AllowedMentions.None;
+				});
+			}
 		}
 	}
 
@@ -97,6 +109,6 @@ public class CommandHandlingService
 	{
 		//var ctx = arg.CreateGenericContext(m_client);
 		var ctx = new ShardedInteractionContext(m_client, arg);
-		await m_interactions.ExecuteCommandAsync(ctx, m_services);
+		await Interactions.ExecuteCommandAsync(ctx, m_services);
 	}
 }
