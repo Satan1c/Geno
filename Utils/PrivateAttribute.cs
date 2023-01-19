@@ -15,7 +15,8 @@ public class PrivateAttribute : Attribute
 [Flags]
 public enum Category : byte
 {
-	Genshin = 0,
-	Reactions = 1,
-	Admin = 2
+	None = 0,
+	Genshin = 1 << 0,
+	Images = 1 << 1,
+	Admin = 1 << 2
 }
