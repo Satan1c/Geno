@@ -5,11 +5,12 @@ using Discord.Interactions;
 using Discord.WebSocket;
 using EnkaAPI;
 using Geno.Database;
+using Geno.Responses;
 using Geno.Utils;
 
 namespace Geno.Commands.Private;
 
-[Group("genshin", "genshin commands")]
+[Group("genshin", "Genshin Impact commands")]
 [Private(Category.Genshin)]
 public class Genshin : InteractionModuleBase<ShardedInteractionContext>
 {
@@ -46,24 +47,7 @@ public class Genshin : InteractionModuleBase<ShardedInteractionContext>
 			x.Components = components.Build();
 		});
 	}
-
-	private static void CreateLinks(in string[] codes, out string[] links, out string[] contents)
-	{
-		var linksRaw = new LinkedList<string>();
-		var contentsRaw = new LinkedList<string>();
-
-		foreach (var c in codes)
-		{
-			var link = m_baseLink + c;
-			
-			linksRaw.AddLast(link);
-			contentsRaw.AddLast($"[{c}]({link})");
-		}
-
-		links = linksRaw.ToArray();
-		contents = contentsRaw.ToArray();
-	}
-
+	
 	[MessageCommand("Rank info")]
 	public async Task RankInfo(IMessage message)
 	{
@@ -105,7 +89,7 @@ public class Genshin : InteractionModuleBase<ShardedInteractionContext>
 	[SlashCommand("set_rank", "set rank for user")]
 	[RequireUserPermission(GuildPermission.ManageRoles)]
 	[RequireBotPermission(GuildPermission.ManageRoles)]
-	public async Task Setup(IUser user, byte newRank)
+	public async Task Setup(IUser user, [MinValue(1), MaxValue(60)] byte newRank)
 	{
 		var member = Context.Guild.GetUser(user.Id)!;
 		var cfg = await m_databaseProvider.GetConfig(Context.Guild.Id);
@@ -169,5 +153,22 @@ public class Genshin : InteractionModuleBase<ShardedInteractionContext>
 		await m_databaseProvider.SetConfig(doc);
 
 		return doc;
+	}
+	
+	private static void CreateLinks(in string[] codes, out string[] links, out string[] contents)
+	{
+		var linksRaw = new LinkedList<string>();
+		var contentsRaw = new LinkedList<string>();
+
+		foreach (var c in codes)
+		{
+			var link = m_baseLink + c;
+			
+			linksRaw.AddLast(link);
+			contentsRaw.AddLast($"[{c}]({link})");
+		}
+
+		links = linksRaw.ToArray();
+		contents = contentsRaw.ToArray();
 	}
 }
