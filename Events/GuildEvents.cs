@@ -21,60 +21,75 @@ public class GuildEvents
 		m_client.UserVoiceStateUpdated += OnCreateChannel;
 	}
 
-	public async Task MessageReceived(SocketMessage message)
+	public Task MessageReceived(SocketMessage message)
 	{
-		if (message.Source != MessageSource.User)
-			return;
-		var userMessage = (message as SocketUserMessage)!;
+		_ = Task.Run(async () =>
+		{
+			if (message.Source != MessageSource.User)
+				return;
+			var userMessage = (message as SocketUserMessage)!;
 
-		var isLink = message.HasLink();
-		var isInvite = await m_client.HasInvite(userMessage, true, true).ConfigureAwait(false);
+			var isLink = message.HasLink();
+			var isInvite = await m_client.HasInvite(userMessage, true, true);
 
-		if (!isLink && !isInvite)
-			return;
+			if (!isLink && !isInvite)
+				return;
 
-		await (userMessage.Author as SocketGuildUser)!.SetTimeOutAsync(TimeSpan.FromSeconds(15));
+			await (userMessage.Author as SocketGuildUser)!.SetTimeOutAsync(TimeSpan.FromSeconds(15));
+		});
+		
+		return Task.CompletedTask;
 	}
 
-	public async Task OnDeleteChannel(SocketUser user, SocketVoiceState before, SocketVoiceState after)
+	public Task OnDeleteChannel(SocketUser user, SocketVoiceState before, SocketVoiceState after)
 	{
-		if (user is not SocketGuildUser guildUser || !await m_databaseProvider.HasDocument(guildUser.Guild.Id))
-			return;
-
-		var config = await m_databaseProvider.GetConfig(guildUser.Guild.Id);
-		var userId = guildUser.Id.ToString();
-
-		if (config.Voices.ContainsKey(userId)
-		    && before.VoiceChannel is SocketVoiceChannel beforeChannel
-		    && beforeChannel.Id == config.Voices[userId])
+		_ = Task.Run(async () =>
 		{
-			await guildUser.Guild
-				.GetChannel(config.Voices[userId])
-				.DeleteAsync();
+			if (user is not SocketGuildUser guildUser || !await m_databaseProvider.HasDocument(guildUser.Guild.Id))
+				return;
 
-			config.Voices.Remove(userId);
-			await m_databaseProvider.SetConfig(config);
-		}
+			var config = await m_databaseProvider.GetConfig(guildUser.Guild.Id);
+			var userId = guildUser.Id.ToString();
+
+			if (config.Voices.TryGetValue(userId, out var value) 
+			    && before.VoiceChannel is SocketVoiceChannel beforeChannel
+			    && beforeChannel.Id == value)
+			{
+				await guildUser.Guild
+					.GetChannel(value)
+					.DeleteAsync();
+
+				config.Voices.Remove(userId);
+				await m_databaseProvider.SetConfig(config);
+			}
+		});
+
+		return Task.CompletedTask;
 	}
 
-	public async Task OnCreateChannel(SocketUser user, SocketVoiceState before, SocketVoiceState after)
+	public Task OnCreateChannel(SocketUser user, SocketVoiceState before, SocketVoiceState after)
 	{
-		if (user is not SocketGuildUser guildUser || !await m_databaseProvider.HasDocument(guildUser.Guild.Id))
-			return;
-
-		var config = await m_databaseProvider.GetConfig(guildUser.Guild.Id);
-
-		if (after.VoiceChannel is SocketVoiceChannel afterChannel &&
-		    config.Channels.ContainsKey(afterChannel.Id.ToString()))
+		_ = Task.Run(async () =>
 		{
-			var voice = await guildUser.Guild
-				.CreateVoiceChannelAsync(
-					$"Party #{config.Voices.Count + 1}",
-					properties => properties.CategoryId = config.Channels[after.VoiceChannel.Id.ToString()]);
+			if (user is not SocketGuildUser guildUser || !await m_databaseProvider.HasDocument(guildUser.Guild.Id))
+				return;
 
-			config.Voices[guildUser.Id.ToString()] = voice.Id;
-			await m_databaseProvider.SetConfig(config);
-			await guildUser.ModifyAsync(x => x.Channel = voice);
-		}
+			var config = await m_databaseProvider.GetConfig(guildUser.Guild.Id);
+
+			if (after.VoiceChannel is SocketVoiceChannel afterChannel &&
+			    config.Channels.ContainsKey(afterChannel.Id.ToString()))
+			{
+				var voice = await guildUser.Guild
+					.CreateVoiceChannelAsync(
+						$"Party #{config.Voices.Count + 1}",
+						properties => properties.CategoryId = config.Channels[after.VoiceChannel.Id.ToString()]);
+
+				config.Voices[guildUser.Id.ToString()] = voice.Id;
+				await m_databaseProvider.SetConfig(config);
+				await guildUser.ModifyAsync(x => x.Channel = voice);
+			}
+		});
+		
+		return Task.CompletedTask;
 	}
 }

@@ -47,19 +47,15 @@ public class CommandHandlingService
 			if (attr != null && !attr.IsDefaultAttribute())
 			{
 				var attribute = ((PrivateAttribute)attr);
-				
+
 				if (attribute.Categories.HasCategory(Category.Admin))
-				{
 					await Interactions.AddModulesToGuildAsync(648571219674923008, true, m);
-					
-					continue;
-				}
 
 				if (!priv.ContainsKey(attribute.Categories))
 					priv[attribute.Categories] = new LinkedList<ModuleInfo>();
-				
+
 				priv[attribute.Categories].AddLast(m);
-				
+
 				continue;
 			}
 
@@ -70,7 +66,7 @@ public class CommandHandlingService
 			priv.Select((k) => 
 				new KeyValuePair<Category, ModuleInfo[]>(k.Key, k.Value.ToArray())))
 			.AsReadOnly();
-		
+
 		await Interactions.AddModulesGloballyAsync(true, safe.ToArray());
 
 		ErrorResolver.Init(assembly);
@@ -83,32 +79,41 @@ public class CommandHandlingService
 		Interactions.Log += ClientEvents.OnLog;
 	}
 
-	private async Task InteractionExecuted(ICommandInfo commandInfo, IInteractionContext context, IResult result)
+	private Task InteractionExecuted(ICommandInfo commandInfo, IInteractionContext context, IResult result)
 	{
-		if (result.Error is not null)
+		_ = Task.Run(async () =>
 		{
-			var embed = ErrorResolver.Resolve(result, commandInfo, context).Build()!;
-			try
+			if (result.Error is not null)
 			{
-				await context.Interaction.RespondAsync(embed: embed,
-					allowedMentions: AllowedMentions.None,
-					ephemeral: true);
-			}
-			catch (Exception e)
-			{
-				await context.Interaction.ModifyOriginalResponseAsync(x =>
+				var embed = ErrorResolver.Resolve(result, commandInfo, context).Build()!;
+				try
 				{
-					x.Embed = embed;
-					x.AllowedMentions = AllowedMentions.None;
-				});
+					await context.Interaction.RespondAsync(embed: embed,
+						allowedMentions: AllowedMentions.None,
+						ephemeral: true);
+				}
+				catch (Exception e)
+				{
+					await context.Interaction.ModifyOriginalResponseAsync(x =>
+					{
+						x.Embed = embed;
+						x.AllowedMentions = AllowedMentions.None;
+					});
+				}
 			}
-		}
+		});
+
+		return Task.CompletedTask;
 	}
 
-	private async Task OnInteractionCreated(SocketInteraction arg)
+	private Task OnInteractionCreated(SocketInteraction arg)
 	{
-		//var ctx = arg.CreateGenericContext(m_client);
-		var ctx = new ShardedInteractionContext(m_client, arg);
-		await Interactions.ExecuteCommandAsync(ctx, m_services);
+		_ = Task.Run(async () =>
+		{
+			var ctx = new ShardedInteractionContext(m_client, arg);
+			await Interactions.ExecuteCommandAsync(ctx, m_services);
+		});
+
+		return Task.CompletedTask;
 	}
 }

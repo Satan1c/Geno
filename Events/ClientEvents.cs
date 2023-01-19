@@ -75,19 +75,24 @@ public class ClientEvents
 		return Task.CompletedTask;
 	}
 
-	private async Task OnReady(DiscordSocketClient client)
+	private Task OnReady(DiscordSocketClient client)
 	{
-		try
+		_ = Task.Run(async () =>
 		{
-			await m_handlingService.InitializeAsync();
+			try
+			{
+				await m_handlingService.InitializeAsync();
 
-			m_client.ShardReady -= OnReady;
+				m_client.ShardReady -= OnReady;
 
-			GC.Collect();
-		}
-		catch (Exception e)
-		{
-			await OnLog(new LogMessage(LogSeverity.Error, nameof(OnReady), e.Message, e));
-		}
+				GC.Collect();
+			}
+			catch (Exception e)
+			{
+				await OnLog(new LogMessage(LogSeverity.Error, nameof(OnReady), e.Message, e));
+			}
+		});
+
+		return Task.CompletedTask;
 	}
 }
