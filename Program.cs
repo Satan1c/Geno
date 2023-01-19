@@ -45,7 +45,7 @@ await using var service = new ServiceCollection()
 		EnableAutocompleteHandlers = true,
 		LogLevel = LogSeverity.Verbose,
 		UseCompiledLambda = true,
-		LocalizationManager = new JsonLocalizationManager(localizations, "interactions")
+		LocalizationManager = new Geno.Utils.JsonLocalizationManager(localizations)
 	})
 	.AddSingleton<InteractionService>()
 	.AddSingleton(MongoClientSettings.FromConnectionString(env["Mongo"]))
