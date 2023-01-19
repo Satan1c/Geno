@@ -10,7 +10,7 @@ namespace Geno.Responses;
 
 public static class SdcResponse
 {
-	public static async Task GuildInfo(this ShardedInteractionContext context, Guild guild)
+	public static Task GuildInfo(this ShardedInteractionContext context, Guild guild)
 	{
 		var embed = context.GetLocale() switch
 		{
@@ -32,10 +32,10 @@ public static class SdcResponse
 				.AddField("Is bot on server", $"`{(guild.IsBotOnServer ? "Yes" : "No")}`")
 		};
 
-		await context.Respond(embed);
+		return context.Respond(embed);
 	}
 
-	public static async Task WarnsInfo(this ShardedInteractionContext context, UserWarns warns)
+	public static Task WarnsInfo(this ShardedInteractionContext context, UserWarns warns)
 	{
 		var embed = context.GetLocale() switch
 		{
@@ -44,7 +44,7 @@ public static class SdcResponse
 				.WithDescription(warns.Warns.ToString())
 		};
 
-		await context.Respond(embed);
+		return context.Respond(embed);
 	}
 
 	public static async Task GuildRatesInfo(this ShardedInteractionContext context,

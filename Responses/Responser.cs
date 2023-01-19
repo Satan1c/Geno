@@ -5,7 +5,7 @@ namespace Geno.Responses;
 
 public static class Responser
 {
-	public static async Task Respond(this ShardedInteractionContext context,
+	public static Task Respond(this ShardedInteractionContext context,
 		EmbedBuilder embed,
 		bool ephemeral = false,
 		bool isDefered = false)
@@ -14,16 +14,15 @@ public static class Responser
 
 		if (isDefered)
 		{
-			await context.Interaction.ModifyOriginalResponseAsync(x =>
+			return context.Interaction.ModifyOriginalResponseAsync(x =>
 				{
 					x.Embed = em;
 					x.AllowedMentions = AllowedMentions.None;
 				}
 			);
-			return;
 		}
 
-		await context.Interaction.RespondAsync(embed: em,
+		return context.Interaction.RespondAsync(embed: em,
 			allowedMentions: AllowedMentions.None,
 			ephemeral: ephemeral
 		);
