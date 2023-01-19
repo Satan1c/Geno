@@ -9,8 +9,8 @@ using WaifuPicsApi.Enums;
 namespace Geno.Commands.Private;
 
 [Group("img", "images group")]
-[Private(Category.Reactions)]
-public class Reactions : InteractionModuleBase<ShardedInteractionContext>
+[Private(Category.Images)]
+public class Images : InteractionModuleBase<ShardedInteractionContext>
 {
 	private readonly WaifuClient m_waifuClient = new();
 	//private IEnumerable<AutocompleteResult> m_sfwCategories = Array.Empty<AutocompleteResult>();
@@ -79,7 +79,7 @@ public class Reactions : InteractionModuleBase<ShardedInteractionContext>
 			await ClientEvents.OnLog(
 				new LogMessage(
 					LogSeverity.Error,
-					$"{nameof(Reactions)} {nameof(SfwCommands)}",
+					$"{nameof(Images)} {nameof(SfwCommands)}",
 					e.Message,
 					e));
 		}
