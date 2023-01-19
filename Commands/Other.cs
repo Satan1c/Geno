@@ -40,8 +40,7 @@ public class Other : InteractionModuleBase<ShardedInteractionContext>
 
 			embed.AddField("Servers: ", $"`{m_client.Shards.Select(x => x.Guilds.Count).Sum().ToString()}`", true)
 				.AddField("RAM usage:", $"`{ram}`mb", true)
-				.AddField("UP time:", uptimeString, true)
-				.AddEmpty(1);
+				.AddField("UP time:", uptimeString, true);
 
 			if (Context.Guild is { } guild)
 			{
