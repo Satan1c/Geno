@@ -1,3 +1,2 @@
-﻿dotnet build -c Release
-clear
+﻿clear
 dotnet run Geno.csproj -c Release
