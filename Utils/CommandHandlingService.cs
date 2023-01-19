@@ -62,9 +62,11 @@ public class CommandHandlingService
 			safe.AddLast(m);
 		}
 
-		Private = new Dictionary<Category, ModuleInfo[]>(
-			priv.Select((k) => 
-				new KeyValuePair<Category, ModuleInfo[]>(k.Key, k.Value.ToArray())))
+		Private = new Dictionary<Category, ModuleInfo[]>(priv.Select((k) 
+				=> new KeyValuePair<Category, ModuleInfo[]>(k.Key, k.Value.ToArray())))
+			{
+				{Category.None, Array.Empty<ModuleInfo>()}
+			}
 			.AsReadOnly();
 
 		await Interactions.AddModulesGloballyAsync(true, safe.ToArray());
