@@ -1,0 +1,18 @@
+﻿{
+	"Make code links": {
+		"name": "Ссылки кодов"
+	},
+
+	"Rank info": {
+		"name": "Роли за ранг"
+	},
+
+	"Set ranks roles": {
+		"name": "Установить роли"
+	},
+	
+	"genshin": {
+		"name": "геншин",
+		"description": "категория команд связанных с Genshin Impact"
+	}
+}

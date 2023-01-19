@@ -60,7 +60,12 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Content Include="bin\Localizations\interactions.ru.json" />
+      <Content Include="bin\Localizations\pb_Other.ru.json" />
+      <Content Include="bin\Localizations\pr_Admin.ru.json" />
+      <Content Include="bin\Localizations\pr_Genshin.ru.json" />
+      <Content Include="bin\Localizations\pr_Images.ru.json" />
+      <Content Include="bin\Localizations\pb_Sdc.ru.json" />
+      <Content Include="bin\Localizations\pb_Utils.ru.json" />
     </ItemGroup>
 
 </Project>
