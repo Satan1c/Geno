@@ -56,7 +56,6 @@ public static class EmbedExtensions
 			.AddField("Is bot:", $"`{user.IsBot.ToString()}`")
 			.AddField("Badges:", $"`{string.Join("`, `", user.PublicFlags.ToString()!.Split(", "))}`")
 			.AddField("Created at:", $"<t:{user.CreatedAt.ToUnixTimeSeconds().ToString()}:R>");
-		;
 	}
 
 	public static EmbedBuilder AddEmpty(this EmbedBuilder builder, byte count, bool isInline = true)
