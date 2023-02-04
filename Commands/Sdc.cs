@@ -60,6 +60,7 @@ public class Sdc : InteractionModuleBase<ShardedInteractionContext>
 			{
 				warns = await m_blacklistService.GetWarns(id, true);
 				await Context.WarnsInfo(warns);
+				return;
 			}
 			catch
 			{
