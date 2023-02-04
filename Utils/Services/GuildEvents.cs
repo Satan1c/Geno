@@ -46,7 +46,7 @@ public class GuildEvents
 		var config = await m_databaseProvider.GetConfig(guildUser.Guild.Id);
 		var userId = guildUser.Id.ToString();
 
-		if (config.Voices.TryGetValue(userId, out var value) 
+		if (config.Voices.TryGetValue(userId, out var value)
 		    && before.VoiceChannel is SocketVoiceChannel beforeChannel
 		    && beforeChannel.Id == value)
 		{
@@ -66,12 +66,13 @@ public class GuildEvents
 
 		var config = await m_databaseProvider.GetConfig(guildUser.Guild.Id);
 
-		if (after.VoiceChannel is SocketVoiceChannel afterChannel && config.Channels.ContainsKey(afterChannel.Id.ToString()))
+		if (after.VoiceChannel is SocketVoiceChannel afterChannel &&
+		    config.Channels.ContainsKey(afterChannel.Id.ToString()))
 		{
 			var count = config.Voices.Count + 1;
 			var voice = await guildUser.Guild.CreateVoiceChannelAsync(
-					"Party #" + count,
-					properties => properties.CategoryId = config.Channels[after.VoiceChannel.Id.ToString()]);
+				"Party #" + count,
+				properties => properties.CategoryId = config.Channels[after.VoiceChannel.Id.ToString()]);
 
 			config.Voices[guildUser.Id.ToString()] = voice.Id;
 			await m_databaseProvider.SetConfig(config);

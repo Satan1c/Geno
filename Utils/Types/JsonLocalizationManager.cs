@@ -12,7 +12,8 @@ public sealed class JsonLocalizationManager : ILocalizationManager
 	private const string m_spaceToken = "~";*/
 	private readonly string m_basePath;
 
-	private readonly Regex m_localeParserRegex = new("\\w+.(?<locale>\\w{2}(?:-\\w{2})?).json", RegexOptions.Compiled | RegexOptions.Singleline);
+	private readonly Regex m_localeParserRegex = new("\\w+.(?<locale>\\w{2}(?:-\\w{2})?).json",
+		RegexOptions.Compiled | RegexOptions.Singleline);
 
 	public JsonLocalizationManager(string basePath)
 	{
@@ -34,7 +35,9 @@ public sealed class JsonLocalizationManager : ILocalizationManager
 	}
 
 	private string[] GetAllFiles()
-		=> Directory.GetFiles(m_basePath, "*.*.json", SearchOption.TopDirectoryOnly);
+	{
+		return Directory.GetFiles(m_basePath, "*.*.json", SearchOption.TopDirectoryOnly);
+	}
 
 	private IDictionary<string, string> GetValues(IList<string> key, string identifier)
 	{
@@ -44,7 +47,7 @@ public sealed class JsonLocalizationManager : ILocalizationManager
 		foreach (var allFile in files)
 		{
 			var match = m_localeParserRegex.Match(Path.GetFileName(allFile));
-			
+
 			if (!match.Success)
 				continue;
 

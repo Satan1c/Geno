@@ -13,11 +13,11 @@ namespace Geno.Utils.Services;
 
 public class CommandHandlingService
 {
-	private readonly DiscordShardedClient m_client;
 	internal static InteractionService Interactions = null!;
-	private readonly IServiceProvider m_services;
 
 	internal static IReadOnlyDictionary<Category, ModuleInfo[]> Private = null!;
+	private readonly DiscordShardedClient m_client;
+	private readonly IServiceProvider m_services;
 
 	public CommandHandlingService(IServiceProvider services)
 	{
@@ -47,7 +47,7 @@ public class CommandHandlingService
 
 			if (attr != null && !attr.IsDefaultAttribute())
 			{
-				var attribute = ((PrivateAttribute)attr);
+				var attribute = (PrivateAttribute)attr;
 
 				if (attribute.Categories.HasCategory(Category.Admin))
 					await Interactions.AddModulesToGuildAsync(648571219674923008, true, m);
@@ -63,17 +63,17 @@ public class CommandHandlingService
 			safe.AddLast(m);
 		}
 
-		Private = new Dictionary<Category, ModuleInfo[]>(priv.Select((k) 
+		Private = new Dictionary<Category, ModuleInfo[]>(priv.Select(k
 				=> new KeyValuePair<Category, ModuleInfo[]>(k.Key, k.Value.ToArray())))
 			{
-				{Category.None, Array.Empty<ModuleInfo>()}
+				{ Category.None, Array.Empty<ModuleInfo>() }
 			}
 			.AsReadOnly();
 
 		await Interactions.AddModulesGloballyAsync(true, safe.ToArray());
 
 		ErrorResolver.Init(assembly);
-		
+
 		GC.Collect();
 	}
 

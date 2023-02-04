@@ -85,6 +85,7 @@ public class Images : InteractionModuleBase<ShardedInteractionContext>
 		}
 	}
 
+
 	private static CategoryFormat GetCategoryFormat(SfwCategory category)
 	{
 		return category switch
@@ -211,6 +212,7 @@ public class Images : InteractionModuleBase<ShardedInteractionContext>
 			}
 		}
 	}
+}
 
 	private enum CategoryFormat : byte
 	{

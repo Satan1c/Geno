@@ -35,7 +35,7 @@ public class Sdc : InteractionModuleBase<ShardedInteractionContext>
 			var id = guildId;
 			var rates = m_monitoring.GetGuildRates(id, true);
 			var guild = m_monitoring.GetGuild(id, true);
-			
+
 			await Context.GuildRatesInfo(guild, rates);
 		}
 	}

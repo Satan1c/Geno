@@ -13,10 +13,9 @@ namespace Geno.Commands.Private;
 [Private(Category.Genshin)]
 public class Genshin : InteractionModuleBase<ShardedInteractionContext>
 {
+	private const string m_baseLink = "https://genshin.hoyoverse.com/en/gift?code=";
 	private readonly DatabaseProvider m_databaseProvider;
 	private readonly EnkaApiClient m_enkaApiClient;
-	
-	private const string m_baseLink = "https://genshin.hoyoverse.com/en/gift?code=";
 
 	public Genshin(DatabaseProvider databaseProvider, EnkaApiClient enkaApiClient)
 	{
@@ -28,17 +27,15 @@ public class Genshin : InteractionModuleBase<ShardedInteractionContext>
 	public async Task MakeCodeLinks(IMessage message)
 	{
 		await DeferAsync();
-		
+
 		var codes = message.Content.Split('\n');
 		CreateLinks(codes, out var links, out _);
 
 		var components = new ComponentBuilder();
-		
+
 		for (byte i = 0; i < links.Length; i++)
-			components
-				.AddRow(
-					new ActionRowBuilder()
-						.WithButton(codes[i], style: ButtonStyle.Link, url: links[i]));
+			components.AddRow(new ActionRowBuilder()
+				.WithButton(codes[i], style: ButtonStyle.Link, url: links[i]));
 
 		await ModifyOriginalResponseAsync(x =>
 		{
@@ -46,7 +43,7 @@ public class Genshin : InteractionModuleBase<ShardedInteractionContext>
 			x.Components = components.Build();
 		});
 	}
-	
+
 	[MessageCommand("Rank info")]
 	public async Task RankInfo(IMessage message)
 	{
@@ -88,13 +85,13 @@ public class Genshin : InteractionModuleBase<ShardedInteractionContext>
 	[SlashCommand("set_rank", "set rank for user")]
 	[RequireUserPermission(GuildPermission.ManageRoles)]
 	[RequireBotPermission(GuildPermission.ManageRoles)]
-	public async Task Setup(IUser user, [MinValue(1), MaxValue(60)] byte newRank)
+	public async Task Setup(IUser user, [MinValue(1)] [MaxValue(60)] byte newRank)
 	{
 		var member = Context.Guild.GetUser(user.Id)!;
-		var cfg = await m_databaseProvider.GetConfig(Context.Guild.Id);
-		var role = cfg.RankRoles.GetPerfectRole(newRank.ToString());
+		var config = await m_databaseProvider.GetConfig(Context.Guild.Id);
+		var role = config.RankRoles.GetPerfectRole(newRank.ToString());
 		var remove = member.Roles
-			.Where(x => cfg.RankRoles.Values.Any(y => y.Contains(x.Id)))
+			.Where(x => config.RankRoles.Values.Any(y => y.Contains(x.Id)))
 			.Where(x => !role.Contains(x.Id))
 			.Select(x => x.Id)
 			.ToArray();
@@ -153,7 +150,7 @@ public class Genshin : InteractionModuleBase<ShardedInteractionContext>
 
 		return doc;
 	}
-	
+
 	private static void CreateLinks(in string[] codes, out string[] links, out string[] contents)
 	{
 		var linksRaw = new LinkedList<string>();
@@ -162,7 +159,7 @@ public class Genshin : InteractionModuleBase<ShardedInteractionContext>
 		foreach (var c in codes)
 		{
 			var link = m_baseLink + c;
-			
+
 			linksRaw.AddLast(link);
 			contentsRaw.AddLast($"[{c}]({link})");
 		}

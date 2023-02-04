@@ -29,11 +29,12 @@ public static class Extensions
 	{
 		return ((MessageFlags)target!)!.HasFlags(categories);
 	}
+
 	public static bool HasFlags(this MessageFlags target, MessageFlags categories)
 	{
 		return ((byte)target & (byte)categories) != 0;
 	}
-	
+
 	public static bool HasCategory(this Category target, Category categories)
 	{
 		return ((byte)target & (byte)categories) != 0;

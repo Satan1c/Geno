@@ -16,9 +16,9 @@ public class Admin : InteractionModuleBase<ShardedInteractionContext>
 	public async Task Registration(ulong guild, Category category, bool clear = false)
 	{
 		await DeferAsync(true);
-		
+
 		clear = category == Category.None || clear;
-		
+
 		if (CommandHandlingService.Private.TryGetValue(category, out var modules))
 		{
 			await CommandHandlingService.Interactions.AddModulesToGuildAsync(guild, clear, modules);
@@ -26,7 +26,8 @@ public class Admin : InteractionModuleBase<ShardedInteractionContext>
 			await Context.Respond(new EmbedBuilder().WithColor(Color.Green).WithDescription("Registered"), true, true);
 			return;
 		}
-		
-		await Context.Respond(new EmbedBuilder().WithColor(Color.Red).WithDescription("Category not found"), true, true);
+
+		await Context.Respond(new EmbedBuilder().WithColor(Color.Red).WithDescription("Category not found"), true,
+			true);
 	}
 }

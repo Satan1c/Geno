@@ -54,7 +54,7 @@ public static class SdcResponse
 		await context.Interaction.DeferAsync();
 
 		var guild = await guildTask;
-		
+
 		var embed = context.GetLocale() switch
 		{
 			_ => new EmbedBuilder()

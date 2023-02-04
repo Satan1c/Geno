@@ -9,7 +9,6 @@ public class PrivateAttribute : Attribute
 	}
 
 	public Category Categories { get; }
-
 }
 
 [Flags]
