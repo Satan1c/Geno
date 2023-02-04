@@ -40,7 +40,7 @@ public class Images : InteractionModuleBase<ShardedInteractionContext>
 			if (!Enum.TryParse<SfwCategory>(tag, out var category)) return;
 
 			await ClientEvents.OnLog(new LogMessage(LogSeverity.Debug, nameof(SfwCommands) + " #1",
-				$"{tag} | {category}"));
+				$"{tag} | {category.CategoryToString()}"));
 
 			var ctf = GetCategoryFormat(category);
 			if (ctf == CategoryFormat.User && user == null)
@@ -49,7 +49,8 @@ public class Images : InteractionModuleBase<ShardedInteractionContext>
 				return;
 			}
 
-			await ClientEvents.OnLog(new LogMessage(LogSeverity.Debug, nameof(SfwCommands) + " #2", $"{ctf}"));
+			await ClientEvents.OnLog(new LogMessage(LogSeverity.Debug, nameof(SfwCommands) + " #2",
+				$"{ctf.CategoryFormatToString()}"));
 
 			var embed = new EmbedBuilder();
 			var title = ctf switch
@@ -214,10 +215,23 @@ public class Images : InteractionModuleBase<ShardedInteractionContext>
 	}
 }
 
-	private enum CategoryFormat : byte
+public enum CategoryFormat : byte
+{
+	Neutral,
+	Solo,
+	User
+}
+
+public static class CategoryFormatExtensions
+{
+	public static string CategoryFormatToString(this CategoryFormat format)
 	{
-		Neutral,
-		Solo,
-		User
+		return format switch
+		{
+			CategoryFormat.Neutral => nameof(CategoryFormat.Neutral),
+			CategoryFormat.Solo => nameof(CategoryFormat.Solo),
+			CategoryFormat.User => nameof(CategoryFormat.User),
+			_ => throw new ArgumentOutOfRangeException(nameof(format), format, null)
+		};
 	}
 }
