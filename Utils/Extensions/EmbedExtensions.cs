@@ -2,7 +2,7 @@
 using Discord.Rest;
 using Discord.WebSocket;
 
-namespace Geno.Utils;
+namespace Geno.Utils.Extensions;
 
 public static class EmbedExtensions
 {

@@ -1,12 +1,11 @@
 ﻿using System.Linq.Expressions;
 using MongoDB.Driver;
 
-namespace Geno.Database;
+namespace Geno.Utils.Services.Database;
 
 public class DatabaseProvider
 {
 	private readonly DatabaseCache m_cache;
-
 	private readonly IMongoCollection<GuildDocument> m_guildConfigs;
 
 	public DatabaseProvider(IMongoClient client, DatabaseCache cache)
@@ -40,10 +39,10 @@ public class DatabaseProvider
 		return await GetConfig(id);
 	}
 
-	public async Task SetConfig(GuildDocument document)
+	public Task SetConfig(GuildDocument document)
 	{
 		m_cache.SetDocument(document);
-		await InsertOrReplaceOne(m_guildConfigs, x => x.Id == document.Id, document);
+		return InsertOrReplaceOne(m_guildConfigs, x => x.Id == document.Id, document);
 	}
 
 	private static async Task InsertOrReplaceOne<TDocument>(IMongoCollection<TDocument> collection,

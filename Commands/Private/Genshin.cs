@@ -1,12 +1,11 @@
 ﻿using System.Text;
 using Discord;
-using Discord.Extensions;
 using Discord.Interactions;
 using Discord.WebSocket;
 using EnkaAPI;
-using Geno.Database;
-using Geno.Responses;
-using Geno.Utils;
+using Geno.Utils.Extensions;
+using Geno.Utils.Services.Database;
+using Geno.Utils.Types;
 
 namespace Geno.Commands.Private;
 

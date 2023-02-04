@@ -3,15 +3,16 @@ using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
 using EnkaAPI;
-using Geno.Database;
-using Geno.Events;
 using Geno.Utils;
+using Geno.Utils.Services;
+using Geno.Utils.Services.Database;
 using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Driver;
 using SDC_Sharp;
 using SDC_Sharp.DiscordNet;
 using SDC_Sharp.Types;
 using Serilog;
+using JsonLocalizationManager = Geno.Utils.Types.JsonLocalizationManager;
 
 Console.OutputEncoding = Encoding.UTF8;
 

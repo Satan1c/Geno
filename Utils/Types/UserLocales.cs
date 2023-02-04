@@ -2,7 +2,7 @@
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
-namespace Geno.Errors;
+namespace Geno.Utils.Types;
 
 [JsonConverter(typeof(StringEnumConverter))]
 public enum UserLocales

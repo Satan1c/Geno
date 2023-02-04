@@ -1,8 +1,8 @@
 ﻿using System.Text;
 using Discord;
 using Discord.Interactions;
-using Geno.Database;
-using Geno.Utils;
+using Geno.Utils.Services.Database;
+using Geno.Utils.StaticData;
 
 namespace Geno.Commands;
 

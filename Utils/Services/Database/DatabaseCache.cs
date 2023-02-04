@@ -1,4 +1,4 @@
-﻿namespace Geno.Database;
+﻿namespace Geno.Utils.Services.Database;
 
 public class DatabaseCache
 {

@@ -3,10 +3,10 @@ using Discord;
 using Discord.Interactions;
 using Discord.Rest;
 using Discord.WebSocket;
-using Geno.Errors;
+using Geno.Utils.Types;
 using Newtonsoft.Json;
 
-namespace Geno.Utils;
+namespace Geno.Utils.Extensions;
 
 public static class Extensions
 {
@@ -25,6 +25,15 @@ public static class Extensions
 		RegexOptions.Compiled | RegexOptions.Singleline
 	);
 
+	public static bool HasFlags(this Optional<MessageFlags?> target, MessageFlags categories)
+	{
+		return ((MessageFlags)target!)!.HasFlags(categories);
+	}
+	public static bool HasFlags(this MessageFlags target, MessageFlags categories)
+	{
+		return ((byte)target & (byte)categories) != 0;
+	}
+	
 	public static bool HasCategory(this Category target, Category categories)
 	{
 		return ((byte)target & (byte)categories) != 0;

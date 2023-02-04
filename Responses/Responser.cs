@@ -1,5 +1,4 @@
 ﻿using Discord;
-using Discord.Interactions;
 
 namespace Geno.Responses;
 

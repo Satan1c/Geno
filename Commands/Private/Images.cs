@@ -1,8 +1,8 @@
 ﻿using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
-using Geno.Events;
-using Geno.Utils;
+using Geno.Utils.Services;
+using Geno.Utils.Types;
 using WaifuPicsApi;
 using WaifuPicsApi.Enums;
 

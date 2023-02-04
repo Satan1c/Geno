@@ -1,6 +1,6 @@
 ﻿using MongoDB.Bson.Serialization.Attributes;
 
-namespace Geno.Database;
+namespace Geno.Utils.Services.Database;
 
 public class GuildDocument
 {

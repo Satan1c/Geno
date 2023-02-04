@@ -1,8 +1,8 @@
 ﻿using Discord;
 
-namespace Geno.Utils;
+namespace Geno.Utils.StaticData;
 
-public static class BotPermissions
+public static class UserPermissions
 {
 	public const ChannelPermission UtilsAddVoice = ChannelPermission.ManageChannels;
 }

@@ -1,9 +1,8 @@
 ﻿using Discord;
 using Discord.WebSocket;
-using Geno.Utils;
 using Serilog;
 
-namespace Geno.Events;
+namespace Geno.Utils.Services;
 
 public class ClientEvents
 {
@@ -75,24 +74,17 @@ public class ClientEvents
 		return Task.CompletedTask;
 	}
 
-	private Task OnReady(DiscordSocketClient client)
+	private async Task OnReady(DiscordSocketClient client)
 	{
-		_ = Task.Run(async () =>
+		try
 		{
-			try
-			{
-				await m_handlingService.InitializeAsync();
+			await m_handlingService.InitializeAsync();
 
-				m_client.ShardReady -= OnReady;
-
-				GC.Collect();
-			}
-			catch (Exception e)
-			{
-				await OnLog(new LogMessage(LogSeverity.Error, nameof(OnReady), e.Message, e));
-			}
-		});
-
-		return Task.CompletedTask;
+			m_client.ShardReady -= OnReady;
+		}
+		catch (Exception e)
+		{
+			await OnLog(new LogMessage(LogSeverity.Error, nameof(OnReady), e.Message, e));
+		}
 	}
 }

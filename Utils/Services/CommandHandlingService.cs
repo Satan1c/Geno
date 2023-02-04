@@ -1,14 +1,15 @@
-﻿using System.Collections.ObjectModel;
-using System.Reflection;
+﻿using System.Reflection;
 using Discord;
 using Discord.Extensions.Interactions;
 using Discord.Interactions;
 using Discord.WebSocket;
 using Geno.Errors;
-using Geno.Events;
+using Geno.Responses;
+using Geno.Utils.Extensions;
+using Geno.Utils.Types;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Geno.Utils;
+namespace Geno.Utils.Services;
 
 public class CommandHandlingService
 {
@@ -72,6 +73,8 @@ public class CommandHandlingService
 		await Interactions.AddModulesGloballyAsync(true, safe.ToArray());
 
 		ErrorResolver.Init(assembly);
+		
+		GC.Collect();
 	}
 
 	private void RegisterEvents()
@@ -81,41 +84,19 @@ public class CommandHandlingService
 		Interactions.Log += ClientEvents.OnLog;
 	}
 
-	private Task InteractionExecuted(ICommandInfo commandInfo, IInteractionContext context, IResult result)
+	private static Task InteractionExecuted(ICommandInfo commandInfo, IInteractionContext context, IResult result)
 	{
-		_ = Task.Run(async () =>
-		{
-			if (result.Error is not null)
-			{
-				var embed = ErrorResolver.Resolve(result, commandInfo, context).Build()!;
-				try
-				{
-					await context.Interaction.RespondAsync(embed: embed,
-						allowedMentions: AllowedMentions.None,
-						ephemeral: true);
-				}
-				catch (Exception e)
-				{
-					await context.Interaction.ModifyOriginalResponseAsync(x =>
-					{
-						x.Embed = embed;
-						x.AllowedMentions = AllowedMentions.None;
-					});
-				}
-			}
-		});
+		if (result.Error is null)
+			return Task.CompletedTask;
 
-		return Task.CompletedTask;
+		var embed = ErrorResolver.Resolve(result, commandInfo, context).Build()!;
+
+		return context.Respond(embed, true);
 	}
 
 	private Task OnInteractionCreated(SocketInteraction arg)
 	{
-		_ = Task.Run(async () =>
-		{
-			var ctx = new ShardedInteractionContext(m_client, arg);
-			await Interactions.ExecuteCommandAsync(ctx, m_services);
-		});
-
-		return Task.CompletedTask;
+		var ctx = new ShardedInteractionContext(m_client, arg);
+		return Interactions.ExecuteCommandAsync(ctx, m_services);
 	}
 }

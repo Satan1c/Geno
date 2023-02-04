@@ -3,7 +3,7 @@ using Discord;
 using Discord.Interactions;
 using Discord.Rest;
 using Discord.WebSocket;
-using Geno.Utils;
+using Geno.Utils.Extensions;
 
 namespace Geno.Commands;
 

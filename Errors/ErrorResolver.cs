@@ -1,7 +1,7 @@
 ﻿using System.Reflection;
 using Discord;
 using Discord.Interactions;
-using Geno.Utils;
+using Geno.Utils.Extensions;
 
 namespace Geno.Errors;
 

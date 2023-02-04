@@ -1,12 +1,12 @@
 ﻿using Discord;
 using Discord.Interactions;
-using Geno.Errors;
-using Geno.Utils;
+using Geno.Utils.Extensions;
+using Geno.Utils.Types;
 using SDC_Sharp.DiscordNet.Types;
 using SDC_Sharp.Types;
 using SDC_Sharp.Types.Enums;
 
-namespace Geno.Responses;
+namespace Geno.Responses.Modules;
 
 public static class SdcResponse
 {
