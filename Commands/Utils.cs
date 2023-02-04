@@ -55,7 +55,7 @@ public class Utils : InteractionModuleBase<ShardedInteractionContext>
 		[RequireUserPermission(ChannelPermission.ManageChannels)]
 		public async Task RemoveVoiceChannel([ChannelTypes(ChannelType.Voice)] IVoiceChannel channel)
 		{
-			if (await channel.GetCategoryAsync() is not ICategoryChannel _)
+			if (await channel.GetCategoryAsync() is null)
 			{
 				await RespondAsync("Voice channel must have a category",
 					allowedMentions: AllowedMentions.None,
