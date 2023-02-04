@@ -21,8 +21,11 @@ public class Other : InteractionModuleBase<ShardedInteractionContext>
 		}
 
 		[SlashCommand("stats", "show bot stats")]
-		public async Task PingCommand()
+		public async Task PingCommand(bool clear = false)
 		{
+			if (clear)
+				GC.Collect();
+
 			var embed = new EmbedBuilder().WithTitle("Bot stats");
 			var process = Process.GetCurrentProcess();
 			var ram = ((short)(process.WorkingSet64 / 1024 / 1024)).ToString();
@@ -50,7 +53,7 @@ public class Other : InteractionModuleBase<ShardedInteractionContext>
 					$"`{currentShard.ShardId.ToString()}`: `{currentShard.Latency.ToString()}`ms");
 			}
 
-			foreach (var shard in Context.Client.Shards)
+			foreach (var shard in Context.Client.Shards.ToArray())
 				embed.AddField($"`{shard.ShardId.ToString()}`:", $"`{shard.Latency.ToString()}`ms", true);
 
 			await RespondAsync(embed: embed.Build(),
