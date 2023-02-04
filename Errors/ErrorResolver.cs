@@ -5,14 +5,14 @@ using Geno.Utils.Extensions;
 
 namespace Geno.Errors;
 
-public class ErrorResolver
+public static class ErrorResolver
 {
 	private static readonly TypeInfo s_validType = typeof(IErrorResolver).GetTypeInfo();
 	private static readonly Dictionary<string, IErrorResolver> s_list = new();
 
 	public static void Init(Assembly assembly)
 	{
-		foreach (var definedType in assembly.DefinedTypes)
+		foreach (var definedType in assembly.DefinedTypes.ToArray())
 		{
 			if (!s_validType.IsAssignableFrom(definedType) || !definedType.IsClass) continue;
 
