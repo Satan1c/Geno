@@ -64,7 +64,6 @@ bld/
 [Bb]in/Release/net[0-9].[0-9]/[a-z][a-z]-Han[a-z]/
 [Bb]in/Release/net[0-9].[0-9]/[A-Z][a-z]-Han[A-Z]/
 
-[Bb]in/Release/net[0-9].[0-9]/linux-x64/!publish!
 [Bb]in/Release/net[0-9].[0-9]/linux-x64/Geno
 [Bb]in/Release/net[0-9].[0-9]/linux-x64/createdump
 [Bb]in/Release/net[0-9].[0-9]/linux-x64/*.dll
