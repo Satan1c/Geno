@@ -66,17 +66,15 @@
 
     <ItemGroup>
       <Compile Remove="bin\Release\**" />
-      <Compile Remove="WaifuPicsApi\**" />
+      <Compile Include="WaifuPicsApi\WaifuClient.cs" />
     </ItemGroup>
 
     <ItemGroup>
       <EmbeddedResource Remove="bin\Release\**" />
-      <EmbeddedResource Remove="WaifuPicsApi\**" />
     </ItemGroup>
 
     <ItemGroup>
       <None Remove="bin\Release\**" />
-      <None Remove="WaifuPicsApi\**" />
     </ItemGroup>
 
 </Project>
