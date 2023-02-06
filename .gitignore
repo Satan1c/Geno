@@ -52,8 +52,8 @@ bld/
 
 [Bb]in/Release/netcoreapp[0-9].[0-9]/
 
-![Bb]in/Release/net[0-9].[0-9]/**/publish
-[Bb]in/Release/net[0-9].[0-9]/runtimes
+![Bb]in/Release/net[0-9].[0-9]/**/publish/
+[Bb]in/Release/net[0-9].[0-9]/runtimes/
 [Bb]in/Release/net[0-9].[0-9]/*.dll
 [Bb]in/Release/net[0-9].[0-9]/*.exe
 [Bb]in/Release/net[0-9].[0-9]/*.json
@@ -63,7 +63,6 @@ bld/
 [Bb]in/Release/net[0-9].[0-9]/**/[a-zA-Z][a-zA-Z]-[a-zA-Z][a-zA-Z]/
 [Bb]in/Release/net[0-9].[0-9]/**/[a-zA-Z][a-zA-Z]-Han[a-zA-Z]/
 
-[Bb]in/Release/net[0-9].[0-9]/linux-x64/
 [Bb]in/Release/net[0-9].[0-9]/linux-x64/Geno
 [Bb]in/Release/net[0-9].[0-9]/linux-x64/createdump
 [Bb]in/Release/net[0-9].[0-9]/linux-x64/*.dll
@@ -72,7 +71,7 @@ bld/
 [Bb]in/Release/net[0-9].[0-9]/linux-x64/*.pdb
 [Bb]in/Release/net[0-9].[0-9]/linux-x64/*.so
 
-[Bb]in/Release/net[0-9].[0-9]/win-x64/native
+[Bb]in/Release/net[0-9].[0-9]/win-x64/native/
 [Bb]in/Release/net[0-9].[0-9]/win-x64/*.dll
 [Bb]in/Release/net[0-9].[0-9]/win-x64/*.exe
 [Bb]in/Release/net[0-9].[0-9]/win-x64/*.json
