@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.Interactions;
 using Geno.Responses.Modules;
+using Geno.Utils.Types;
 using SDC_Sharp.DiscordNet.Services;
 using SDC_Sharp.DiscordNet.Types;
 
@@ -20,12 +21,14 @@ public class Sdc : InteractionModuleBase<ShardedInteractionContext>
 		}
 
 		[SlashCommand("guild_info", "show guild info from site")]
-		public async Task GetGuild(ulong guildId)
+		public async Task<Result> GetGuild(ulong guildId)
 		{
 			//var id = ulong.Parse(guildId);
 			var id = guildId;
 			var guild = await m_monitoring.GetGuild(id, true);
 			await Context.GuildInfo(guild);
+
+			return new Result(true, null, false, false);
 		}
 
 		//[SlashCommand("guild_rates", "show guild info from site")]

@@ -43,16 +43,16 @@ fabric.properties
 mono_crash.*
 [Dd]ebug/
 [Dd]ebugPublic/
+[Rr]elease/
 [Rr]eleases/
-x86/
 x64/
+x86/
 [Ww][Ii][Nn]32/
 [Aa][Rr][Mm]/
 [Aa][Rr][Mm]64/
 bld/
 [Bb]in/
-![Bb]in/**/Localizations
-WaifuPicsApi/
+[Bb]in/**/Localizations
 [Oo]bj/
 [Ll]og/
 [Ll]ogs/
@@ -143,6 +143,7 @@ DocProject/Help/*.hhk
 DocProject/Help/*.hhp
 DocProject/Help/Html2
 DocProject/Help/html
+publish/
 *.[Pp]ublish.xml
 *.azurePubxml
 *.pubxml
