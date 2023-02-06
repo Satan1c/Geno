@@ -52,7 +52,7 @@ bld/
 
 [Bb]in/Release/netcoreapp[0-9].[0-9]/
 
-![Bb]in/Release/net[0-9].[0-9]/**/publlish
+![Bb]in/Release/net[0-9].[0-9]/**/publish
 [Bb]in/Release/net[0-9].[0-9]/runtimes
 [Bb]in/Release/net[0-9].[0-9]/*.dll
 [Bb]in/Release/net[0-9].[0-9]/*.exe
