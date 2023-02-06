@@ -56,6 +56,18 @@
     </ItemGroup>
 
     <ItemGroup>
+        <Compile Remove="WaifuPicsApi\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <EmbeddedResource Remove="WaifuPicsApi\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Remove="WaifuPicsApi\**" />
+    </ItemGroup>
+
+    <ItemGroup>
         <ProjectReference Include="WaifuPicsApi\WaifuPicsApi.csproj" />
     </ItemGroup>
 
@@ -388,6 +400,10 @@
       <Content Include="bin\Release\net7.0\win-x64\publish\Geno.pdb" />
       <Content Include="bin\Release\net7.0\win-x64\publish\mongocrypt.dll" />
       <Content Include="bin\Release\net7.0\win-x64\publish\WaifuPicsApi.pdb" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="bin\Release\net7.0\linux-x64\publish" />
     </ItemGroup>
 
 </Project>
