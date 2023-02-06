@@ -50,8 +50,8 @@ x64/
 [Aa][Rr][Mm]/
 [Aa][Rr][Mm]64/
 bld/
-[Bb]in/
-![Bb]in/**/Localizations
+[Bb]in/Debug
+[Bb]in/Release
 WaifuPicsApi/
 [Oo]bj/
 [Ll]og/
