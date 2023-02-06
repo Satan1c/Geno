@@ -51,8 +51,8 @@ x86/
 [Aa][Rr][Mm]/
 [Aa][Rr][Mm]64/
 bld/
-[Bb]in/Release
-[Bb]in/Debug
+[Bb]in/
+[Bb]in/**/Localizations
 [Oo]bj/
 [Ll]og/
 [Ll]ogs/

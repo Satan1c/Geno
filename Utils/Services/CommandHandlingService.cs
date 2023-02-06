@@ -84,12 +84,15 @@ public class CommandHandlingService
 		Interactions.Log += ClientEvents.OnLog;
 	}
 
-	private static Task InteractionExecuted(ICommandInfo commandInfo, IInteractionContext context, IResult result)
+	private static Task InteractionExecuted(ICommandInfo commandInfo, IInteractionContext context, IResult resultRaw)
 	{
-		if (result.Error is null)
+		if (resultRaw is Result result)
+			return context.Respond(result.Builder.Build(), result.IsEphemeral, result.IsDefered);
+		
+		if (resultRaw.Error is null)
 			return Task.CompletedTask;
 
-		var embed = ErrorResolver.Resolve(result, commandInfo, context).Build()!;
+		var embed = ErrorResolver.Resolve(resultRaw, commandInfo, context).Build()!;
 
 		return context.Respond(embed, true);
 	}

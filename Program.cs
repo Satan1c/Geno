@@ -16,7 +16,8 @@ using JsonLocalizationManager = Geno.Utils.Types.JsonLocalizationManager;
 
 Console.OutputEncoding = Encoding.UTF8;
 
-var localizations = Path.GetFullPath("../../", AppDomain.CurrentDomain.BaseDirectory) + "/Localizations";
+var localizations = Path.GetFullPath("../../../../", AppDomain.CurrentDomain.BaseDirectory) + "/Localizations";
+
 var env = Utils.GetEnv();
 
 await using var service = new ServiceCollection()
