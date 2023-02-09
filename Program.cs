@@ -16,9 +16,10 @@ using JsonLocalizationManager = Geno.Utils.Types.JsonLocalizationManager;
 
 Console.OutputEncoding = Encoding.UTF8;
 
-var localizations = Path.GetFullPath("../../../../", AppDomain.CurrentDomain.BaseDirectory) + "/Localizations";
-
 var env = Utils.GetEnv();
+var localizations = env.TryGetValue("LOCALS", out var p)
+	? Path.GetFullPath(p)
+	: Path.GetFullPath("./" + AppDomain.CurrentDomain.BaseDirectory + "/Localizations");
 
 await using var service = new ServiceCollection()
 	.AddSingleton(new DiscordSocketConfig
