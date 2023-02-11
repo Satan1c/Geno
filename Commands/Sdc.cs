@@ -21,14 +21,12 @@ public class Sdc : InteractionModuleBase<ShardedInteractionContext>
 		}
 
 		[SlashCommand("guild_info", "show guild info from site")]
-		public async Task<Result> GetGuild(ulong guildId)
+		public async Task GetGuild(ulong guildId)
 		{
 			//var id = ulong.Parse(guildId);
 			var id = guildId;
 			var guild = await m_monitoring.GetGuild(id, true);
 			await Context.GuildInfo(guild);
-
-			return new Result(true, null, false, false);
 		}
 
 		//[SlashCommand("guild_rates", "show guild info from site")]
