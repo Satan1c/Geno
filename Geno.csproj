@@ -10,13 +10,6 @@
         <TrimMode>partial</TrimMode>
     </PropertyGroup>
 
-    <ItemGroup>
-        <ProjectReference Include=".\Geno.csproj" />
-        <Content Include=".\Geno.csproj">
-            <PackageCopyToOutput>true</PackageCopyToOutput>
-        </Content>
-    </ItemGroup>
-
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
