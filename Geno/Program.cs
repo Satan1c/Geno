@@ -17,8 +17,6 @@ using JsonLocalizationManager = Geno.Utils.Types.JsonLocalizationManager;
 Console.OutputEncoding = Encoding.UTF8;
 
 var env = Utils.GetEnv();
-Console.WriteLine(AppDomain.CurrentDomain.BaseDirectory);
-Console.WriteLine(Path.GetFullPath("../../", AppDomain.CurrentDomain.BaseDirectory) + "Localizations");
 var localizations = env.TryGetValue("LOCALS", out var p)
 	? Path.GetFullPath(p)
 	: Path.GetFullPath("../../", AppDomain.CurrentDomain.BaseDirectory) + "Localizations";

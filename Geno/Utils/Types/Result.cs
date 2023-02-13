@@ -3,9 +3,9 @@ using Discord.Interactions;
 
 namespace Geno.Utils.Types;
 
-public class Result : IResult
+public class Result : RuntimeResult
 {
-	public Result(bool isSuccess, EmbedBuilder builder, bool isEphemeral, bool isDefered, InteractionCommandError? error = null, string? errorReason = null)
+	public Result(bool isSuccess, EmbedBuilder builder, bool isEphemeral, bool isDefered, InteractionCommandError? error = null, string? errorReason = null) : base(error, errorReason)
 	{
 		IsSuccess = isSuccess;
 		Builder = builder;

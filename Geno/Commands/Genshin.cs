@@ -6,7 +6,7 @@ using Geno.Responses;
 namespace Geno.Commands;
 
 [Group("genshin", "Genshin Impact commands")]
-public class Genshin : InteractionModuleBase<ShardedInteractionContext>
+public class Genshin// : InteractionModuleBase<ShardedInteractionContext>
 {
 	private readonly EnkaApiClient m_enkaApiClient;
 
@@ -15,7 +15,7 @@ public class Genshin : InteractionModuleBase<ShardedInteractionContext>
 		m_enkaApiClient = enkaApiClient;
 	}
 
-	[UserCommand("Genshin profile")]
+	/*[UserCommand("Genshin profile")]
 	public async Task GenshinProfile(IUser user)
 	{
 		const uint uid = 700289769;
@@ -38,6 +38,6 @@ public class Genshin : InteractionModuleBase<ShardedInteractionContext>
 				$"`{level.ToString()}`/`90` `{ascension.ToString()}`/`6`", true);
 		}
 
-		await Context.Respond(embed, true);
-	}
+		//await Context.Respond(embed, true);
+	}*/
 }
