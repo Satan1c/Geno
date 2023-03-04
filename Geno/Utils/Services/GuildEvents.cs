@@ -47,7 +47,7 @@ public class GuildEvents
 		var userId = guildUser.Id.ToString();
 
 		if (config.Voices.TryGetValue(userId, out var value)
-		    && before.VoiceChannel is SocketVoiceChannel beforeChannel
+		    && before.VoiceChannel is { } beforeChannel
 		    && beforeChannel.Id == value)
 		{
 			await guildUser.Guild
@@ -66,7 +66,7 @@ public class GuildEvents
 
 		var config = await m_databaseProvider.GetConfig(guildUser.Guild.Id);
 
-		if (after.VoiceChannel is SocketVoiceChannel afterChannel &&
+		if (after.VoiceChannel is { } afterChannel &&
 		    config.Channels.ContainsKey(afterChannel.Id.ToString()))
 		{
 			var count = config.Voices.Count + 1;

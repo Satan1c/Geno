@@ -31,7 +31,7 @@ await using var service = new ServiceCollection()
 		                 | GatewayIntents.GuildMembers
 		                 | GatewayIntents.GuildMessages
 		                 | GatewayIntents.GuildVoiceStates,
-		MessageCacheSize = 5,
+		MessageCacheSize = 1,
 		LogLevel = LogSeverity.Verbose,
 		LogGatewayIntentWarnings = false
 	})

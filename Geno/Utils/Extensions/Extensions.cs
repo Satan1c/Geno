@@ -20,10 +20,10 @@ public static class Extensions
 		RegexOptions.Compiled | RegexOptions.Singleline
 	);
 
-	private static readonly Regex s_noAsciiRegex = new(
+	/*private static readonly Regex s_noAsciiRegex = new(
 		"[^А-Яа-я -~]+",
 		RegexOptions.Compiled | RegexOptions.Singleline
-	);
+	);*/
 
 	public static bool HasFlags(this Optional<MessageFlags?> target, MessageFlags categories)
 	{
@@ -49,7 +49,7 @@ public static class Extensions
 	{
 		do
 		{
-			if (module.Parent is ModuleInfo info)
+			if (module.Parent is { } info)
 				module = info;
 		} while (!module.IsTopLevelGroup);
 
@@ -68,7 +68,7 @@ public static class Extensions
 		return
 			rankByte >= byte.Parse(first)
 				? roles[first]
-				: roles[keys.Select(x => byte.Parse(x)).FirstOrDefault(i => rankByte >= i).ToString()];
+				: roles[keys.Select(byte.Parse).FirstOrDefault(i => rankByte >= i).ToString()];
 	}
 
 	internal static bool HasLink(this SocketMessage message)
@@ -119,7 +119,7 @@ public static class Extensions
 
 		try
 		{
-			if (client.GetGuildAsync(id).Result is not RestGuild res)
+			if (client.GetGuildAsync(id).Result is not { } res)
 				return false;
 
 			guild = res;
@@ -137,7 +137,7 @@ public static class Extensions
 
 		try
 		{
-			if (client.GetUserAsync(id).Result is not RestUser res)
+			if (client.GetUserAsync(id).Result is not { } res)
 				return false;
 
 			user = res;
@@ -156,7 +156,7 @@ public static class Extensions
 
 		try
 		{
-			if (client.GetGuildUserAsync(guildId, userId).Result is not RestGuildUser res)
+			if (client.GetGuildUserAsync(guildId, userId).Result is not { } res)
 				return false;
 
 			user = res;

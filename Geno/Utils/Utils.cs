@@ -1,5 +1,4 @@
 ﻿using System.Collections;
-using Discord.Commands;
 
 namespace Geno.Utils;
 
@@ -14,7 +13,7 @@ public static class Utils
 	}
 }
 
-public class TypeReader<T> : TypeReader where T : struct, Enum
+/*public class TypeReader<T> : TypeReader where T : struct, Enum
 {
 	public override Task<TypeReaderResult> ReadAsync(ICommandContext context, string input, IServiceProvider services)
 	{
@@ -22,4 +21,4 @@ public class TypeReader<T> : TypeReader where T : struct, Enum
 			? TypeReaderResult.FromSuccess(result)
 			: TypeReaderResult.FromError(CommandError.ParseFailed, "CommandError.ParseFailed"));
 	}
-}
+}*/

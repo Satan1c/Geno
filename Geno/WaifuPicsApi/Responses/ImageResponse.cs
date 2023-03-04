@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 
-namespace WaifuPicsApi.Responses;
+namespace Geno.WaifuPicsApi.Responses;
 
 public class ImageResponse
 {

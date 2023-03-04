@@ -24,8 +24,7 @@ public class Sdc : InteractionModuleBase<ShardedInteractionContext>
 		public async Task<RuntimeResult> GetGuild(ulong guildId)
 		{
 			//var id = ulong.Parse(guildId);
-			var id = guildId;
-			var guild = await m_monitoring.GetGuild(id, true);
+			var guild = await m_monitoring.GetGuild(guildId, true);
 			await Context.GuildInfo(guild);
 
 			return new Result(true, null, false, false);

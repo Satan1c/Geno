@@ -3,8 +3,8 @@ using Discord.Interactions;
 using Discord.WebSocket;
 using Geno.Utils.Services;
 using Geno.Utils.Types;
-using WaifuPicsApi;
-using WaifuPicsApi.Enums;
+using Geno.WaifuPicsApi;
+using Geno.WaifuPicsApi.Enums;
 
 namespace Geno.Commands.Private;
 

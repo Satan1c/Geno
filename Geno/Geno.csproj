@@ -1,5 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
-    
+
     <PropertyGroup>
         <OutputType>Exe</OutputType>
         <TargetFramework>net7.0</TargetFramework>
@@ -17,59 +17,51 @@
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
-      <PlatformTarget>x64</PlatformTarget>
-      <Optimize>false</Optimize>
-      <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
-      <CheckForOverflowUnderflow>false</CheckForOverflowUnderflow>
+        <PlatformTarget>x64</PlatformTarget>
+        <Optimize>false</Optimize>
+        <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+        <CheckForOverflowUnderflow>false</CheckForOverflowUnderflow>
     </PropertyGroup>
-    
+
     <ItemGroup>
-        <PackageReference Include="ClrHeapAllocationAnalyzer" Version="3.0.0" />
-        <PackageReference Include="Discord.Net" Version="3.9.0" />
-        <PackageReference Include="Discord.Net.Analyzers" Version="3.7.0" />
-        <PackageReference Include="Discord.Net.Commands" Version="3.9.0" />
-        <PackageReference Include="Discord.Net.Core" Version="3.9.0" />
-        <PackageReference Include="Discord.Net.Extensions" Version="1.2.1" />
-        <PackageReference Include="Discord.Net.Interactions" Version="3.9.0" />
-        <PackageReference Include="Discord.Net.Rest" Version="3.9.0" />
-        <PackageReference Include="Discord.Net.Webhook" Version="3.9.0" />
-        <PackageReference Include="Discord.Net.WebSocket" Version="3.9.0" />
-        <PackageReference Include="EnkaAPI" Version="1.1.0" />
-        <PackageReference Include="Microsoft.CodeAnalysis" Version="4.4.0" />
+        <PackageReference Include="ClrHeapAllocationAnalyzer" Version="3.0.0"/>
+        <PackageReference Include="Discord.Net" Version="3.9.0"/>
+        <PackageReference Include="Discord.Net.Analyzers" Version="3.7.0"/>
+        <PackageReference Include="Discord.Net.Extensions" Version="1.2.1"/>
+        <PackageReference Include="EnkaAPI" Version="1.1.0"/>
+        <PackageReference Include="Microsoft.CodeAnalysis" Version="4.5.0"/>
         <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="3.3.4">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.4.0" />
-        <PackageReference Include="Microsoft.DotNet.ILCompiler" Version="7.0.2" />
-        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="7.0.0" />
-        <PackageReference Include="MongoDB.Bson" Version="2.19.0" />
-        <PackageReference Include="MongoDB.Driver" Version="2.19.0" />
-        <PackageReference Include="RateLimiter" Version="2.2.0" />
-        <PackageReference Include="runtime.linux-x64.Microsoft.DotNet.ILCompiler" Version="7.0.2" />
-        <PackageReference Include="runtime.win-x64.Microsoft.DotNet.ILCompiler" Version="7.0.2" />
-        <PackageReference Include="SDC_Sharp" Version="3.1.2" />
-        <PackageReference Include="SDC_Sharp.DiscordNet" Version="3.1.2" />
-        <PackageReference Include="Serilog" Version="2.12.1-dev-01587" />
-        <PackageReference Include="Serilog.Extensions.Logging" Version="3.1.1-dev-10301" />
-        <PackageReference Include="Serilog.Sinks.Console" Version="4.1.1-dev-00896" />
+        <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.5.0"/>
+        <PackageReference Include="Microsoft.DotNet.ILCompiler" Version="7.0.3"/>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="7.0.0"/>
+        <PackageReference Include="MongoDB.Bson" Version="2.19.0"/>
+        <PackageReference Include="MongoDB.Driver" Version="2.19.0"/>
+        <PackageReference Include="RateLimiter" Version="2.2.0"/>
+        <PackageReference Include="SDC_Sharp" Version="3.1.2"/>
+        <PackageReference Include="SDC_Sharp.DiscordNet" Version="3.1.2"/>
+        <PackageReference Include="Serilog" Version="2.12.1-dev-01587"/>
+        <PackageReference Include="Serilog.Extensions.Logging" Version="3.1.1-dev-10301"/>
+        <PackageReference Include="Serilog.Sinks.Console" Version="4.1.1-dev-00896"/>
     </ItemGroup>
 
     <ItemGroup>
-      <Content Include="bin\Localizations\pb_Other.ru.json" />
-      <Content Include="bin\Localizations\pb_Sdc.ru.json" />
-      <Content Include="bin\Localizations\pb_Utils.ru.json" />
-      <Content Include="bin\Localizations\pr_Admin.ru.json" />
-      <Content Include="bin\Localizations\pr_Genshin.ru.json" />
-      <Content Include="bin\Localizations\pr_Images.ru.json" />
-    </ItemGroup>
-    
-    <ItemGroup>
-      <EmbeddedResource Remove="bin\Release\**" />
+        <Content Include="bin\Localizations\pb_Other.ru.json"/>
+        <Content Include="bin\Localizations\pb_Sdc.ru.json"/>
+        <Content Include="bin\Localizations\pb_Utils.ru.json"/>
+        <Content Include="bin\Localizations\pr_Admin.ru.json"/>
+        <Content Include="bin\Localizations\pr_Genshin.ru.json"/>
+        <Content Include="bin\Localizations\pr_Images.ru.json"/>
     </ItemGroup>
 
     <ItemGroup>
-      <None Remove="bin\Release\**" />
+        <EmbeddedResource Remove="bin\Release\**"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Remove="bin\Release\**"/>
     </ItemGroup>
 
 </Project>

@@ -1,6 +1,6 @@
 ﻿using System.Runtime.Serialization;
 
-namespace WaifuPicsApi.Enums;
+namespace Geno.WaifuPicsApi.Enums;
 
 public enum SfwCategory
 {

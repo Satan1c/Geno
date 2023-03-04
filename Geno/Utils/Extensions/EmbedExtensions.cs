@@ -35,6 +35,7 @@ public static class EmbedExtensions
 		builder.Author.Name = guild.Name;
 		builder.Author.IconUrl = guild.IconUrl;
 
+		//TODO: make zero-allocation ToString for guild.Features.Value
 		builder.AddField("Created at", $"<t:{guild.CreatedAt.ToUnixTimeSeconds().ToString()}:R>")
 			.AddField("Flags:", $"`{string.Join("`, `", guild.Features.Value.ToString().Split(", "))}`")
 			.AddField("Member count:", $"`{guild.MemberCount.ToString()}`/`{guild.MaxMembers.ToString()}`");
@@ -76,6 +77,5 @@ public static class EmbedExtensions
 
 		return builder.AddField("Created at:", $"<t:{user.CreatedAt.ToUnixTimeSeconds().ToString()}:R>", true)
 			.AddField("Joined at:", $"<t:{user.JoinedAt!.Value.ToUnixTimeSeconds().ToString()}:R>", true);
-		;
 	}
 }

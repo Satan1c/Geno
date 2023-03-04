@@ -29,9 +29,9 @@ public class Genshin : InteractionModuleBase<ShardedInteractionContext>
 		await DeferAsync();
 
 		var codes = message.Content.Split('\n');
-		CreateLinks(codes, out var links, out _);
+		CreateLinks(codes, out var links);
 
-		var components = new ComponentBuilder();
+		var components = new ComponentBuilder().WithButton();
 
 		for (byte i = 0; i < links.Length; i++)
 			components.AddRow(new ActionRowBuilder()
@@ -152,7 +152,8 @@ public class Genshin : InteractionModuleBase<ShardedInteractionContext>
 		return doc;
 	}
 
-	private static void CreateLinks(in string[] codes, out string[] links, out string[] contents)
+	//private static void CreateLinks(in string[] codes, out string[] links, out string[] contents)
+	private static void CreateLinks(in string[] codes, out string[] links)
 	{
 		var linksRaw = new LinkedList<string>();
 		var contentsRaw = new LinkedList<string>();
@@ -166,6 +167,6 @@ public class Genshin : InteractionModuleBase<ShardedInteractionContext>
 		}
 
 		links = linksRaw.ToArray();
-		contents = contentsRaw.ToArray();
+		//contents = contentsRaw.ToArray();
 	}
 }

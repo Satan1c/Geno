@@ -4,6 +4,7 @@ using Discord.Interactions;
 using Discord.Rest;
 using Discord.WebSocket;
 using Geno.Utils.Extensions;
+using Geno.Utils.Types;
 
 namespace Geno.Commands;
 
@@ -89,18 +90,23 @@ public class Other : InteractionModuleBase<ShardedInteractionContext>
 		}
 
 		[SlashCommand("user", "fetch user information by id")]
-		public async Task FetchUser(IUser rawUser)
+		public Task<RuntimeResult> FetchUser(IUser rawUser)
 		{
 			if (!Context.Client.Rest.TryGetUser(rawUser.Id, out var user))
-				throw new Exception("Can't get info about this user");
+				return Result.GetTaskFor(
+					false,
+					null,
+					true,
+					false,
+					InteractionCommandError.Unsuccessful,
+					"Can't get info about this user");
 
 			var embed = new EmbedBuilder().ApplyData(user);
 
 			if (Context.Guild is { } guild && Context.Client.Rest.TryGetGuildUser(guild.Id, user.Id, out var guildUser))
 				embed = embed.ApplyData(guildUser);
 
-			await RespondAsync(embed: embed.Build(),
-				allowedMentions: AllowedMentions.None);
+			return Result.GetTaskFor(true, embed, false, false);
 		}
 	}
 }

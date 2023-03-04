@@ -1,12 +1,7 @@
-﻿using Discord;
-using Discord.Interactions;
-using EnkaAPI;
-using Geno.Responses;
+﻿//namespace Geno.Commands;
 
-namespace Geno.Commands;
-
-[Group("genshin", "Genshin Impact commands")]
-public class Genshin// : InteractionModuleBase<ShardedInteractionContext>
+/*[Group("genshin", "Genshin Impact commands")]
+public class Genshin // : InteractionModuleBase<ShardedInteractionContext>
 {
 	private readonly EnkaApiClient m_enkaApiClient;
 
@@ -39,5 +34,5 @@ public class Genshin// : InteractionModuleBase<ShardedInteractionContext>
 		}
 
 		//await Context.Respond(embed, true);
-	}*/
-}
+	}#1#
+}*/

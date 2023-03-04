@@ -7,23 +7,25 @@ using Geno.Errors;
 using Geno.Responses;
 using Geno.Utils.Extensions;
 using Geno.Utils.Types;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Geno.Utils.Services;
 
 public class CommandHandlingService
 {
 	internal static InteractionService Interactions = null!;
-
 	internal static IReadOnlyDictionary<Category, ModuleInfo[]> Private = null!;
+	
 	private readonly DiscordShardedClient m_client;
 	private readonly IServiceProvider m_services;
 
-	public CommandHandlingService(IServiceProvider services)
+	private static readonly Embed s_emptyEmbed = new EmbedBuilder().Build();
+
+	public CommandHandlingService(IServiceProvider services, DiscordShardedClient client,
+		InteractionService interactions)
 	{
 		m_services = services;
-		m_client = services.GetRequiredService<DiscordShardedClient>();
-		Interactions = services.GetRequiredService<InteractionService>();
+		m_client = client;
+		Interactions = interactions;
 	}
 
 	public async Task InitializeAsync()
@@ -87,8 +89,8 @@ public class CommandHandlingService
 	private static Task InteractionExecuted(ICommandInfo commandInfo, IInteractionContext context, IResult resultRaw)
 	{
 		if (resultRaw is Result result)
-			return context.Respond(result.Builder.Build(), result.IsEphemeral, result.IsDefered);
-		
+			return context.Respond(result.Builder?.Build() ?? s_emptyEmbed, result.IsEphemeral, result.IsDefered);
+
 		if (resultRaw.Error is null)
 			return Task.CompletedTask;
 
