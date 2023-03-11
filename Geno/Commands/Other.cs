@@ -22,9 +22,10 @@ public class Other : InteractionModuleBase<ShardedInteractionContext>
 		}
 
 		[SlashCommand("stats", "show bot stats")]
+		[RequireOwner]
 		public async Task PingCommand(bool clear = false)
 		{
-			if (clear)
+			if (clear && Context.User.Id == (await Context.Client.GetApplicationInfoAsync()).Owner.Id)
 				GC.Collect();
 
 			var embed = new EmbedBuilder().WithTitle("Bot stats");
