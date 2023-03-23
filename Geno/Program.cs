@@ -14,6 +14,7 @@ using SDC_Sharp.Types;
 using Serilog;
 using JsonLocalizationManager = Geno.Utils.Types.JsonLocalizationManager;
 
+Console.InputEncoding = Encoding.UTF8;
 Console.OutputEncoding = Encoding.UTF8;
 
 var env = Utils.GetEnv();
