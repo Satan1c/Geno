@@ -69,6 +69,7 @@ public class GuildEvents
 		if (after.VoiceChannel is { } afterChannel &&
 		    config.Channels.ContainsKey(afterChannel.Id.ToString()))
 		{
+			//TODO: add permissions override to rename channel
 			var count = config.Voices.Count + 1;
 			var voice = await guildUser.Guild.CreateVoiceChannelAsync(
 				"Party #" + count,

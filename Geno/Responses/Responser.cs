@@ -20,7 +20,7 @@ public static class Responser
 		if (isDefered)
 			return context.Interaction.ModifyOriginalResponseAsync(x =>
 				{
-					var flags = ((MessageFlags)x.Flags.GetValueOrDefault()!)!;
+					var flags = x.Flags.GetValueOrDefault() ?? MessageFlags.None;
 					x.Embed = embed;
 					x.AllowedMentions = AllowedMentions.None;
 					x.Flags = ephemeral ? flags ^ MessageFlags.Ephemeral : flags | MessageFlags.Ephemeral;
