@@ -31,7 +31,7 @@ public class Genshin : InteractionModuleBase<ShardedInteractionContext>
 		var codes = message.Content.Split('\n');
 		CreateLinks(codes, out var links);
 
-		var components = new ComponentBuilder().WithButton();
+		var components = new ComponentBuilder();
 
 		for (byte i = 0; i < links.Length; i++)
 			components.AddRow(new ActionRowBuilder()
