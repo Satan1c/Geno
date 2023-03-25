@@ -9,8 +9,12 @@ namespace Geno.Responses.Modules;
 public static class Shikimori
 {
 	private static readonly Regex s_characterRegex = new (@"\[(?:character=\w+|\/character)\]", RegexOptions.Compiled | RegexOptions.Singleline);
-	
-	public static Task SearchResult(this ShardedInteractionContext context, AnimeID? anime, MangaID? manga)
+
+	public static Task SearchResult(this ShardedInteractionContext context, MangaID? manga = null, AnimeID? anime = null)
+	{
+		return context.SearchResult(anime, manga);
+	}
+	public static Task SearchResult(this ShardedInteractionContext context, AnimeID? anime = null, MangaID? manga = null)
 	{
 		if (anime == null && manga == null)
 		{

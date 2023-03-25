@@ -1,6 +1,5 @@
 ﻿using Discord;
 using Discord.Interactions;
-using Discord.WebSocket;
 using Geno.Utils.Services;
 using Geno.Utils.Types;
 using Geno.WaifuPicsApi;
@@ -35,23 +34,15 @@ public class Images : InteractionModuleBase<ShardedInteractionContext>
 	{
 		try
 		{
-			await ClientEvents.OnLog(new LogMessage(LogSeverity.Debug, nameof(SfwCommands) + " #0", "enter"));
-
 			if (!Enum.TryParse<SfwCategory>(tag, out var category)) return;
-
-			await ClientEvents.OnLog(new LogMessage(LogSeverity.Debug, nameof(SfwCommands) + " #1",
-				$"{tag} | {category.CategoryToString()}"));
-
+			
 			var ctf = GetCategoryFormat(category);
 			if (ctf == CategoryFormat.User && user == null)
 			{
 				await RespondAsync($"You must provide {nameof(user)} for this category");
 				return;
 			}
-
-			await ClientEvents.OnLog(new LogMessage(LogSeverity.Debug, nameof(SfwCommands) + " #2",
-				$"{ctf.CategoryFormatToString()}"));
-
+			
 			var embed = new EmbedBuilder();
 			var title = ctf switch
 			{
@@ -63,11 +54,7 @@ public class Images : InteractionModuleBase<ShardedInteractionContext>
 				_ => throw new ArgumentOutOfRangeException()
 			};
 
-			await ClientEvents.OnLog(new LogMessage(LogSeverity.Debug, nameof(SfwCommands) + " #3", $"{title}"));
-
 			var img = await m_waifuClient.GetImageAsync(category);
-
-			await ClientEvents.OnLog(new LogMessage(LogSeverity.Debug, nameof(SfwCommands) + " #4", $"{img}"));
 
 			await RespondAsync(embed: embed
 					.WithDescription(title)
@@ -192,7 +179,7 @@ public class Images : InteractionModuleBase<ShardedInteractionContext>
 					m_sfwCategories = res;
 				}
 
-				var userInput = (context.Interaction as SocketAutocompleteInteraction)!.Data.Current.Value.ToString()!;
+				var userInput = autocompleteInteraction.Data.Current.Value.ToString()!;
 				var results =
 					m_sfwCategories.Where(x =>
 						x.Name.StartsWith(userInput,
