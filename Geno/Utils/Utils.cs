@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using Geno.Commands;
 
 namespace Geno.Utils;
 
@@ -10,6 +11,11 @@ public static class Utils
 			.ToDictionary(
 				kvp
 					=> (string)kvp.Key, kvp => (string)kvp.Value!);
+	}
+	
+	public static bool HasMode(this Shikimori.Mode mode, Shikimori.Mode searchMode)
+	{
+		return ((byte)mode & (byte)searchMode) != 0;
 	}
 }
 

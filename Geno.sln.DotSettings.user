@@ -16,4 +16,5 @@
 &lt;/AssemblyExplorer&gt;</s:String>
 	
 	<s:Boolean x:Key="/Default/UserDictionary/Words/=Mongo/@EntryIndexedValue">True</s:Boolean>
+	<s:Boolean x:Key="/Default/UserDictionary/Words/=Shikimori/@EntryIndexedValue">True</s:Boolean>
 	<s:Boolean x:Key="/Default/UserDictionary/Words/=Wargaming/@EntryIndexedValue">True</s:Boolean></wpf:ResourceDictionary>
