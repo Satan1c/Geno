@@ -35,14 +35,14 @@ public class Images : InteractionModuleBase<ShardedInteractionContext>
 		try
 		{
 			if (!Enum.TryParse<SfwCategory>(tag, out var category)) return;
-			
+
 			var ctf = GetCategoryFormat(category);
 			if (ctf == CategoryFormat.User && user == null)
 			{
 				await RespondAsync($"You must provide {nameof(user)} for this category");
 				return;
 			}
-			
+
 			var embed = new EmbedBuilder();
 			var title = ctf switch
 			{

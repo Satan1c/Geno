@@ -14,11 +14,11 @@ public class CommandHandlingService
 {
 	public static InteractionService Interactions = null!;
 	public static IReadOnlyDictionary<Category, ModuleInfo[]> Private = null!;
-	
-	private readonly DiscordShardedClient m_client;
-	private readonly IServiceProvider m_services;
 
 	private static readonly Embed s_emptyEmbed = new EmbedBuilder().Build();
+
+	private readonly DiscordShardedClient m_client;
+	private readonly IServiceProvider m_services;
 
 	public CommandHandlingService(IServiceProvider services, DiscordShardedClient client,
 		InteractionService interactions)
@@ -89,7 +89,8 @@ public class CommandHandlingService
 	private static Task InteractionExecuted(ICommandInfo commandInfo, IInteractionContext context, IResult resultRaw)
 	{
 		if (resultRaw is Result result)
-			return context.Respond(result.Builder ?? s_emptyEmbed.ToEmbedBuilder(), result.IsEphemeral, result.IsDefered);
+			return context.Respond(result.Builder ?? s_emptyEmbed.ToEmbedBuilder(), result.IsEphemeral,
+				result.IsDefered);
 
 		if (resultRaw.Error is null)
 			return Task.CompletedTask;

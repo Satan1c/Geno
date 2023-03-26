@@ -11,13 +11,13 @@ public static class Responser
 	{
 		return context.Respond(embed.Build(), ephemeral, isDefered);
 	}
-	
+
 	public static Task Respond(this IInteractionContext context,
 		EmbedBuilder[] embeds,
 		bool ephemeral = false,
 		bool isDefered = false)
 	{
-		return context.Respond(null, ephemeral, isDefered,embeds.Select(x => x.Build()).ToArray());
+		return context.Respond(null, ephemeral, isDefered, embeds.Select(x => x.Build()).ToArray());
 	}
 
 	private static Task Respond(this IInteractionContext context,

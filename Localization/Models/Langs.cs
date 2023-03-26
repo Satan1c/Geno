@@ -7,10 +7,8 @@ namespace Localization.Models;
 [JsonConverter(typeof(StringEnumConverter))]
 public enum Langs
 {
-	[EnumMember(Value = "ru")]
-	Ru,
-	[EnumMember(Value = "en-GB")]
-	En
+	[EnumMember(Value = "ru")] Ru,
+	[EnumMember(Value = "en-GB")] En
 }
 
 public static class LangsExtensions

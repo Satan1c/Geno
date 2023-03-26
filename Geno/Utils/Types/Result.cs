@@ -24,7 +24,8 @@ public class Result : RuntimeResult
 	public bool IsEphemeral { get; }
 	public bool IsDefered { get; }
 
-	public static Task<RuntimeResult> GetTaskFor(bool isSuccess, EmbedBuilder? builder, bool isEphemeral, bool isDefered,
+	public static Task<RuntimeResult> GetTaskFor(bool isSuccess, EmbedBuilder? builder, bool isEphemeral,
+		bool isDefered,
 		InteractionCommandError? error = null, string? errorReason = null)
 	{
 		var result = new Result(isSuccess, builder, isEphemeral, isDefered, error, errorReason);

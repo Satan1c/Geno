@@ -12,18 +12,12 @@ public class LocalizationManager
 	{
 		var files = Directory.GetFiles(filesPath, "*.csv");
 		if (files.Length > 0)
-		{
 			Load(files);
-		}
 		else
-		{
 			foreach (var directory in Directory.GetDirectories(filesPath))
-			{
 				Load(Directory.GetFiles(directory, "*.csv"));
-			}
-		}
 	}
-	
+
 	private void Load(string[] filesPaths)
 	{
 		foreach (var path in filesPaths)
@@ -41,7 +35,7 @@ public class LocalizationManager
 				m_categories[category] = new Category(name, lines);
 		}
 	}
-	
+
 	public Category GetCategory(string category)
 	{
 		return m_categories[category];

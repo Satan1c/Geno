@@ -6,7 +6,7 @@ namespace Geno.Responsers.Error.Modules;
 
 public class UtilsErrors : IErrorResolver
 {
-	private const string m_module = nameof(Geno.Commands.Utils);
+	private const string m_module = nameof(Commands.Utils);
 	public string ModuleName => m_module;
 
 	public EmbedBuilder Resolve(IResult result, ICommandInfo command, IInteractionContext context, EmbedBuilder embed)
@@ -22,7 +22,7 @@ public class UtilsErrors : IErrorResolver
 	{
 		return commandMethodName switch
 		{
-			nameof(Geno.Commands.Utils.AddUtils.AddVoiceChannel) => result.Error switch
+			nameof(Commands.Utils.AddUtils.AddVoiceChannel) => result.Error switch
 			{
 				InteractionCommandError.Exception => embed.WithDescription(result.ErrorReason),
 				InteractionCommandError.UnmetPrecondition => embed.WithDescription(result.ErrorReason),

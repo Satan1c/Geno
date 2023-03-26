@@ -7,13 +7,15 @@ using EnkaAPI;
 using Geno.Utils;
 using Geno.Utils.Services;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging.Abstractions;
 using MongoDB.Driver;
 using SDC_Sharp;
 using SDC_Sharp.DiscordNet;
 using SDC_Sharp.Types;
 using Serilog;
-using Serilog.Extensions.Logging;
 using ShikimoriSharp;
+using ILogger = Microsoft.Extensions.Logging.ILogger;
+using JsonLocalizationManager = Localization.JsonLocalizationManager;
 using Logger = Microsoft.Extensions.Logging.Logger<Microsoft.Extensions.Logging.ILogger>;
 
 Console.InputEncoding = Encoding.UTF8;
@@ -39,40 +41,34 @@ await using var service = new ServiceCollection()
 		LogGatewayIntentWarnings = false
 	})
 	.AddSingleton<DiscordShardedClient>()
-	.AddSingleton<ILogger>(new LoggerConfiguration()
+	.AddSingleton<Serilog.ILogger>(new LoggerConfiguration()
 		.Enrich.FromLogContext()
 		.MinimumLevel.Verbose()
 		.WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u4}]\t{Message:lj}{NewLine}{Exception}")
 		.CreateLogger()
 	)
-	.AddSingleton<Microsoft.Extensions.Logging.ILogger>(provider => Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance)
-
+	.AddSingleton<ILogger>(provider => NullLogger.Instance)
 	.AddSingleton(new InteractionServiceConfig
 	{
 		DefaultRunMode = RunMode.Async,
 		EnableAutocompleteHandlers = true,
 		LogLevel = LogSeverity.Verbose,
 		UseCompiledLambda = true,
-		LocalizationManager = new Localization.JsonLocalizationManager(localizations)
+		LocalizationManager = new JsonLocalizationManager(localizations)
 	})
 	.AddSingleton<InteractionService>()
 	.AddSingleton(MongoClientSettings.FromConnectionString(env["Mongo"]))
 	.AddSingleton<IMongoClient, MongoClient>()
 	.AddSingleton<DatabaseProvider>()
 	.AddSingleton<CommandHandlingService>()
-	
 	.AddSingleton<ClientEvents>()
 	.AddSingleton<GuildEvents>()
-	
 	.AddSingleton(new SdcConfig { Token = env["Sdc"] })
 	.AddSingleton<SdcSharpClient>()
 	.AddSingleton<SdcServices>()
-
 	.AddSingleton<EnkaApiClient>()
-	
 	.AddSingleton<ShikimoriService.ShikimoriClient>()
 	.AddSingleton<ShikimoriClient>()
-
 	.InitializeSdcServices()
 	.BuildServiceProvider();
 

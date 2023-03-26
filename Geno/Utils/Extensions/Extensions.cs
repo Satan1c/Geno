@@ -29,13 +29,14 @@ public static class Extensions
 	public static AutocompleteResult AutocompleteResultFrom(this AnimeMangaIdBase animeManga, UserLocales locales)
 	{
 		return new AutocompleteResult(
-			locales == UserLocales.Russian 
-				? (string.IsNullOrEmpty(animeManga.Russian) ? animeManga.English.FirstOrDefault() ?? animeManga.Name : animeManga.Russian)
+			locales == UserLocales.Russian
+				? string.IsNullOrEmpty(animeManga.Russian)
+					? animeManga.English.FirstOrDefault() ?? animeManga.Name
+					: animeManga.Russian
 				: animeManga.English.FirstOrDefault() ?? animeManga.Name,
-					
 			animeManga.Name);
 	}
-	
+
 	public static bool HasFlags(this Optional<MessageFlags?> target, MessageFlags categories)
 	{
 		return ((MessageFlags)target!)!.HasFlags(categories);
