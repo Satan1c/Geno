@@ -1,7 +1,7 @@
 ﻿using Discord;
 using Discord.Interactions;
+using Geno.Handlers;
 using Geno.Utils.Extensions;
-using Geno.Utils.Services;
 using Microsoft.Extensions.DependencyInjection;
 using ShikimoriService;
 

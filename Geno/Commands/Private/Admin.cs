@@ -1,7 +1,7 @@
 ﻿using Discord;
 using Discord.Interactions;
+using Geno.Handlers;
 using Geno.Responsers.Success;
-using Geno.Utils.Services;
 using Geno.Utils.Types;
 
 namespace Geno.Commands.Private;
@@ -23,11 +23,11 @@ public class Admin : InteractionModuleBase<ShardedInteractionContext>
 		{
 			await CommandHandlingService.Interactions.AddModulesToGuildAsync(guild, clear, modules);
 
-			await Context.Respond(new EmbedBuilder().WithColor(Color.Green).WithDescription("Registered"), true, true);
+			await Context.Respond(new EmbedBuilder().WithDescription("Registered"), true, true);
 			return;
 		}
 
-		await Context.Respond(new EmbedBuilder().WithColor(Color.Red).WithDescription("Category not found"), true,
+		await Context.Respond(new EmbedBuilder().WithDescription("Category not found"), true,
 			true);
 	}
 }

@@ -1,4 +1,5 @@
 ﻿using System.Text.RegularExpressions;
+using System.Web.UI.DataBinder;
 using Discord;
 using Discord.Interactions;
 using Discord.Rest;
@@ -20,6 +21,10 @@ public static class Extensions
 		"(http|ftp|https):\\/\\/([\\w_-]+(?:(?:\\.[\\w_-]+)+))([\\w.,@?^=%&:\\/~+#-]*[\\w@?^=%&\\/~+#-])",
 		RegexOptions.Compiled | RegexOptions.Singleline
 	);
+	
+	private static readonly Regex s_formatRegex =
+		new(@"(?<start>\{)+(?<property>[\w\.\[\]]+)(?<format>:[^}]+)?(?<end>\})+",
+			RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
 
 	/*private static readonly Regex s_noAsciiRegex = new(
 		"[^А-Яа-я -~]+",
@@ -199,5 +204,57 @@ public static class Extensions
 			return false;
 
 		return !ignoreCurrentServer || invite.GuildId != (message.Author as SocketGuildUser)?.Guild.Id;
+	}
+	
+	public static string FormatWith<T>(this string format, T source)
+		where T : class
+	{
+		return format.FormatWith(source, null);
+	}
+	
+	public static string FormatWith<T>(this string format, T source, IFormatProvider? provider)
+		where T: class
+	{
+		if (format == null)
+			throw new ArgumentNullException(nameof(format));
+		
+		var values = new List<object>();
+		var rewrittenFormat = s_formatRegex.Replace(format, m =>
+		{
+			var leftBracket = m.Groups["start"];
+			var propertyName = m.Groups["property"];
+			var formatGroup = m.Groups["format"];
+			var rightBracket = m.Groups["end"];
+
+			try
+			{
+				values.Add((propertyName.Value == "0")
+					? source
+					: DataBinder.Eval(source, propertyName.Value));
+			}
+			catch (Exception _)
+			{
+				return m.ToString();
+			}
+			
+			return new string('{', leftBracket.Captures.Count) +
+			       (values.Count - 1) +
+			       formatGroup.Value +
+			       new string('}', rightBracket.Captures.Count);
+		});
+
+		try
+		{
+			var res = values.Count == 0
+				? format
+				: string.Format(provider, rewrittenFormat, values.ToArray());
+
+			return res;
+		}
+		catch (Exception e)
+		{
+		}
+
+		return rewrittenFormat;
 	}
 }

@@ -7,8 +7,10 @@ using Geno.Responsers.Error;
 using Geno.Responsers.Success;
 using Geno.Utils.Extensions;
 using Geno.Utils.Types;
+using Localization;
+using Microsoft.Extensions.DependencyInjection;
 
-namespace Geno.Utils.Services;
+namespace Geno.Handlers;
 
 public class CommandHandlingService
 {
@@ -19,13 +21,14 @@ public class CommandHandlingService
 
 	private readonly DiscordShardedClient m_client;
 	private readonly IServiceProvider m_services;
+	private readonly LocalizationManager m_localizationManager;
 
-	public CommandHandlingService(IServiceProvider services, DiscordShardedClient client,
-		InteractionService interactions)
+	public CommandHandlingService(IServiceProvider services)
 	{
 		m_services = services;
-		m_client = client;
-		Interactions = interactions;
+		m_client = services.GetRequiredService<DiscordShardedClient>();
+		m_localizationManager = services.GetRequiredService<LocalizationManager>();
+		Interactions = services.GetRequiredService<InteractionService>();
 	}
 
 	public async Task InitializeAsync()
@@ -74,7 +77,7 @@ public class CommandHandlingService
 
 		await Interactions.AddModulesGloballyAsync(true, safe.ToArray());
 
-		ErrorResolver.Init(assembly);
+		ErrorResolver.Init(assembly, m_localizationManager);
 
 		GC.Collect();
 	}

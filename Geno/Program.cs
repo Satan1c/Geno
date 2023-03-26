@@ -4,8 +4,9 @@ using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
 using EnkaAPI;
+using Geno.Handlers;
 using Geno.Utils;
-using Geno.Utils.Services;
+using Localization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using MongoDB.Driver;
@@ -22,9 +23,9 @@ Console.InputEncoding = Encoding.UTF8;
 Console.OutputEncoding = Encoding.UTF8;
 
 var env = Utils.GetEnv();
-var localizations = env.TryGetValue("LOCALS", out var p)
-	? Path.GetFullPath(p)
-	: Path.GetFullPath("../../", AppDomain.CurrentDomain.BaseDirectory) + "Localizations";
+var locals = Path.GetFullPath("../../", AppDomain.CurrentDomain.BaseDirectory) + "Localizations";
+var jsons = locals + "/json";
+var csv = locals + "/csv";
 
 await using var service = new ServiceCollection()
 	.AddSingleton(new DiscordSocketConfig
@@ -54,8 +55,9 @@ await using var service = new ServiceCollection()
 		EnableAutocompleteHandlers = true,
 		LogLevel = LogSeverity.Verbose,
 		UseCompiledLambda = true,
-		LocalizationManager = new JsonLocalizationManager(localizations)
+		LocalizationManager = new JsonLocalizationManager(jsons)
 	})
+	.AddSingleton(new LocalizationManager(csv))
 	.AddSingleton<InteractionService>()
 	.AddSingleton(MongoClientSettings.FromConnectionString(env["Mongo"]))
 	.AddSingleton<IMongoClient, MongoClient>()

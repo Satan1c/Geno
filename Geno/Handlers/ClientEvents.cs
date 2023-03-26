@@ -2,7 +2,7 @@
 using Discord.WebSocket;
 using Serilog;
 
-namespace Geno.Utils.Services;
+namespace Geno.Handlers;
 
 public class ClientEvents
 {

@@ -2,6 +2,7 @@
 using Discord;
 using Discord.Interactions;
 using Geno.Utils.Extensions;
+using Localization;
 
 namespace Geno.Responsers.Error;
 
@@ -10,13 +11,14 @@ public static class ErrorResolver
 	private static readonly TypeInfo s_validType = typeof(IErrorResolver).GetTypeInfo();
 	private static readonly Dictionary<string, IErrorResolver> s_list = new();
 
-	public static void Init(Assembly assembly)
+	public static void Init(Assembly assembly, LocalizationManager localizationManager)
 	{
 		foreach (var definedType in assembly.DefinedTypes.ToArray())
 		{
 			if (!s_validType.IsAssignableFrom(definedType) || !definedType.IsClass) continue;
 
 			var resolver = (definedType.DeclaredConstructors.First().Invoke(Array.Empty<object>()) as IErrorResolver)!;
+			resolver.localizationManager = localizationManager;
 			s_list[resolver.ModuleName] = resolver;
 		}
 	}

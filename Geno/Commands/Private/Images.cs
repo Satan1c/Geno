@@ -1,6 +1,6 @@
 ﻿using Discord;
 using Discord.Interactions;
-using Geno.Utils.Services;
+using Geno.Handlers;
 using Geno.Utils.Types;
 using WaifuPicsApi;
 using WaifuPicsApi.Enums;

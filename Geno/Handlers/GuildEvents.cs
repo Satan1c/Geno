@@ -2,7 +2,7 @@
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Geno.Utils.Services;
+namespace Geno.Handlers;
 
 public class GuildEvents
 {

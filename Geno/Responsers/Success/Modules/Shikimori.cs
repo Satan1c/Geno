@@ -51,7 +51,6 @@ public static class Shikimori
 		descriptionBuilder.Append($"\n{anime.Description ?? anime.DescriptionSource ?? ""}");
 
 		return new EmbedBuilder()
-			.WithColor(new Color(43, 45, 49))
 			.WithTitle($"{(string.IsNullOrEmpty(anime.Russian) ? "" : $"{anime.Russian} /")}{anime.Name}")
 			.WithUrl(url)
 			.WithImageUrl($"https://shikimori.one{anime.Image?.Original}")
@@ -79,7 +78,6 @@ public static class Shikimori
 		descriptionBuilder.Append($"\n{manga.Description ?? manga.DescriptionSource ?? ""}");
 
 		return new EmbedBuilder()
-			.WithColor(new Color(43, 45, 49))
 			.WithTitle($"{(string.IsNullOrEmpty(manga.Russian) ? "" : $"{manga.Russian} /")}{manga.Name}")
 			.WithUrl($"https://shikimori.one{manga.Url}")
 			.WithImageUrl($"https://shikimori.one{manga.Image?.Original}")
