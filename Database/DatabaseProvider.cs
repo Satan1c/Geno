@@ -1,70 +1,77 @@
 ﻿using System.Linq.Expressions;
+using CacheManager.Core;
+using Database.Models;
 using MongoDB.Driver;
 
-namespace Geno.Utils.Services.Database;
+namespace Database;
 
 public class DatabaseProvider
 {
-	private readonly DatabaseCache m_cache;
+	private static readonly ICacheManager<GuildDocument> m_cache = CacheFactory.Build<GuildDocument>(part =>
+		part.WithMicrosoftMemoryCacheHandle().WithExpiration(ExpirationMode.Sliding, TimeSpan.FromHours(1)));
 	private readonly IMongoCollection<GuildDocument> m_guildConfigs;
 
-	public DatabaseProvider(IMongoClient client, DatabaseCache cache)
+	public DatabaseProvider(IMongoClient client)
 	{
-		m_cache = cache;
 		var mainDb = client.GetDatabase("main");
 		m_guildConfigs = mainDb.GetCollection<GuildDocument>("guilds");
 	}
 
 	public async Task<bool> HasDocument(ulong id)
 	{
-		if (m_cache.HasDocument(id))
+		var itemId = id.ToString();
+		if (m_cache.Exists(itemId))
 			return true;
 
-		if (await m_guildConfigs.CountDocumentsAsync(x => x.Id == id) < 1) return false;
+		var item = await m_guildConfigs.Find(x => x.Id == id).FirstOrDefaultAsync();
+		if (item == null) return false;
 
-		m_cache.SetDocument((await m_guildConfigs.FindAsync(x => x.Id == id)).First());
+		m_cache.Put(itemId, item);
 		return true;
 	}
 
 	public async Task<GuildDocument> GetConfig(ulong id)
 	{
-		if (m_cache.TryGetDocument(id, out var document))
-			return document;
+		var itemId = id.ToString();
+		if (m_cache.Exists(itemId))
+			return m_cache.Get(itemId);
 
-		m_cache.SetDocument(id, await FindOrInsertOne(m_guildConfigs, x => x.Id == id, new GuildDocument
+		var item = await FindOrInsertOne(m_guildConfigs, x => x.Id == id, new GuildDocument
 		{
 			Id = id
-		}));
+		});
+		m_cache.Put(itemId, item);
 
 		return await GetConfig(id);
 	}
 
 	public Task SetConfig(GuildDocument document)
 	{
-		m_cache.SetDocument(document);
+		m_cache.Put(document.Id.ToString(), document);
 		return InsertOrReplaceOne(m_guildConfigs, x => x.Id == document.Id, document);
 	}
 
 	private static async Task InsertOrReplaceOne<TDocument>(IMongoCollection<TDocument> collection,
 		Expression<Func<TDocument, bool>> filter, TDocument document)
 	{
-		if (await collection.CountDocumentsAsync(filter) < 1)
+		var item = await collection.FindOneAndReplaceAsync(filter, document);
+		
+		if (item == null)
 			await collection.InsertOneAsync(document);
-		else
-			await collection.ReplaceOneAsync(filter, document);
 	}
 
 	private static async Task<TDocument> FindOrInsertOne<TDocument>(IMongoCollection<TDocument> collection,
 		Expression<Func<TDocument, bool>> filter, TDocument document)
 	{
-		return (await FindOrInsert(collection, filter, document)).First();
+		return await (await FindOrInsert(collection, filter, document)).FirstOrDefaultAsync();
 	}
 
 	private static async Task<IAsyncCursor<TDocument>> FindOrInsert<TDocument>(IMongoCollection<TDocument> collection,
 		Expression<Func<TDocument, bool>> filter, TDocument document)
 	{
-		if (await collection.CountDocumentsAsync(filter) > 0)
-			return await collection.FindAsync(filter);
+		var item = await collection.FindAsync(filter);
+		if (await item.AnyAsync())
+			return item;
 
 		await collection.InsertOneAsync(document);
 		return await collection.FindAsync(filter);
