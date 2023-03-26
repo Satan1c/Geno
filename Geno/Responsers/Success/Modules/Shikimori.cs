@@ -4,74 +4,27 @@ using Discord;
 using Discord.Interactions;
 using ShikimoriSharp.Classes;
 
-namespace Geno.Responses.Modules;
+namespace Geno.Responsers.Success.Modules;
 
 public static class Shikimori
 {
 	private static readonly Regex s_characterRegex = new (@"\[(?:character=\w+|\/character)\]", RegexOptions.Compiled | RegexOptions.Singleline);
 
-	public static Task SearchResult(this ShardedInteractionContext context, MangaID? manga = null, AnimeID? anime = null)
+	public static Task SearchResult(this ShardedInteractionContext context, MangaID? manga = null)
 	{
-		return context.SearchResult(anime, manga);
+		return manga == null
+			? context.Respond(new EmbedBuilder().WithTitle("Nothing found"), true, isDefered: true)
+			: context.Respond(manga.GetMangaEmbed(), isDefered: true);
 	}
-	public static Task SearchResult(this ShardedInteractionContext context, AnimeID? anime = null, MangaID? manga = null)
+	public static Task SearchResult(this ShardedInteractionContext context, AnimeID? anime = null)
 	{
-		if (anime == null && manga == null)
-		{
-			return context.Respond(new EmbedBuilder().WithTitle("Nothing found"), isDefered: true);
-		}
-		
-		var animeEmbed = anime.GetAnimeEmbed();
-		var mangaEmbed = manga.GetMangaEmbed();
-		
-		if (animeEmbed != null && mangaEmbed != null)
-		{
-			return context.Respond(new[] {animeEmbed, mangaEmbed}, isDefered: true);
-		}
-		
-		return context.Respond(animeEmbed ?? mangaEmbed!, isDefered: true);
-	}
-
-	public static Task SearchResult(this ShardedInteractionContext context, AnimeID? anime1, AnimeID? anime2)
-	{
-		if (anime1 == null && anime2 == null)
-		{
-			return context.Respond(new EmbedBuilder().WithTitle("Nothing found"), isDefered: true);
-		}
-		
-		var anime1Embed = anime1.GetAnimeEmbed();
-		var anime2Embed = anime2.GetAnimeEmbed();
-		
-		if (anime1 != null && anime2 != null)
-		{
-			return context.Respond(new[] {anime1Embed!, anime2Embed!}, isDefered: true);
-		}
-		
-		return context.Respond(anime1Embed ?? anime2Embed!, isDefered: true);
+		return anime == null
+			? context.Respond(new EmbedBuilder().WithTitle("Nothing found"), true, isDefered: true)
+			: context.Respond(anime.GetAnimeEmbed(), isDefered: true);
 	}
 	
-	public static Task SearchResult(this ShardedInteractionContext context, MangaID? manga1, MangaID? manga2)
+	private static EmbedBuilder GetAnimeEmbed(this AnimeID anime)
 	{
-		if (manga1 == null && manga2 == null)
-		{
-			return context.Respond(new EmbedBuilder().WithTitle("Nothing found"), isDefered: true);
-		}
-		
-		var manga1Embed = manga1.GetMangaEmbed();
-		var manga2Embed = manga2.GetMangaEmbed();
-		
-		if (manga1 != null && manga2 != null)
-		{
-			return context.Respond(new[] {manga1Embed!, manga2Embed!}, isDefered: true);
-		}
-		
-		return context.Respond(manga1Embed ?? manga2Embed!, isDefered: true);
-	}
-	
-	private static EmbedBuilder? GetAnimeEmbed(this AnimeID? anime)
-	{
-		if (anime == null) return null;
-
 		var url = $"https://shikimori.one{anime.Url}";
 		var descriptionBuilder = new StringBuilder($"Status: `{anime.Status}`\n");
 		
@@ -102,10 +55,8 @@ public static class Shikimori
 			.WithDescription(descriptionBuilder.ClearDescription());
 	}
 	
-	private static EmbedBuilder? GetMangaEmbed(this MangaID? manga)
+	private static EmbedBuilder GetMangaEmbed(this MangaID manga)
 	{
-		if (manga == null) return null;
-
 		var descriptionBuilder = new StringBuilder($"Volumes: `{manga.Volumes.ToString()}`\nChapters: `{manga.Chapters.ToString()}`\n");
 		
 		if (manga.Genres != null)

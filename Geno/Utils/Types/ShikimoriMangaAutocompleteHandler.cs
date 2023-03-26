@@ -3,15 +3,13 @@ using Discord.Interactions;
 using Geno.Utils.Extensions;
 using Geno.Utils.Services;
 using Microsoft.Extensions.DependencyInjection;
-using ShikimoriSharp;
-using ShikimoriSharp.Settings;
 
 namespace Geno.Utils.Types;
 
 
 	public class ShikimoriMangaAutocompleteHandler : AutocompleteHandler
 	{
-		private ShikimoriClient? m_shikimoriClient = null;
+		private ShikimoriService.ShikimoriClient? m_shikimoriClient = null;
 
 		public override async Task<AutocompletionResult> GenerateSuggestionsAsync(
 			IInteractionContext context,
@@ -19,24 +17,20 @@ namespace Geno.Utils.Types;
 			IParameterInfo parameter,
 			IServiceProvider services)
 		{
-			m_shikimoriClient ??= services.GetRequiredService<ShikimoriClient>();
+			m_shikimoriClient ??= services.GetRequiredService<ShikimoriService.ShikimoriClient>();
 			
 			try
 			{
 				var userInput = autocompleteInteraction.Data.Current.Value.ToString()!;
-				
-				var resultsRaw = await m_shikimoriClient.Mangas.GetBySearch(new MangaRequestSettings
-				{
-					search = userInput,
-					limit = 10
-				});
-				var results = resultsRaw.Select(x => 
-					new AutocompleteResult(
-						context.GetLocale() == UserLocales.Russian 
-							? (string.IsNullOrEmpty(x.Russian) ? x.Name : x.Russian)
-							: x.Name,
-					
-						x.Name));return AutocompletionResult.FromSuccess(results.Take(10));
+				var search = await m_shikimoriClient.GetManga(userInput, 5);
+				if (search == null || search.Length < 1) return AutocompletionResult.FromSuccess(Array.Empty<AutocompleteResult>());
+			
+				var tasks = search.Select(async x => await m_shikimoriClient.GetManga(x.Id)).ToArray();
+				Task.WaitAll(tasks, CancellationToken.None);
+			
+				var resultsRaw = tasks.Select(x => x.Result).Where(x => x != null).ToArray();
+				var results = resultsRaw.Select(x => x!.AutocompleteResultFrom(context.GetLocale()));
+				return AutocompletionResult.FromSuccess(results.Take(5));
 			}
 			catch (Exception e)
 			{

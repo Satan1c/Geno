@@ -1,9 +1,7 @@
 ﻿using Discord.Interactions;
-using Geno.Responses.Modules;
+using Geno.Responsers.Success.Modules;
 using Geno.Utils.Types;
-using ShikimoriSharp;
 using ShikimoriSharp.Classes;
-using ShikimoriSharp.Settings;
 
 namespace Geno.Commands;
 
@@ -13,9 +11,9 @@ public partial class Shikimori : InteractionModuleBase<ShardedInteractionContext
 	[Group("search", "search anime or manga")]
 	public class SearchCommands : InteractionModuleBase<ShardedInteractionContext>
 	{
-		private readonly ShikimoriClient m_shikimoriClient;
+		private readonly ShikimoriService.ShikimoriClient m_shikimoriClient;
 
-		public SearchCommands(ShikimoriClient shikimoriClient)
+		public SearchCommands(ShikimoriService.ShikimoriClient shikimoriClient)
 		{
 			m_shikimoriClient = shikimoriClient;
 		}
@@ -40,24 +38,14 @@ public partial class Shikimori : InteractionModuleBase<ShardedInteractionContext
 		
 		private async Task<AnimeID?> FetchAnime(string query)
 		{
-			var animeSettings = new AnimeRequestSettings
-			{
-				search = query,
-				limit = 1
-			};
-			var animeRaw = (await m_shikimoriClient.Animes.GetAnime(animeSettings)).FirstOrDefault();
-			return animeRaw == null ? null : await m_shikimoriClient.Animes.GetAnime(animeRaw.Id);
+			var animeRaw = (await m_shikimoriClient.GetAnime(query));
+			return animeRaw == null ? null : await m_shikimoriClient.GetAnime(animeRaw.Id);
 		}
 		
 		private async Task<MangaID?> FetchManga(string query)
 		{
-			var mangaSettings = new MangaRequestSettings
-			{
-				search = query,
-				limit = 1
-			};
-			var mangaRaw = (await m_shikimoriClient.Mangas.GetBySearch(mangaSettings)).FirstOrDefault();
-			return mangaRaw == null ? null : await m_shikimoriClient.Mangas.GetById(mangaRaw.Id);
+			var mangaRaw = (await m_shikimoriClient.GetManga(query));
+			return mangaRaw == null ? null : await m_shikimoriClient.GetManga(mangaRaw.Id);
 		}
 	}
 

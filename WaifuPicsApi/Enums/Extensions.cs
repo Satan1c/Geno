@@ -1,4 +1,4 @@
-﻿namespace Geno.WaifuPicsApi.Enums;
+﻿namespace WaifuPicsApi.Enums;
 
 public static class Extensions
 {

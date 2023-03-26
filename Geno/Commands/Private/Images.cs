@@ -2,8 +2,8 @@
 using Discord.Interactions;
 using Geno.Utils.Services;
 using Geno.Utils.Types;
-using Geno.WaifuPicsApi;
-using Geno.WaifuPicsApi.Enums;
+using WaifuPicsApi;
+using WaifuPicsApi.Enums;
 
 namespace Geno.Commands.Private;
 

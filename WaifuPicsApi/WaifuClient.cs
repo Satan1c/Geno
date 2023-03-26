@@ -1,10 +1,10 @@
 ﻿using System.Net.Http.Headers;
-using Geno.WaifuPicsApi.Enums;
-using Geno.WaifuPicsApi.Responses;
 using Newtonsoft.Json;
-using Type = Geno.WaifuPicsApi.Enums.Type;
+using WaifuPicsApi.Enums;
+using WaifuPicsApi.Responses;
+using Type = WaifuPicsApi.Enums.Type;
 
-namespace Geno.WaifuPicsApi;
+namespace WaifuPicsApi;
 
 public class WaifuClient
 {
