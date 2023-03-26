@@ -35,7 +35,7 @@ await using var service = new ServiceCollection()
 		                 | GatewayIntents.GuildMessages
 		                 | GatewayIntents.GuildVoiceStates,
 		MessageCacheSize = 1,
-		LogLevel = LogSeverity.Verbose,
+		LogLevel = LogSeverity.Info,
 		LogGatewayIntentWarnings = false
 	})
 	.AddSingleton<DiscordShardedClient>()
@@ -45,7 +45,7 @@ await using var service = new ServiceCollection()
 		.WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u4}]\t{Message:lj}{NewLine}{Exception}")
 		.CreateLogger()
 	)
-	.AddSingleton<Microsoft.Extensions.Logging.ILogger>(provider => new Logger(new SerilogLoggerFactory(provider.GetRequiredService<ILogger>())))
+	.AddSingleton<Microsoft.Extensions.Logging.ILogger>(provider => Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance)
 
 	.AddSingleton(new InteractionServiceConfig
 	{
