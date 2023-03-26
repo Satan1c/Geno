@@ -3,7 +3,7 @@ using Discord;
 using Discord.Interactions;
 using Geno.Utils.Extensions;
 
-namespace Geno.Errors;
+namespace Geno.Responsers.Error;
 
 public static class ErrorResolver
 {

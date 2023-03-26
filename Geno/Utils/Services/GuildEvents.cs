@@ -1,5 +1,5 @@
-﻿using Discord.WebSocket;
-using Geno.Utils.Services.Database;
+﻿using Database;
+using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Geno.Utils.Services;

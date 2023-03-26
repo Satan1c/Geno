@@ -1,6 +1,6 @@
 ﻿using Discord;
 using Discord.Interactions;
-using Geno.Responses.Modules;
+using Geno.Responsers.Success.Modules;
 using Geno.Utils.Types;
 using SDC_Sharp.DiscordNet.Services;
 using SDC_Sharp.DiscordNet.Types;

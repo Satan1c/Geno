@@ -4,7 +4,7 @@ using Geno.Commands;
 using Geno.Utils.Extensions;
 using Geno.Utils.Types;
 
-namespace Geno.Errors.Modules;
+namespace Geno.Responsers.Error.Modules;
 
 public class SdcErrors : IErrorResolver
 {

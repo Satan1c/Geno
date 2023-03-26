@@ -1,6 +1,6 @@
 ﻿using Discord;
 using Discord.Interactions;
-using Geno.Responses;
+using Geno.Responsers.Success;
 using Geno.Utils.Services;
 using Geno.Utils.Types;
 

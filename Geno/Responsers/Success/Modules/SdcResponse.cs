@@ -6,7 +6,7 @@ using SDC_Sharp.DiscordNet.Types;
 using SDC_Sharp.Types;
 using SDC_Sharp.Types.Enums;
 
-namespace Geno.Responses.Modules;
+namespace Geno.Responsers.Success.Modules;
 
 public static class SdcResponse
 {

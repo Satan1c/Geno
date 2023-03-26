@@ -5,6 +5,7 @@ using Discord.Rest;
 using Discord.WebSocket;
 using Geno.Utils.Types;
 using Newtonsoft.Json;
+using ShikimoriSharp.Bases;
 
 namespace Geno.Utils.Extensions;
 
@@ -25,6 +26,16 @@ public static class Extensions
 		RegexOptions.Compiled | RegexOptions.Singleline
 	);*/
 
+	public static AutocompleteResult AutocompleteResultFrom(this AnimeMangaIdBase animeManga, UserLocales locales)
+	{
+		return new AutocompleteResult(
+			locales == UserLocales.Russian 
+				? (string.IsNullOrEmpty(animeManga.Russian) ? animeManga.English.FirstOrDefault() ?? animeManga.Name : animeManga.Russian)
+				: animeManga.English.FirstOrDefault() ?? animeManga.Name,
+					
+			animeManga.Name);
+	}
+	
 	public static bool HasFlags(this Optional<MessageFlags?> target, MessageFlags categories)
 	{
 		return ((MessageFlags)target!)!.HasFlags(categories);
@@ -71,7 +82,7 @@ public static class Extensions
 				: roles[keys.Select(byte.Parse).FirstOrDefault(i => rankByte >= i).ToString()];
 	}
 
-	internal static bool HasLink(this SocketMessage message)
+	public static bool HasLink(this SocketMessage message)
 	{
 		return s_linkRegex.IsMatch(message.Content);
 	}
@@ -81,7 +92,7 @@ public static class Extensions
 		return user.Username + '#' + user.Discriminator;
 	}
 
-	internal static bool TryGetRole(this SocketGuild guild, ulong id, out SocketRole role)
+	public static bool TryGetRole(this SocketGuild guild, ulong id, out SocketRole role)
 	{
 		try
 		{
@@ -95,7 +106,7 @@ public static class Extensions
 		}
 	}
 
-	internal static bool TryGetInvite(this BaseSocketClient client, string code, out RestInviteMetadata invite)
+	public static bool TryGetInvite(this BaseSocketClient client, string code, out RestInviteMetadata invite)
 	{
 		invite = null!;
 
@@ -113,7 +124,7 @@ public static class Extensions
 		}
 	}
 
-	internal static bool TryGetGuild(this DiscordRestClient client, ulong id, out RestGuild guild)
+	public static bool TryGetGuild(this DiscordRestClient client, ulong id, out RestGuild guild)
 	{
 		guild = null!;
 
@@ -131,7 +142,7 @@ public static class Extensions
 		}
 	}
 
-	internal static bool TryGetUser(this DiscordRestClient client, ulong id, out RestUser user)
+	public static bool TryGetUser(this DiscordRestClient client, ulong id, out RestUser user)
 	{
 		user = null!;
 
@@ -149,7 +160,7 @@ public static class Extensions
 		}
 	}
 
-	internal static bool TryGetGuildUser(this DiscordRestClient client, ulong guildId, ulong userId,
+	public static bool TryGetGuildUser(this DiscordRestClient client, ulong guildId, ulong userId,
 		out RestGuildUser user)
 	{
 		user = null!;
@@ -168,7 +179,7 @@ public static class Extensions
 		}
 	}
 
-	internal static async ValueTask<bool> HasInvite(this IDiscordClient client, SocketUserMessage message,
+	public static async ValueTask<bool> HasInvite(this IDiscordClient client, SocketUserMessage message,
 		bool fetchForValidation = false,
 		bool ignoreCurrentServer = false)
 	{

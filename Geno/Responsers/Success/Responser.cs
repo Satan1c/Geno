@@ -1,6 +1,6 @@
 ﻿using Discord;
 
-namespace Geno.Responses;
+namespace Geno.Responsers.Success;
 
 public static class Responser
 {
@@ -24,7 +24,7 @@ public static class Responser
 		Embed? embed = null,
 		bool ephemeral = false,
 		bool isDefered = false,
-		Embed[] embeds = null)
+		Embed[]? embeds = null)
 	{
 		if (isDefered)
 			return context.Interaction.ModifyOriginalResponseAsync(x =>

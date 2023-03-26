@@ -1,11 +1,11 @@
 ﻿using System.Text;
+using Database;
 using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
 using EnkaAPI;
 using Geno.Utils;
 using Geno.Utils.Services;
-using Geno.Utils.Services.Database;
 using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Driver;
 using SDC_Sharp;
@@ -14,9 +14,7 @@ using SDC_Sharp.Types;
 using Serilog;
 using Serilog.Extensions.Logging;
 using ShikimoriSharp;
-using ShikimoriSharp.Bases;
 using Logger = Microsoft.Extensions.Logging.Logger<Microsoft.Extensions.Logging.ILogger>;
-using JsonLocalizationManager = Geno.Utils.Types.JsonLocalizationManager;
 
 Console.InputEncoding = Encoding.UTF8;
 Console.OutputEncoding = Encoding.UTF8;
@@ -55,12 +53,11 @@ await using var service = new ServiceCollection()
 		EnableAutocompleteHandlers = true,
 		LogLevel = LogSeverity.Verbose,
 		UseCompiledLambda = true,
-		LocalizationManager = new JsonLocalizationManager(localizations)
+		LocalizationManager = new Localization.JsonLocalizationManager(localizations)
 	})
 	.AddSingleton<InteractionService>()
 	.AddSingleton(MongoClientSettings.FromConnectionString(env["Mongo"]))
 	.AddSingleton<IMongoClient, MongoClient>()
-	.AddSingleton<DatabaseCache>()
 	.AddSingleton<DatabaseProvider>()
 	.AddSingleton<CommandHandlingService>()
 	
@@ -73,12 +70,7 @@ await using var service = new ServiceCollection()
 
 	.AddSingleton<EnkaApiClient>()
 	
-	.AddSingleton(new ClientSettings(
-			"Geno",
-			"mkGRM2ud5xmOqUl5bvZkUbFV-zqjQimkQ-W5hhPBFR0",
-			"OlOUNsD14GN2TM6WHwaUaEuqrkFS7LGKJfwtHvyf6Ck"
-		)
-	)
+	.AddSingleton<ShikimoriService.ShikimoriClient>()
 	.AddSingleton<ShikimoriClient>()
 
 	.InitializeSdcServices()

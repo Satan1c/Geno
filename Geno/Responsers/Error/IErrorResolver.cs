@@ -1,7 +1,7 @@
 ﻿using Discord;
 using Discord.Interactions;
 
-namespace Geno.Errors;
+namespace Geno.Responsers.Error;
 
 public interface IErrorResolver
 {

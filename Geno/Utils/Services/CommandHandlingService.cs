@@ -3,8 +3,8 @@ using Discord;
 using Discord.Extensions.Interactions;
 using Discord.Interactions;
 using Discord.WebSocket;
-using Geno.Errors;
-using Geno.Responses;
+using Geno.Responsers.Error;
+using Geno.Responsers.Success;
 using Geno.Utils.Extensions;
 using Geno.Utils.Types;
 
@@ -12,8 +12,8 @@ namespace Geno.Utils.Services;
 
 public class CommandHandlingService
 {
-	internal static InteractionService Interactions = null!;
-	internal static IReadOnlyDictionary<Category, ModuleInfo[]> Private = null!;
+	public static InteractionService Interactions = null!;
+	public static IReadOnlyDictionary<Category, ModuleInfo[]> Private = null!;
 	
 	private readonly DiscordShardedClient m_client;
 	private readonly IServiceProvider m_services;
