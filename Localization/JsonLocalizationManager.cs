@@ -3,7 +3,7 @@ using Discord.Interactions;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace Geno.Utils.Types;
+namespace Localization;
 
 public sealed class JsonLocalizationManager : ILocalizationManager
 {
