@@ -19,8 +19,11 @@ public class Shikimori : InteractionModuleBase<ShardedInteractionContext>
 			m_shikimoriClient = shikimoriClient;
 		}
 
-		[SlashCommand("anime", "search anime")]
-		public async Task SearchAnime([Autocomplete(typeof(ShikimoriAnimeAutocompleteHandler))] string query)
+		[SlashCommand("anime", "search anime by name")]
+		public async Task SearchAnime(
+			[Autocomplete(typeof(ShikimoriAnimeAutocompleteHandler))]
+			[Summary("anime_name", "Anime name")]
+			string query)
 		{
 			await Context.Interaction.DeferAsync();
 			query = query.ToLower();
@@ -28,8 +31,11 @@ public class Shikimori : InteractionModuleBase<ShardedInteractionContext>
 			await Context.SearchResult(await FetchAnime(query));
 		}
 
-		[SlashCommand("manga", "search manga")]
-		public async Task SearchManga([Autocomplete(typeof(ShikimoriMangaAutocompleteHandler))] string query)
+		[SlashCommand("manga", "search manga by name")]
+		public async Task SearchManga(
+			[Autocomplete(typeof(ShikimoriMangaAutocompleteHandler))]
+			[Summary("manga_name", "Manga name")]
+			string query)
 		{
 			await Context.Interaction.DeferAsync();
 			query = query.ToLower();

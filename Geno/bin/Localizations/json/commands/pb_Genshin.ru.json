@@ -1,0 +1,37 @@
+﻿{
+	"Make code links": {
+		"name": "Ссылки кодов"
+	},
+	
+	"Rank info": {
+		"name": "Роли за ранг"
+	},
+	
+	"Set ranks roles": {
+		"name": "Установить роли"
+	},
+	
+	"genshin": {
+		"name": "геншин",
+		"description": "Команды связанные с Genshin Impact",
+		
+		"set_rank": {
+			"name": "set_rank",
+			"description": "Установить ранг",
+			
+			"user": {
+				"name": "пользователь",
+				"description": "Пользователь, которому вы хотите установить ранг"
+			},
+			"rank": {
+				"name": "ранг",
+				"description": "Ранг, который вы хотите установить"
+			}
+		},
+		
+		"get_ranks": {
+			"name": "get_rank",
+			"description": "Получить ранг"
+		}
+	}
+}

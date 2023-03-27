@@ -14,8 +14,9 @@ public class LocalizationManager
 		if (files.Length > 0)
 			Load(files);
 		else
+			//foreach (var d in Directory.GetDirectories(filesPath))
 			foreach (var directory in Directory.GetDirectories(filesPath))
-				Load(Directory.GetFiles(directory, "*.csv"));
+					Load(Directory.GetFiles(directory, "*.csv"));
 	}
 
 	private void Load(string[] filesPaths)

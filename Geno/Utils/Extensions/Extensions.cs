@@ -207,13 +207,11 @@ public static class Extensions
 	}
 	
 	public static string FormatWith<T>(this string format, T source)
-		where T : class
 	{
 		return format.FormatWith(source, null);
 	}
 	
 	public static string FormatWith<T>(this string format, T source, IFormatProvider? provider)
-		where T: class
 	{
 		if (format == null)
 			throw new ArgumentNullException(nameof(format));

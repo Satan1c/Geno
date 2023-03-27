@@ -4,7 +4,6 @@ using Discord;
 using Discord.Interactions;
 using Geno.Responsers.Success;
 using Geno.Utils.StaticData;
-using Geno.Utils.Types;
 
 namespace Geno.Commands;
 
@@ -22,12 +21,13 @@ public class Settings : InteractionModuleBase<ShardedInteractionContext>
 	[Group("set", "set commands sub group")]
 	public class SetUtils : InteractionModuleBase<ShardedInteractionContext>
 	{
-		[SlashCommand("voice_rooms_names", "sets names for voice-rooms channel")]
+		[SlashCommand("voice_rooms_names", "Voice room name template; {Count},{DisplayName},{Username},{UserTag},{ActivityName}")]
 		[RequireBotPermission(BotPermissions.UtilsAddVoice)]
 		[RequireUserPermission(UserPermissions.UtilsAddVoice)]
-		public async Task SetVoiceChannelNames(IVoiceChannel channel,
-			[MinLength(1), MaxLength(50), Summary("name", "created channel name, default - Party #{Count}")]
-			string name = "Party #{Count}")
+		public async Task SetVoiceChannelNames(
+			IVoiceChannel channel,
+			[MinLength(1), MaxLength(50), Summary("template", "created channel name, default - Party #{Count}")]
+			string name = "Default - Party #{Count}")
 		{
 			if (await channel.GetCategoryAsync() is null)
 			{
@@ -49,8 +49,9 @@ public class Settings : InteractionModuleBase<ShardedInteractionContext>
 		[SlashCommand("voice_rooms_channel", "sets base voice-rooms channel")]
 		[RequireBotPermission(BotPermissions.UtilsAddVoice)]
 		[RequireUserPermission(UserPermissions.UtilsAddVoice)]
-		public async Task AddVoiceChannel(IVoiceChannel channel,
-			[MinLength(1), MaxLength(50), Summary("name", "created channel name, default - Party #{Count}")]
+		public async Task AddVoiceChannel(
+			IVoiceChannel channel,
+			[MinLength(1), MaxLength(50), Summary("template", "created channel name, default - Party #{Count}")]
 			string name = "Party #{Count}")
 		{
 			if (await channel.GetCategoryAsync() is not { } category)
@@ -73,7 +74,9 @@ public class Settings : InteractionModuleBase<ShardedInteractionContext>
 		[SlashCommand("voice_rooms_channel", "removes base voice-rooms channel")]
 		[RequireBotPermission(ChannelPermission.ManageChannels)]
 		[RequireUserPermission(ChannelPermission.ManageChannels)]
-		public async Task RemoveVoiceChannel([ChannelTypes(ChannelType.Voice)] IVoiceChannel channel)
+		public async Task RemoveVoiceChannel(
+			[Summary("", "")]
+			IVoiceChannel channel)
 		{
 			if (await channel.GetCategoryAsync() is null)
 			{
@@ -85,8 +88,9 @@ public class Settings : InteractionModuleBase<ShardedInteractionContext>
 
 			var config = await m_databaseProvider.GetConfig(Context.Guild.Id, true);
 			config.Channels.Remove(channel.Id.ToString());
+            config.VoicesNames.Remove(channel.Id.ToString());
 
-			await m_databaseProvider.SetConfig(config);
+            await m_databaseProvider.SetConfig(config);
 			await RespondAsync("Done",
 				allowedMentions: AllowedMentions.None,
 				ephemeral: true);

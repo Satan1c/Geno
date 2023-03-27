@@ -2,7 +2,6 @@
 using Discord.Interactions;
 using Geno.Commands;
 using Geno.Utils.Extensions;
-using Geno.Utils.Types;
 using Localization;
 
 namespace Geno.Responsers.Error.Modules;

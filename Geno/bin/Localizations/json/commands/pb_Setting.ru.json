@@ -1,0 +1,69 @@
+﻿{
+	"settings": {
+		"name": "настройки",
+		"description": "настройки бота",
+		
+		"set": {
+			"name": "установить",
+			"description": "устанавливает значения настроек",
+			
+			"voice_rooms_names": {
+				"name": "имена_голосовых_комнат",
+				"description": "Шаблон для имен голосовых комнат; {Count},{DisplayName},{Username},{UserTag},{ActivityName}",
+				
+				"channel": {
+					"name": "канал",
+					"description": "Канал к которому будет привязан щаблон"
+				},
+				"template": {
+					"name": "шаблон",
+					"description": "Поумолчанию - Party #{Count}"
+				}
+			}
+		},
+		
+		"add": {
+			"name": "добавить",
+			"description": "добавляет значения в настройки",
+			
+			"voice_rooms_channel": {
+				"name": "канал_голосовых_комнат",
+				"description": "Добавляет канал в список каналов для создания голосовых комнат",
+				
+				"channel": {
+					"name": "канал",
+					"description": "канал который будет добавлен в список"
+				},
+				"template": {
+					"name": "шаблон",
+					"description": "Поумолчанию - Party #{Count}"
+				}
+			}
+		},
+		
+		"remove": {
+			"name": "убрать",
+			"description": "убирает значение из настроек",
+			
+			"voice_rooms_channel": {
+				"name": "канал_голосовых_комнат",
+				"description": "Убирает канал из списка каналов для создания голосовых комнат",
+				
+				"channel": {
+					"name": "канал",
+					"description": "канал который будет убран из списков"
+				}
+			}
+		},
+		
+		"get": {
+			"name": "вывести",
+			"description": "выводит информацию о настройке",
+			
+			"voice_rooms_channel": {
+				"name": "каналы_голосовых_комнат",
+				"description": "Выводит список каналов для создания голосовых комнат"
+			}
+		}
+	}
+}
