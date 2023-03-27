@@ -21,27 +21,27 @@ public class GuildEvents
 
 	public async Task OnUserVoiceStateUpdated(SocketUser user, SocketVoiceState before, SocketVoiceState after)
 	{
-		if (user is not SocketGuildUser guildUser || guildUser.IsBot ||
-		    !await m_databaseProvider.HasDocument(guildUser.Guild.Id))
+		if (user is not SocketGuildUser guildUser
+		    || guildUser.IsBot
+		    || !await m_databaseProvider.HasDocument(guildUser.Guild.Id))
 			return;
 
 		var config = await m_databaseProvider.GetConfig(guildUser.Guild.Id, true);
 		var guildUserId = guildUser.Id.ToString();
-		var afterChannelId = after.VoiceChannel?.Id.ToString() ?? ""; 
-		
-		if (config.Voices.TryGetValue(guildUserId, out var voiceId)
-		    && before.VoiceChannel is { } beforeChannel
+		var afterChannelId = after.VoiceChannel?.Id.ToString() ?? "";
+
+		if (before.VoiceChannel is { } beforeChannel
+		    && config.Voices.TryGetValue(guildUserId, out var voiceId)
 		    && beforeChannel.Id == voiceId)
 		{
 			await OnDeleteChannel(beforeChannel, guildUserId, guildUser, config);
 		}
-		
-		if (after.VoiceChannel is { } afterChannel &&
-		    config.Channels.TryGetValue(afterChannelId, out var categoryId))
+
+		if (after.VoiceChannel is { } afterVoiceChannel && config.Channels.TryGetValue(afterChannelId, out var categoryId))
 		{
-			await OnCreateChannel(afterChannelId, categoryId, config, guildUser);
+			await OnCreateChannel(afterChannelId, afterVoiceChannel, categoryId, config, guildUser);
 		}
-		
+
 		await m_databaseProvider.SetConfig(config);
 	}
 
@@ -71,7 +71,7 @@ public class GuildEvents
 	}
 
 
-	private static async Task OnCreateChannel(string afterChannelId, ulong categoryId, GuildDocument config, SocketGuildUser guildUser)
+	private static async Task OnCreateChannel(string afterChannelId, IGuildChannel afterVoiceChannel, ulong categoryId, GuildDocument config, SocketGuildUser guildUser)
 	{
 		var formatSource = new
 		{
@@ -87,6 +87,7 @@ public class GuildEvents
 			properties =>
 			{
 				properties.CategoryId = categoryId;
+				properties.Position = afterVoiceChannel?.Position ?? 0;
 				properties.PermissionOverwrites = new Overwrite[]
 				{
 					new(guildUser.Id, PermissionTarget.User, new OverwritePermissions(manageChannel: PermValue.Allow)),
@@ -97,6 +98,5 @@ public class GuildEvents
 		
 		
 		await guildUser.ModifyAsync(x => x.Channel = voice);
-
 	}
 }
