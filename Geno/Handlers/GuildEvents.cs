@@ -1,5 +1,8 @@
 ﻿using Database;
+using Database.Models;
+using Discord;
 using Discord.WebSocket;
+using Geno.Utils.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Geno.Handlers;
@@ -13,71 +16,87 @@ public class GuildEvents
 		var client = services.GetRequiredService<DiscordShardedClient>();
 		m_databaseProvider = services.GetRequiredService<DatabaseProvider>();
 
-		//m_client.MessageReceived += MessageReceived;
-		client.UserVoiceStateUpdated += OnDeleteChannel;
-		client.UserVoiceStateUpdated += OnCreateChannel;
+		client.UserVoiceStateUpdated += OnUserVoiceStateUpdated;
 	}
 
-	/*public Task MessageReceived(SocketMessage message)
+	public async Task OnUserVoiceStateUpdated(SocketUser user, SocketVoiceState before, SocketVoiceState after)
 	{
-		_ = Task.Run(async () =>
-		{
-			if (message.Source != MessageSource.User)
-				return;
-			var userMessage = (message as SocketUserMessage)!;
-
-			var isLink = message.HasLink();
-			var isInvite = await m_client.HasInvite(userMessage, true, true);
-
-			if (!isLink && !isInvite)
-				return;
-
-			await (userMessage.Author as SocketGuildUser)!.SetTimeOutAsync(TimeSpan.FromSeconds(15));
-		});
-		
-		return Task.CompletedTask;
-	}*/
-
-	public async Task OnDeleteChannel(SocketUser user, SocketVoiceState before, SocketVoiceState after)
-	{
-		if (user is not SocketGuildUser guildUser || !await m_databaseProvider.HasDocument(guildUser.Guild.Id))
+		if (user is not SocketGuildUser guildUser || guildUser.IsBot ||
+		    !await m_databaseProvider.HasDocument(guildUser.Guild.Id))
 			return;
 
-		var config = await m_databaseProvider.GetConfig(guildUser.Guild.Id);
-		var userId = guildUser.Id.ToString();
-
-		if (config.Voices.TryGetValue(userId, out var value)
+		var config = await m_databaseProvider.GetConfig(guildUser.Guild.Id, true);
+		var guildUserId = guildUser.Id.ToString();
+		var afterChannelId = after.VoiceChannel?.Id.ToString() ?? ""; 
+		
+		if (config.Voices.TryGetValue(guildUserId, out var voiceId)
 		    && before.VoiceChannel is { } beforeChannel
-		    && beforeChannel.Id == value)
+		    && beforeChannel.Id == voiceId)
+		{
+			await OnDeleteChannel(beforeChannel, guildUserId, guildUser, config);
+		}
+		
+		if (after.VoiceChannel is { } afterChannel &&
+		    config.Channels.TryGetValue(afterChannelId, out var categoryId))
+		{
+			await OnCreateChannel(afterChannelId, categoryId, config, guildUser);
+		}
+		
+		await m_databaseProvider.SetConfig(config);
+	}
+
+	private static async Task OnDeleteChannel(SocketVoiceChannel before, string guildUserId, SocketGuildUser guildUser, GuildDocument config)
+	{
+		var firstUser = before.ConnectedUsers.FirstOrDefault(x => !x.IsBot && x.Id != guildUser.Id);
+		if (firstUser is null)
 		{
 			await guildUser.Guild
-				.GetChannel(value)
+				.GetChannel(before.Id)
 				.DeleteAsync();
-
-			config.Voices.Remove(userId);
-			await m_databaseProvider.SetConfig(config);
 		}
+		else
+		{
+			await before.ModifyAsync(properties =>
+			{
+				properties.Name = config.VoicesNames[before.Id.ToString()].FormatWith(firstUser);
+				properties.PermissionOverwrites = before.PermissionOverwrites
+					.Where(x => x.TargetType == PermissionTarget.User && x.TargetId != guildUser.Id)
+					.Append(new Overwrite(firstUser.Id, PermissionTarget.User, new OverwritePermissions(manageChannel: PermValue.Allow)))
+					.ToArray();
+			});
+			config.Voices.Add(firstUser.Id.ToString(), before.Id);
+		}
+
+		config.Voices.Remove(guildUserId);
 	}
 
-	public async Task OnCreateChannel(SocketUser user, SocketVoiceState before, SocketVoiceState after)
+
+	private static async Task OnCreateChannel(string afterChannelId, ulong categoryId, GuildDocument config, SocketGuildUser guildUser)
 	{
-		if (user is not SocketGuildUser guildUser || !await m_databaseProvider.HasDocument(guildUser.Guild.Id))
-			return;
-
-		var config = await m_databaseProvider.GetConfig(guildUser.Guild.Id);
-
-		if (after.VoiceChannel is { } afterChannel &&
-		    config.Channels.ContainsKey(afterChannel.Id.ToString()))
+		var formatSource = new
 		{
-			//TODO: add permissions override to rename channel
-			var count = config.Voices.Count + 1;
-			var voice = await guildUser.Guild.CreateVoiceChannelAsync(
-				"Party #" + count,
-				properties => properties.CategoryId = config.Channels[after.VoiceChannel.Id.ToString()]);
+			Count = config.Voices.Count + 1,
+			guildUser.DisplayName,
+			guildUser.Username,
+			UserTag = guildUser.UserTag(),
+			ActivityName = guildUser.Activities.FirstOrDefault()?.Name ?? "Discord"
+		};
+		
+		var voice = await guildUser.Guild.CreateVoiceChannelAsync(
+			config.VoicesNames[afterChannelId].FormatWith(formatSource),
+			properties =>
+			{
+				properties.CategoryId = categoryId;
+				properties.PermissionOverwrites = new Overwrite[]
+				{
+					new(guildUser.Id, PermissionTarget.User, new OverwritePermissions(manageChannel: PermValue.Allow)),
+				};
+			});
 
-			config.Voices[guildUser.Id.ToString()] = voice.Id;
-			await m_databaseProvider.SetConfig(config);
-			await guildUser.ModifyAsync(x => x.Channel = voice);
-		}
+		config.Voices[guildUser.Id.ToString()] = voice.Id;
+		
+		
+		await guildUser.ModifyAsync(x => x.Channel = voice);
+
 	}
 }
