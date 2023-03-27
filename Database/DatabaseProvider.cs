@@ -31,25 +31,30 @@ public class DatabaseProvider
 		return true;
 	}
 
-	public async Task<GuildDocument> GetConfig(ulong id)
+	public async Task<GuildDocument> GetConfig(ulong id, bool fetch = false)
 	{
 		var itemId = id.ToString();
 		if (s_cache.Exists(itemId))
 			return s_cache.Get(itemId);
 
-		var item = await FindOrInsert(m_guildConfigs, x => x.Id == id, new GuildDocument
-		{
-			Id = id
-		});
+		var item = GuildDocument.GetDefault(id);
+		
+		if (fetch && await HasDocument(id))
+			item = await FindOrInsert(m_guildConfigs, x => x.Id == id, item);
+		
 		s_cache.Put(itemId, item);
 
 		return await GetConfig(id);
 	}
 
-	public Task SetConfig(GuildDocument document)
+	public async Task SetConfig(GuildDocument document, GuildDocument? before = null)
 	{
 		s_cache.Put(document.Id.ToString(), document);
-		return InsertOrReplaceOne(m_guildConfigs, x => x.Id == document.Id, document);
+		
+		if (before != null && document == before)
+			return;
+
+		await InsertOrReplaceOne(m_guildConfigs, x => x.Id == document.Id, document);
 	}
 
 	private static async Task InsertOrReplaceOne<TDocument>(IMongoCollection<TDocument> collection,
