@@ -7,7 +7,7 @@ namespace Localization;
 public class JsonLocalizationManager
 {
 	private readonly string m_basePath;
-	private readonly Regex m_categoryRegex = new("\\w+.(?<category>\\w(?:-\\w)?).json", RegexOptions.Compiled | RegexOptions.Singleline);
+	private readonly Regex m_categoryRegex = new(@"\w+.(?<locale>\w+(?:-\w+)?).json", RegexOptions.Compiled | RegexOptions.Singleline);
 
 	public JsonLocalizationManager(string basePath)
 	{

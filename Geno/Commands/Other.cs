@@ -21,7 +21,7 @@ public class Other : InteractionModuleBase<ShardedInteractionContext>
 			m_client = client;
 		}
 
-		[SlashCommand("stats", "show bot stats")]
+		[SlashCommand("status", "show bot stats")]
 		public async Task PingCommand(bool clear = false)
 		{
 			if (clear && Context.User.Id == (await Context.Client.GetApplicationInfoAsync()).Owner.Id)
