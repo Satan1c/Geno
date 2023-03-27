@@ -23,8 +23,8 @@ Console.OutputEncoding = Encoding.UTF8;
 
 var env = Utils.GetEnv();
 var locals = Path.GetFullPath("../../", AppDomain.CurrentDomain.BaseDirectory) + "Localizations";
-var jsons = locals + "\\json";
-var csv = locals + "\\csv";
+var jsons = locals + "/json";
+var csv = locals + "/csv";
 
 await using var service = new ServiceCollection()
 	.AddSingleton(new DiscordSocketConfig
@@ -54,7 +54,7 @@ await using var service = new ServiceCollection()
 		EnableAutocompleteHandlers = true,
 		LogLevel = LogSeverity.Verbose,
 		UseCompiledLambda = true,
-		LocalizationManager = new CommandsLocalizationManager(jsons + "\\commands")
+		LocalizationManager = new CommandsLocalizationManager(jsons + "/commands")
 	})
 	.AddSingleton(new LocalizationManager(csv))
 	.AddSingleton<InteractionService>()

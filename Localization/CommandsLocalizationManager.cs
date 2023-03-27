@@ -12,7 +12,7 @@ public sealed class CommandsLocalizationManager : ILocalizationManager
 	private const string m_spaceToken = "~";*/
 	private readonly string m_basePath;
 
-	private readonly Regex m_localeParserRegex = new("\\w+.(?<locale>\\w{2}(?:-\\w{2})?).json",
+	private readonly Regex m_localeParserRegex = new(@"\w+.(?<locale>\w+(?:-\w+)?).json",
 		RegexOptions.Compiled | RegexOptions.Singleline);
 
 	public CommandsLocalizationManager(string basePath)
