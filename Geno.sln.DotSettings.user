@@ -16,7 +16,10 @@
   &lt;Assembly Path="C:\projects\C#\WargamingApi\WorldOfTanksBlitz\bin\Release\netcoreapp3.1\WorldOfTanksBlitz.dll" /&gt;&#xD;
   &lt;Assembly Path="C:\Users\Satan1c\.nuget\packages\shikimorisharp\1.3.4\lib\netstandard2.1\ShikimoriSharp.dll" /&gt;&#xD;
 &lt;/AssemblyExplorer&gt;</s:String>
+	<s:Boolean x:Key="/Default/UserDictionary/Words/=enka/@EntryIndexedValue">True</s:Boolean>
+	<s:Boolean x:Key="/Default/UserDictionary/Words/=Genshin/@EntryIndexedValue">True</s:Boolean>
 	
 	<s:Boolean x:Key="/Default/UserDictionary/Words/=Mongo/@EntryIndexedValue">True</s:Boolean>
 	<s:Boolean x:Key="/Default/UserDictionary/Words/=Shikimori/@EntryIndexedValue">True</s:Boolean>
+	<s:Boolean x:Key="/Default/UserDictionary/Words/=waifu/@EntryIndexedValue">True</s:Boolean>
 	<s:Boolean x:Key="/Default/UserDictionary/Words/=Wargaming/@EntryIndexedValue">True</s:Boolean></wpf:ResourceDictionary>

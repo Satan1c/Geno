@@ -7,9 +7,9 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="CacheManager.Microsoft.Extensions.Caching.Memory" Version="1.2.0"/>
-        <PackageReference Include="MongoDB.Bson" Version="2.19.0"/>
-        <PackageReference Include="MongoDB.Driver" Version="2.19.0"/>
+        <PackageReference Include="CacheManager.Microsoft.Extensions.Caching.Memory" Version="1.2.0" />
+        <PackageReference Include="MongoDB.Bson" Version="2.19.1" />
+        <PackageReference Include="MongoDB.Driver" Version="2.19.1" />
     </ItemGroup>
 
 </Project>

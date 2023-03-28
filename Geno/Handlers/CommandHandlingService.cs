@@ -48,19 +48,16 @@ public class CommandHandlingService
 			if (m is null)
 				continue;
 
-			var attr = m.Attributes.FirstOrDefault(x => x is PrivateAttribute);
-
-			if (attr != null && !attr.IsDefaultAttribute())
+			if (m.Attributes.FirstOrDefault(x => x is PrivateAttribute)
+				    is PrivateAttribute privateAttribute && !privateAttribute.IsDefaultAttribute())
 			{
-				var attribute = (PrivateAttribute)attr;
-
-				if (attribute.Categories.HasCategory(Category.Admin))
+				if (privateAttribute.Categories.HasCategory(Category.Admin))
 					await Interactions.AddModulesToGuildAsync(648571219674923008, true, m);
 
-				if (!priv.ContainsKey(attribute.Categories))
-					priv[attribute.Categories] = new LinkedList<ModuleInfo>();
+				if (!priv.ContainsKey(privateAttribute.Categories))
+					priv[privateAttribute.Categories] = new LinkedList<ModuleInfo>();
 
-				priv[attribute.Categories].AddLast(m);
+				priv[privateAttribute.Categories].AddLast(m);
 
 				continue;
 			}
@@ -68,11 +65,12 @@ public class CommandHandlingService
 			safe.AddLast(m);
 		}
 
-		Private = new Dictionary<Category, ModuleInfo[]>(priv.Select(k
-				=> new KeyValuePair<Category, ModuleInfo[]>(k.Key, k.Value.ToArray())))
-			{
-				{ Category.None, Array.Empty<ModuleInfo>() }
-			}
+		Private = new Dictionary<Category, ModuleInfo[]>(
+				priv
+					.Select(k =>
+						new KeyValuePair<Category, ModuleInfo[]>(k.Key, k.Value.ToArray())
+					)
+				) { { Category.None, Array.Empty<ModuleInfo>() } }
 			.AsReadOnly();
 
 		await Interactions.AddModulesGloballyAsync(true, safe.ToArray());

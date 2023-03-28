@@ -1,5 +1,6 @@
 ﻿using Discord;
 using Discord.Interactions;
+using Geno.Handlers;
 using Geno.Responsers.Success.Modules;
 using Geno.Utils.Types;
 using SDC_Sharp.DiscordNet.Services;
@@ -17,7 +18,11 @@ public class Sdc : InteractionModuleBase<ShardedInteractionContext>
 
 		public MonitoringCommands(MonitoringService monitoring)
 		{
+			ClientEvents.OnLog(new LogMessage(LogSeverity.Verbose, $"{nameof(Sdc)}.{nameof(MonitoringCommands)}", "Initializing"));
+			
 			m_monitoring = monitoring;
+			
+			ClientEvents.OnLog(new LogMessage(LogSeverity.Verbose, $"{nameof(Sdc)}.{nameof(MonitoringCommands)}", "Initialized"));
 		}
 
 		[SlashCommand("guild_info", "show guild info from site")]
@@ -49,7 +54,11 @@ public class Sdc : InteractionModuleBase<ShardedInteractionContext>
 
 		public NikaCommands(BlacklistService blacklistService)
 		{
+			ClientEvents.OnLog(new LogMessage(LogSeverity.Verbose, $"{nameof(Sdc)}.{nameof(NikaCommands)}", "Initializing"));
+			
 			m_blacklistService = blacklistService;
+			
+			ClientEvents.OnLog(new LogMessage(LogSeverity.Verbose, $"{nameof(Sdc)}.{nameof(NikaCommands)}", "Initialized"));
 		}
 
 		[SlashCommand("warns", "show guild info from site")]

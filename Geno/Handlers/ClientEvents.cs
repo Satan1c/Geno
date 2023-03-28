@@ -26,22 +26,25 @@ public class ClientEvents
 		var message = log.Message;
 		var exceptionType = log.Exception?.GetType();
 		var stackTrace = log.Exception?.StackTrace?.Replace("\n", "\n\t\t\t");
+		var innerTrace = log.Exception?.InnerException?.StackTrace?.Replace("\n", "\n\t\t\t");
 
 		switch (log.Severity)
 		{
 			case LogSeverity.Critical:
 				s_logger.Fatal(
-					"{Source}\t{Exception}\t{Trace}",
+					"{Source}\t{Exception}\t{Trace}\n{InnerTrace}",
 					source,
 					exceptionType,
-					stackTrace);
+					stackTrace,
+					innerTrace);
 				break;
 			case LogSeverity.Error:
 				s_logger.Error(
-					"{Source}\t{Exception}\t{Trace}",
+					"{Source}\t{Exception}\t{Trace}\n{InnerTrace}",
 					source,
 					exceptionType,
-					stackTrace);
+					stackTrace,
+					innerTrace);
 				break;
 			case LogSeverity.Warning:
 				s_logger.Warning(

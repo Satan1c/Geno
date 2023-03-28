@@ -2,6 +2,7 @@
 using Database;
 using Discord;
 using Discord.Interactions;
+using Geno.Handlers;
 using Geno.Responsers.Success;
 using Geno.Utils.StaticData;
 
@@ -15,7 +16,11 @@ public class Settings : InteractionModuleBase<ShardedInteractionContext>
 
 	public Settings(DatabaseProvider databaseProvider)
 	{
+		ClientEvents.OnLog(new LogMessage(LogSeverity.Verbose, $"{nameof(Settings)}", "Initializing"));
+		
 		m_databaseProvider = databaseProvider;
+		
+		ClientEvents.OnLog(new LogMessage(LogSeverity.Verbose, $"{nameof(Settings)}", "Initialized"));
 	}
 	
 	[Group("set", "set commands sub group")]
@@ -35,7 +40,7 @@ public class Settings : InteractionModuleBase<ShardedInteractionContext>
 				return;
 			}
 
-			var config = await m_databaseProvider.GetConfig(Context.Guild.Id, true);
+			var config = await m_databaseProvider.GetConfig(Context.Guild.Id);
 			config.VoicesNames[channel.Id.ToString()] = name;
 
 			await m_databaseProvider.SetConfig(config);
@@ -57,7 +62,7 @@ public class Settings : InteractionModuleBase<ShardedInteractionContext>
 			if (await channel.GetCategoryAsync() is not { } category)
 				throw new Exception("Voice channel must have a category");
 
-			var config = await m_databaseProvider.GetConfig(Context.Guild.Id, true);
+			var config = await m_databaseProvider.GetConfig(Context.Guild.Id);
 			config.Channels[channel.Id.ToString()] = category.Id;
 			config.VoicesNames[channel.Id.ToString()] = name;
 
@@ -86,7 +91,7 @@ public class Settings : InteractionModuleBase<ShardedInteractionContext>
 				return;
 			}
 
-			var config = await m_databaseProvider.GetConfig(Context.Guild.Id, true);
+			var config = await m_databaseProvider.GetConfig(Context.Guild.Id);
 			config.Channels.Remove(channel.Id.ToString());
             config.VoicesNames.Remove(channel.Id.ToString());
 
@@ -105,7 +110,7 @@ public class Settings : InteractionModuleBase<ShardedInteractionContext>
 		[RequireUserPermission(ChannelPermission.ManageChannels)]
 		public async Task GetVoiceChannel()
 		{
-			var config = await m_databaseProvider.GetConfig(Context.Guild.Id, true);
+			var config = await m_databaseProvider.GetConfig(Context.Guild.Id);
 			if (config.Channels.Count < 1)
 			{
 				await RespondAsync("None",

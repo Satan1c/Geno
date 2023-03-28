@@ -26,7 +26,7 @@ public class GuildEvents
 		    || !await m_databaseProvider.HasDocument(guildUser.Guild.Id))
 			return;
 
-		var config = await m_databaseProvider.GetConfig(guildUser.Guild.Id, true);
+		var config = await m_databaseProvider.GetConfig(guildUser.Guild.Id);
 		var guildUserId = guildUser.Id.ToString();
 		var afterChannelId = after.VoiceChannel?.Id.ToString() ?? "";
 

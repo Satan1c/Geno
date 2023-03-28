@@ -1,4 +1,6 @@
-﻿using Discord.Interactions;
+﻿using Discord;
+using Discord.Interactions;
+using Geno.Handlers;
 using Geno.Responsers.Success.Modules;
 using Geno.Utils.Types;
 using ShikimoriService;
@@ -16,7 +18,11 @@ public class Shikimori : InteractionModuleBase<ShardedInteractionContext>
 
 		public SearchCommands(ShikimoriClient shikimoriClient)
 		{
+			ClientEvents.OnLog(new LogMessage(LogSeverity.Verbose, $"{nameof(Shikimori)}.{nameof(SearchCommands)}", "Initializing"));
+			
 			m_shikimoriClient = shikimoriClient;
+			
+			ClientEvents.OnLog(new LogMessage(LogSeverity.Verbose, $"{nameof(Shikimori)}.{nameof(SearchCommands)}", "Initialized"));
 		}
 
 		[SlashCommand("anime", "search anime by name")]

@@ -5,6 +5,7 @@ using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
 using EnkaAPI;
+using Geno.Handlers;
 using Geno.Responsers.Success.Modules;
 using Geno.Utils.Extensions;
 using Geno.Utils.Types;
@@ -23,9 +24,13 @@ public class Genshin : InteractionModuleBase<ShardedInteractionContext>
 
 	public Genshin(DatabaseProvider databaseProvider, EnkaApiClient enkaApiClient, LocalizationManager localizationManager)
 	{
+		ClientEvents.OnLog(new LogMessage(LogSeverity.Verbose, nameof(Genshin), "Initializing"));
+		
 		m_databaseProvider = databaseProvider;
 		m_enkaApiClient = enkaApiClient;
 		m_localizations = localizationManager.GetCategory("genshin");
+		
+		ClientEvents.OnLog(new LogMessage(LogSeverity.Verbose, nameof(Genshin), "Initialized"));
 	}
 	
 	[UserCommand("Genshin profile")]
@@ -85,12 +90,12 @@ public class Genshin : InteractionModuleBase<ShardedInteractionContext>
 		var cfg = await m_databaseProvider.GetConfig(Context.Guild.Id);
 		cfg.RankRoles = new Dictionary<string, ulong[]>();
 
-		string[] pair;
 		for (byte i = 0; i < pairs.Length; i++)
 		{
-			pair = pairs[i].Split('-');
+			var pair = pairs[i].Split('-');
 			var k = byte.Parse(pair[0]);
 			var v = pair[1].Split(',').Select(s => ulong.Parse(s)).ToArray();
+			
 			cfg.RankRoles[k.ToString()] = v;
 		}
 

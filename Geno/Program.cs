@@ -15,6 +15,7 @@ using SDC_Sharp.DiscordNet;
 using SDC_Sharp.Types;
 using Serilog;
 using ShikimoriSharp;
+using WaifuPicsApi;
 using ILogger = Microsoft.Extensions.Logging.ILogger;
 using Logger = Microsoft.Extensions.Logging.Logger<Microsoft.Extensions.Logging.ILogger>;
 
@@ -54,7 +55,7 @@ await using var service = new ServiceCollection()
 		EnableAutocompleteHandlers = true,
 		LogLevel = LogSeverity.Verbose,
 		UseCompiledLambda = true,
-		LocalizationManager = new CommandsLocalizationManager(jsons + "/commands")
+		LocalizationManager = new CommandsLocalizationManager(jsons)
 	})
 	.AddSingleton(new LocalizationManager(csv))
 	.AddSingleton<InteractionService>()
@@ -70,6 +71,7 @@ await using var service = new ServiceCollection()
 	.AddSingleton<EnkaApiClient>()
 	.AddSingleton<ShikimoriService.ShikimoriClient>()
 	.AddSingleton<ShikimoriClient>()
+	.AddSingleton<WaifuClient>()
 	.InitializeSdcServices()
 	.BuildServiceProvider();
 

@@ -11,8 +11,17 @@ namespace Geno.Commands.Private;
 [Private(Category.Images)]
 public class Images : InteractionModuleBase<ShardedInteractionContext>
 {
-	private readonly WaifuClient m_waifuClient = new();
+	private readonly WaifuClient m_waifuClient;
 	//private IEnumerable<AutocompleteResult> m_sfwCategories = Array.Empty<AutocompleteResult>();
+
+	public Images(WaifuClient waifuClient)
+	{
+		ClientEvents.OnLog(new LogMessage(LogSeverity.Verbose, nameof(Images), "Initializing"));
+		
+		m_waifuClient = waifuClient;
+		
+		ClientEvents.OnLog(new LogMessage(LogSeverity.Verbose, nameof(Images), "Initialized"));
+	}
 
 	[SlashCommand("nsfw", "nsfw images")]
 	[EnabledInDm(false)]

@@ -31,28 +31,26 @@ public class DatabaseProvider
 		return true;
 	}
 
-	public async Task<GuildDocument> GetConfig(ulong id, bool fetch = false)
+	public async Task<GuildDocument> GetConfig(ulong id, bool fetch = true)
 	{
 		var itemId = id.ToString();
 		if (s_cache.Exists(itemId))
 			return s_cache.Get(itemId);
-
-		var item = GuildDocument.GetDefault(id);
 		
 		if (fetch && await HasDocument(id))
-			item = await FindOrInsert(m_guildConfigs, x => x.Id == id, item);
-		
-		s_cache.Put(itemId, item);
+			return s_cache.Get(itemId);
 
-		return await GetConfig(id);
+		return GuildDocument.GetDefault(id);
 	}
 
 	public async Task SetConfig(GuildDocument document, GuildDocument? before = null)
 	{
-		s_cache.Put(document.Id.ToString(), document);
+		before ??= await GetConfig(document.Id, false);
 		
-		if (before != null && document == before)
+		if (document == before)
 			return;
+		
+		s_cache.Put(document.Id.ToString(), document);
 
 		await InsertOrReplaceOne(m_guildConfigs, x => x.Id == document.Id, document);
 	}

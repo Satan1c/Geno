@@ -24,7 +24,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Discord.Net" Version="3.9.0" />
+        <PackageReference Include="Discord.Net" Version="3.10.0" />
         <PackageReference Include="Discord.Net.Analyzers" Version="3.7.0" />
         <PackageReference Include="Discord.Net.Extensions" Version="1.2.1" />
         <PackageReference Include="EnkaAPI" Version="1.1.0" />
@@ -42,15 +42,12 @@
         <Content Include="bin\Localizations\csv\errors\error.sdc.csv" />
         <Content Include="bin\Localizations\csv\success\genshin.characters.csv" />
         <Content Include="bin\Localizations\csv\success\genshin.profile.csv" />
-        <Content Include="bin\Localizations\json\commands\pb_Genshin.ru.json" />
-        <Content Include="bin\Localizations\json\commands\pb_Other.ru.json" />
-        <Content Include="bin\Localizations\json\commands\pb_Sdc.ru.json" />
-        <Content Include="bin\Localizations\json\commands\pb_Setting.ru.json" />
-        <Content Include="bin\Localizations\json\commands\pr_Admin.ru.json" />
-        <Content Include="bin\Localizations\json\commands\pr_Images.ru.json" />
-        <Content Include="bin\Localizations\json\commands\pr_Shikimori.ru.json" />
-        <Content Include="bin\Localizations\json\data\genshin.characters.json" />
-        <Content Include="bin\Localizations\json\data\genshin.names.json" />
+        <Content Include="bin\Localizations\json\pb_Genshin.ru.json" />
+        <Content Include="bin\Localizations\json\pb_Other.ru.json" />
+        <Content Include="bin\Localizations\json\pb_Sdc.ru.json" />
+        <Content Include="bin\Localizations\json\pb_Setting.ru.json" />
+        <Content Include="bin\Localizations\json\pr_Images.ru.json" />
+        <Content Include="bin\Localizations\json\pr_Shikimori.ru.json" />
     </ItemGroup>
 
     <ItemGroup>
