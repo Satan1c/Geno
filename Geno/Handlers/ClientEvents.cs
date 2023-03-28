@@ -29,8 +29,8 @@ public class ClientEvents
 			"[{Source}]\t{Message} {Trace} {InnerTrace}",
 			message.Source,
 			message.Message,
-			$"\n{message.Exception?.StackTrace?.Replace("\n", "\n\t\t\t")}",
-			$"\n{message.Exception?.InnerException?.StackTrace?.Replace("\n", "\n\t\t\t")}");
+			(message.Exception != null ? $"\n{message.Exception.StackTrace?.Replace("\n", "\n\t\t\t")}" : ""),
+			(message.Exception is { StackTrace: { } } ? $"\n{message.Exception.StackTrace.Replace("\n", "\n\t\t\t")}" : ""));
 		
 		return Task.CompletedTask;
 	}

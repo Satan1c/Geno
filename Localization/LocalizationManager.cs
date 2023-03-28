@@ -12,18 +12,26 @@ public class LocalizationManager
 	{
 		var files = Directory.GetFiles(filesPath, "*.csv");
 		if (files.Length > 0)
+		{
 			Load(files);
+		}
 		else
-			//foreach (var d in Directory.GetDirectories(filesPath))
-			foreach (var directory in Directory.GetDirectories(filesPath))
-					Load(Directory.GetFiles(directory, "*.csv"));
+		{
+			var directories = Directory.GetDirectories(filesPath);
+			foreach (var directory in directories)
+			{
+				files = Directory.GetFiles(directory, "*.csv");
+				Load(files);
+			}
+		}
 	}
-
+	
 	private void Load(string[] filesPaths)
 	{
-		foreach (var path in filesPaths)
+		foreach (var filesPath in filesPaths)
 		{
-			var split = path.Split('\\')[^1].Split('.');
+			var path = filesPath.Replace('\\', '/');
+			var split = path.Split('/')[^1].Split('.');
 			var category = split[0];
 			var name = split[1];
 			var file = File.ReadAllText(path);
@@ -36,9 +44,12 @@ public class LocalizationManager
 				m_categories[category] = new Category(name, lines);
 		}
 	}
-
+	
 	public Category GetCategory(string category)
 	{
-		return m_categories[category];
+		if (m_categories.TryGetValue(category, out var value))
+			return value;
+
+		return new Category();
 	}
 }

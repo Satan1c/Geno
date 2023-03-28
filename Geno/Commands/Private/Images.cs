@@ -2,7 +2,6 @@
 using Discord.Interactions;
 using Geno.Handlers;
 using Geno.Utils.Types;
-using Microsoft.Extensions.DependencyInjection;
 using WaifuPicsApi;
 using WaifuPicsApi.Enums;
 
@@ -15,21 +14,9 @@ public class Images : InteractionModuleBase<ShardedInteractionContext>
 	private readonly WaifuClient m_waifuClient;
 	//private IEnumerable<AutocompleteResult> m_sfwCategories = Array.Empty<AutocompleteResult>();
 
-	/*public Images(WaifuClient waifuClient)
+	public Images(WaifuClient waifuClient)
 	{
-		ClientEvents.OnLog(new LogMessage(LogSeverity.Verbose, nameof(Images), "Initializing"));
-		
 		m_waifuClient = waifuClient;
-		
-		ClientEvents.OnLog(new LogMessage(LogSeverity.Verbose, nameof(Images), "Initialized"));
-	}*/
-	public Images(IServiceProvider serviceProvider)
-	{
-		ClientEvents.OnLog(new LogMessage(LogSeverity.Verbose, nameof(Images), "Initializing"));
-		
-		m_waifuClient = serviceProvider.GetRequiredService<WaifuClient>();
-		
-		ClientEvents.OnLog(new LogMessage(LogSeverity.Verbose, nameof(Images), "Initialized"));
 	}
 
 	[SlashCommand("nsfw", "nsfw images")]

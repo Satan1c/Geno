@@ -3,10 +3,8 @@ using Discord;
 using Discord.Interactions;
 using Discord.Rest;
 using Discord.WebSocket;
-using Geno.Handlers;
 using Geno.Utils.Extensions;
 using Geno.Utils.Types;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Geno.Commands;
 
@@ -18,21 +16,9 @@ public class Other : InteractionModuleBase<ShardedInteractionContext>
 	{
 		private readonly DiscordShardedClient m_client;
 
-		/*public BotCommands(DiscordShardedClient client)
+		public BotCommands(DiscordShardedClient client)
 		{
-			ClientEvents.OnLog(new LogMessage(LogSeverity.Verbose, $"{nameof(Other)}.{nameof(BotCommands)}", "Initializing"));
-			
 			m_client = client;
-			
-			ClientEvents.OnLog(new LogMessage(LogSeverity.Verbose, $"{nameof(Other)}.{nameof(BotCommands)}", "Initialized"));
-		}*/
-		public BotCommands(IServiceProvider serviceProvider)
-		{
-			ClientEvents.OnLog(new LogMessage(LogSeverity.Verbose, $"{nameof(Other)}.{nameof(BotCommands)}", "Initializing"));
-			
-			m_client = serviceProvider.GetRequiredService<DiscordShardedClient>();
-			
-			ClientEvents.OnLog(new LogMessage(LogSeverity.Verbose, $"{nameof(Other)}.{nameof(BotCommands)}", "Initialized"));
 		}
 
 		[SlashCommand("status", "show bot stats")]
