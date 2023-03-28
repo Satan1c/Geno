@@ -5,6 +5,7 @@ using Discord.Interactions;
 using Geno.Handlers;
 using Geno.Responsers.Success;
 using Geno.Utils.StaticData;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Geno.Commands;
 
@@ -14,11 +15,19 @@ public class Settings : InteractionModuleBase<ShardedInteractionContext>
 {
 	private static DatabaseProvider m_databaseProvider;
 
-	public Settings(DatabaseProvider databaseProvider)
+	/*public Settings(DatabaseProvider databaseProvider)
 	{
 		ClientEvents.OnLog(new LogMessage(LogSeverity.Verbose, $"{nameof(Settings)}", "Initializing"));
 		
 		m_databaseProvider = databaseProvider;
+		
+		ClientEvents.OnLog(new LogMessage(LogSeverity.Verbose, $"{nameof(Settings)}", "Initialized"));
+	}*/
+	public Settings(IServiceProvider serviceProvider)
+	{
+		ClientEvents.OnLog(new LogMessage(LogSeverity.Verbose, $"{nameof(Settings)}", "Initializing"));
+		
+		m_databaseProvider = serviceProvider.GetRequiredService<DatabaseProvider>();
 		
 		ClientEvents.OnLog(new LogMessage(LogSeverity.Verbose, $"{nameof(Settings)}", "Initialized"));
 	}

@@ -10,6 +10,7 @@ using Geno.Responsers.Success.Modules;
 using Geno.Utils.Extensions;
 using Geno.Utils.Types;
 using Localization;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Geno.Commands;
 
@@ -22,13 +23,23 @@ public class Genshin : InteractionModuleBase<ShardedInteractionContext>
 	private readonly EnkaApiClient m_enkaApiClient;
 	private readonly Localization.Models.Category m_localizations;
 
-	public Genshin(DatabaseProvider databaseProvider, EnkaApiClient enkaApiClient, LocalizationManager localizationManager)
+	/*public Genshin(DatabaseProvider databaseProvider, EnkaApiClient enkaApiClient, LocalizationManager localizationManager)
 	{
 		ClientEvents.OnLog(new LogMessage(LogSeverity.Verbose, nameof(Genshin), "Initializing"));
 		
 		m_databaseProvider = databaseProvider;
 		m_enkaApiClient = enkaApiClient;
 		m_localizations = localizationManager.GetCategory("genshin");
+		
+		ClientEvents.OnLog(new LogMessage(LogSeverity.Verbose, nameof(Genshin), "Initialized"));
+	}*/
+	public Genshin(IServiceProvider serviceProvider)
+	{
+		ClientEvents.OnLog(new LogMessage(LogSeverity.Verbose, nameof(Genshin), "Initializing"));
+		
+		m_databaseProvider = serviceProvider.GetRequiredService<DatabaseProvider>();
+		m_enkaApiClient = serviceProvider.GetRequiredService<EnkaApiClient>();
+		m_localizations = serviceProvider.GetRequiredService<LocalizationManager>().GetCategory("genshin");
 		
 		ClientEvents.OnLog(new LogMessage(LogSeverity.Verbose, nameof(Genshin), "Initialized"));
 	}

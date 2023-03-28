@@ -3,6 +3,7 @@ using Discord.Interactions;
 using Geno.Handlers;
 using Geno.Responsers.Success.Modules;
 using Geno.Utils.Types;
+using Microsoft.Extensions.DependencyInjection;
 using SDC_Sharp.DiscordNet.Services;
 using SDC_Sharp.DiscordNet.Types;
 
@@ -16,11 +17,19 @@ public class Sdc : InteractionModuleBase<ShardedInteractionContext>
 	{
 		private readonly MonitoringService m_monitoring;
 
-		public MonitoringCommands(MonitoringService monitoring)
+		/*public MonitoringCommands(MonitoringService monitoring)
 		{
 			ClientEvents.OnLog(new LogMessage(LogSeverity.Verbose, $"{nameof(Sdc)}.{nameof(MonitoringCommands)}", "Initializing"));
 			
 			m_monitoring = monitoring;
+			
+			ClientEvents.OnLog(new LogMessage(LogSeverity.Verbose, $"{nameof(Sdc)}.{nameof(MonitoringCommands)}", "Initialized"));
+		}*/
+		public MonitoringCommands(IServiceProvider serviceProvider)
+		{
+			ClientEvents.OnLog(new LogMessage(LogSeverity.Verbose, $"{nameof(Sdc)}.{nameof(MonitoringCommands)}", "Initializing"));
+			
+			m_monitoring = serviceProvider.GetRequiredService<MonitoringService>();
 			
 			ClientEvents.OnLog(new LogMessage(LogSeverity.Verbose, $"{nameof(Sdc)}.{nameof(MonitoringCommands)}", "Initialized"));
 		}
@@ -52,11 +61,19 @@ public class Sdc : InteractionModuleBase<ShardedInteractionContext>
 	{
 		private readonly BlacklistService m_blacklistService;
 
-		public NikaCommands(BlacklistService blacklistService)
+		/*public NikaCommands(BlacklistService blacklistService)
 		{
 			ClientEvents.OnLog(new LogMessage(LogSeverity.Verbose, $"{nameof(Sdc)}.{nameof(NikaCommands)}", "Initializing"));
 			
 			m_blacklistService = blacklistService;
+			
+			ClientEvents.OnLog(new LogMessage(LogSeverity.Verbose, $"{nameof(Sdc)}.{nameof(NikaCommands)}", "Initialized"));
+		}*/
+		public NikaCommands(IServiceProvider serviceProvider)
+		{
+			ClientEvents.OnLog(new LogMessage(LogSeverity.Verbose, $"{nameof(Sdc)}.{nameof(NikaCommands)}", "Initializing"));
+			
+			m_blacklistService = serviceProvider.GetRequiredService<BlacklistService>();
 			
 			ClientEvents.OnLog(new LogMessage(LogSeverity.Verbose, $"{nameof(Sdc)}.{nameof(NikaCommands)}", "Initialized"));
 		}

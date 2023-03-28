@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.WebSocket;
 using Serilog;
+using Serilog.Events;
 
 namespace Geno.Handlers;
 
@@ -20,13 +21,29 @@ public class ClientEvents
 		m_client.Log += OnLog;
 	}
 
-	public static Task OnLog(LogMessage log)
+	public static Task OnLog(LogMessage message)
+	{
+		s_logger?.Write(
+			SeverityToLevel(message.Severity),
+			message.Exception,
+			"[{Source}]\t{Message} {Trace} {InnerTrace}",
+			message.Source,
+			message.Message,
+			$"\n{message.Exception?.StackTrace?.Replace("\n", "\n\t\t\t")}",
+			$"\n{message.Exception?.InnerException?.StackTrace?.Replace("\n", "\n\t\t\t")}");
+		
+		return Task.CompletedTask;
+	}
+	
+	/*public static Task OnLog(LogMessage log)
 	{
 		var source = log.Source;
 		var message = log.Message;
 		var exceptionType = log.Exception?.GetType();
 		var stackTrace = log.Exception?.StackTrace?.Replace("\n", "\n\t\t\t");
 		var innerTrace = log.Exception?.InnerException?.StackTrace?.Replace("\n", "\n\t\t\t");
+		
+		
 
 		switch (log.Severity)
 		{
@@ -75,6 +92,20 @@ public class ClientEvents
 		}
 
 		return Task.CompletedTask;
+	}*/
+	
+	private static LogEventLevel SeverityToLevel(LogSeverity severity)
+	{
+		return severity switch
+		{
+			LogSeverity.Critical => LogEventLevel.Fatal,
+			LogSeverity.Error => LogEventLevel.Error,
+			LogSeverity.Warning => LogEventLevel.Warning,
+			LogSeverity.Info => LogEventLevel.Information,
+			LogSeverity.Verbose => LogEventLevel.Verbose,
+			LogSeverity.Debug => LogEventLevel.Debug,
+			_ => throw new ArgumentOutOfRangeException(nameof(severity), severity, null)
+		};
 	}
 
 	private async Task OnReady(DiscordSocketClient client)

@@ -3,6 +3,7 @@ using Discord.Interactions;
 using Geno.Handlers;
 using Geno.Responsers.Success.Modules;
 using Geno.Utils.Types;
+using Microsoft.Extensions.DependencyInjection;
 using ShikimoriService;
 using ShikimoriSharp.Classes;
 
@@ -16,11 +17,19 @@ public class Shikimori : InteractionModuleBase<ShardedInteractionContext>
 	{
 		private readonly ShikimoriClient m_shikimoriClient;
 
-		public SearchCommands(ShikimoriClient shikimoriClient)
+		/*public SearchCommands(ShikimoriClient shikimoriClient)
 		{
 			ClientEvents.OnLog(new LogMessage(LogSeverity.Verbose, $"{nameof(Shikimori)}.{nameof(SearchCommands)}", "Initializing"));
 			
 			m_shikimoriClient = shikimoriClient;
+			
+			ClientEvents.OnLog(new LogMessage(LogSeverity.Verbose, $"{nameof(Shikimori)}.{nameof(SearchCommands)}", "Initialized"));
+		}*/
+		public SearchCommands(IServiceProvider serviceProvider)
+		{
+			ClientEvents.OnLog(new LogMessage(LogSeverity.Verbose, $"{nameof(Shikimori)}.{nameof(SearchCommands)}", "Initializing"));
+			
+			m_shikimoriClient = serviceProvider.GetRequiredService<ShikimoriClient>();
 			
 			ClientEvents.OnLog(new LogMessage(LogSeverity.Verbose, $"{nameof(Shikimori)}.{nameof(SearchCommands)}", "Initialized"));
 		}
