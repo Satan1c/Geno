@@ -284,5 +284,5 @@ public static class EmbedExtensions
 	}
 	
 	public static bool HasProperty(this UserProperties? flags, UserProperties flag) => ((uint)(flags ?? UserProperties.None) & (uint)flag) != 0;
-	public static bool HasFeature(this GuildFeature flags, GuildFeature flag) => ((ulong)(flags) & (uint)flag) != 0;
+	public static bool HasFeature(this GuildFeature flags, GuildFeature flag) => ((ulong)(flags) & (ulong)flag) != 0;
 }
