@@ -40,10 +40,10 @@ public static class Extensions
 		await collection.Indexes.DropOneAsync(name);
 	}
 	
-	public static async Task ModifyIndex<TDocument>(this IMongoCollection<TDocument> collection, TimeSpan expirationTime, string name = "deletion_index")
+	public static async Task ModifyIndex<TDocument>(this IMongoCollection<TDocument> collection, TimeSpan expirationTime, string name = "deletion_index", string? oldName = null)
 	where TDocument: BaseDocument
 	{
-		await collection.RemoveIndex(name);
+		await collection.RemoveIndex(oldName ?? name);
 		await collection.CreateDeletionIndex(expirationTime, name);
 	}
 	

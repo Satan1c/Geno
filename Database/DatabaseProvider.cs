@@ -21,11 +21,19 @@ public class DatabaseProvider
 		var mainDb = client.GetDatabase("main");
 		m_guildConfigs = mainDb.GetCollection<GuildDocument>("guilds");
 		m_usersConfigs = mainDb.GetCollection<UserDocument>("users");
+
+		m_guildConfigs.ModifyIndex(TimeSpan.FromMinutes(10)).GetAwaiter().GetResult();
+		m_usersConfigs.CreateDeletionIndex(TimeSpan.FromDays(30)).GetAwaiter().GetResult();
 	}
 
 	public Task<bool> HasGuild(ulong id)
 	{
 		return m_guildConfigs.HasDocument(s_guildsCache, id);
+	}
+	
+	public Task<bool> HasUser(ulong id)
+	{
+		return m_usersConfigs.HasDocument(s_usersCache, id);
 	}
 
 	public async Task<GuildDocument> GetConfig(ulong id, bool fetch = true)
