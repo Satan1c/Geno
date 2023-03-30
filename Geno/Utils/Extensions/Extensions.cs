@@ -166,8 +166,7 @@ public static class Extensions
 		}
 	}
 
-	public static bool TryGetGuildUser(this DiscordRestClient client, ulong guildId, ulong userId,
-		out RestGuildUser user)
+	public static bool TryGetGuildUser(this DiscordRestClient client, ulong guildId, ulong userId, out IGuildUser user)
 	{
 		user = null!;
 

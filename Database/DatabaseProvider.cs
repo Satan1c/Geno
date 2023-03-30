@@ -1,5 +1,4 @@
-﻿using System.Linq.Expressions;
-using CacheManager.Core;
+﻿using CacheManager.Core;
 using Database.Models;
 using MongoDB.Driver;
 
@@ -7,38 +6,36 @@ namespace Database;
 
 public class DatabaseProvider
 {
-	private static readonly ICacheManager<GuildDocument> s_cache = CacheFactory.Build<GuildDocument>(part =>
-		part.WithMicrosoftMemoryCacheHandle().WithExpiration(ExpirationMode.Sliding, TimeSpan.FromHours(1)));
+	private static readonly ICacheManager<GuildDocument> s_guildsCache = CacheFactory.Build<GuildDocument>(part => part
+		.WithMicrosoftMemoryCacheHandle()
+			.WithExpiration(ExpirationMode.Sliding, TimeSpan.FromHours(1)));
+	private static readonly ICacheManager<UserDocument> s_usersCache = CacheFactory.Build<UserDocument>(part => part
+		.WithMicrosoftMemoryCacheHandle()
+			.WithExpiration(ExpirationMode.Sliding, TimeSpan.FromHours(1)));
 
 	private readonly IMongoCollection<GuildDocument> m_guildConfigs;
+	private readonly IMongoCollection<UserDocument> m_usersConfigs;
 
 	public DatabaseProvider(IMongoClient client)
 	{
 		var mainDb = client.GetDatabase("main");
 		m_guildConfigs = mainDb.GetCollection<GuildDocument>("guilds");
+		m_usersConfigs = mainDb.GetCollection<UserDocument>("users");
 	}
 
-	public async Task<bool> HasDocument(ulong id)
+	public Task<bool> HasGuild(ulong id)
 	{
-		var itemId = id.ToString();
-		if (s_cache.Exists(itemId))
-			return true;
-
-		var item = await m_guildConfigs.Find(x => x.Id == id).FirstOrDefaultAsync();
-		if (item == null) return false;
-
-		s_cache.Put(itemId, item);
-		return true;
+		return m_guildConfigs.HasDocument(s_guildsCache, id);
 	}
 
 	public async Task<GuildDocument> GetConfig(ulong id, bool fetch = true)
 	{
 		var itemId = id.ToString();
-		if (s_cache.Exists(itemId))
-			return s_cache.Get(itemId);
+		if (s_guildsCache.Exists(itemId))
+			return s_guildsCache.Get(itemId);
 		
-		if (fetch && await HasDocument(id))
-			return s_cache.Get(itemId);
+		if (fetch && await HasGuild(id))
+			return s_guildsCache.Get(itemId);
 
 		return GuildDocument.GetDefault(id);
 	}
@@ -50,28 +47,8 @@ public class DatabaseProvider
 		if (document == before)
 			return;
 		
-		s_cache.Put(document.Id.ToString(), document);
+		s_guildsCache.Put(document.Id.ToString(), document);
 
-		await InsertOrReplaceOne(m_guildConfigs, x => x.Id == document.Id, document);
-	}
-
-	private static async Task InsertOrReplaceOne<TDocument>(IMongoCollection<TDocument> collection,
-		Expression<Func<TDocument, bool>> filter, TDocument document)
-	{
-		var item = await collection.FindOneAndReplaceAsync(filter, document);
-
-		if (item == null)
-			await collection.InsertOneAsync(document);
-	}
-
-	private static async Task<TDocument> FindOrInsert<TDocument>(IMongoCollection<TDocument> collection,
-		Expression<Func<TDocument, bool>> filter, TDocument document)
-	{
-		var item = await collection.Find(filter).FirstOrDefaultAsync();
-		if (item != null)
-			return item;
-
-		await collection.InsertOneAsync(document);
-		return await collection.Find(filter).FirstOrDefaultAsync();
+		await m_guildConfigs.InsertOrReplaceOne(x => x.Id == document.Id, document);
 	}
 }

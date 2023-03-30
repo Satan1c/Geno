@@ -74,77 +74,7 @@ public class Genshin : InteractionModuleBase<ShardedInteractionContext>
 		await UpdateRoles(data.AdventureRank, doc, Context.Guild.GetUser(message.Author.Id));
 		await RespondAsync("Done", ephemeral: true);
 	}
-
-	[MessageCommand("Set ranks roles")]
-	[RequireUserPermission(GuildPermission.ManageRoles)]
-	[RequireBotPermission(GuildPermission.ManageRoles)]
-	public async Task SetRankRoles(IMessage message)
-	{
-		//await Context.Interaction.DeferAsync();
-		var pairs = message.Content.Split('\n');
-		var cfg = await m_databaseProvider.GetConfig(Context.Guild.Id);
-		cfg.RankRoles = new Dictionary<string, ulong[]>();
-
-		for (byte i = 0; i < pairs.Length; i++)
-		{
-			var pair = pairs[i].Split('-');
-			var k = byte.Parse(pair[0]);
-			var v = pair[1].Split(',').Select(s => ulong.Parse(s)).ToArray();
-			
-			cfg.RankRoles[k.ToString()] = v;
-		}
-
-		await m_databaseProvider.SetConfig(cfg);
-		await RespondAsync("Done", ephemeral: true);
-	}
-
-	[SlashCommand("set_rank", "set rank for user")]
-	[RequireUserPermission(GuildPermission.ManageRoles)]
-	[RequireBotPermission(GuildPermission.ManageRoles)]
-	public async Task Setup(
-		[Summary("user", "user to set rank for")]
-		IUser user,
-		[MinValue(1)] [MaxValue(60)]
-		[Summary("rank", "rank to set")]
-		byte rank)
-	{
-		var member = Context.Guild.GetUser(user.Id)!;
-		var config = await m_databaseProvider.GetConfig(Context.Guild.Id);
-		var role = config.RankRoles.GetPerfectRole(rank.ToString());
-		var remove = member.Roles
-			.Where(x => config.RankRoles.Values.Any(y => y.Contains(x.Id)))
-			.Where(x => !role.Contains(x.Id))
-			.Select(x => x.Id)
-			.ToArray();
-
-		if (remove.Any())
-			await member.RemoveRolesAsync(remove);
-
-		await member.AddRolesAsync(role);
-
-		await RespondAsync("Done", ephemeral: true);
-	}
-
-	[SlashCommand("get_ranks", "show current ranks config")]
-	[RequireUserPermission(GuildPermission.ManageGuild)]
-	public async Task GetConfig()
-	{
-		var config = await m_databaseProvider.GetConfig(Context.Guild.Id);
-		var message = new StringBuilder("Rank roles config:\n");
-		foreach (var (k, v) in config.RankRoles)
-		{
-			message.Append($"`{k}`");
-			message.Append(" - ");
-			message.Append(string.Join(',', v.Select(x => $"<@&{x}>")));
-			message.Append('\n');
-		}
-
-		await RespondAsync(
-			message.ToString(),
-			ephemeral: true,
-			allowedMentions: AllowedMentions.None);
-	}
-
+	
 	private static async Task UpdateRoles(uint adventureRank, GuildDocument doc, SocketGuildUser member)
 	{
 		var role = doc.RankRoles.GetPerfectRole(adventureRank.ToString());

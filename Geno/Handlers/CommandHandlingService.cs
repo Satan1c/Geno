@@ -90,8 +90,7 @@ public class CommandHandlingService
 	private static Task InteractionExecuted(ICommandInfo commandInfo, IInteractionContext context, IResult resultRaw)
 	{
 		if (resultRaw is Result result)
-			return context.Respond(result.Builder ?? s_emptyEmbed.ToEmbedBuilder(), result.IsEphemeral,
-				result.IsDefered);
+			return context.Respond(result.Builder, result.IsEphemeral, result.IsDefered);
 
 		if (resultRaw.Error is null)
 			return Task.CompletedTask;

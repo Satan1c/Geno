@@ -90,23 +90,18 @@ public class Other : InteractionModuleBase<ShardedInteractionContext>
 		}
 
 		[SlashCommand("user", "fetch user information by id")]
-		public Task<RuntimeResult> FetchUser(IUser rawUser)
+		public Task<RuntimeResult> FetchUser(IUser? rawUser = null)
 		{
-			if (!Context.Client.Rest.TryGetUser(rawUser.Id, out var user))
-				return Result.GetTaskFor(
-					false,
-					null,
-					true,
-					false,
-					InteractionCommandError.Unsuccessful,
-					"Can't get info about this user");
+			if (!Context.Client.Rest.TryGetUser(rawUser?.Id ?? Context.User.Id, out var user))
+				return Result.GetTaskFor(new EmbedBuilder().WithDescription("Can't get info about this user"));
 
 			var embed = new EmbedBuilder().ApplyData(user);
 
-			if (Context.Guild is { } guild && Context.Client.Rest.TryGetGuildUser(guild.Id, user.Id, out var guildUser))
+			if (Context.Guild is { } guild
+			    && Context.Client.Rest.TryGetGuildUser(guild.Id, user.Id, out var guildUser))
 				embed = embed.ApplyData(guildUser);
 
-			return Result.GetTaskFor(true, embed, false, false);
+			return Result.GetTaskFor(embed, true, false);
 		}
 	}
 }

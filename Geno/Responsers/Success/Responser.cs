@@ -9,7 +9,7 @@ public static class Responser
 		bool ephemeral = false,
 		bool isDefered = false)
 	{
-		return context.Respond(embed.WithColor(new Color(43, 45, 49)).Build(), ephemeral, isDefered);
+		return context.Respond(embed.WithColor(embed.Color ?? new Color(43, 45, 49)).Build(), ephemeral, isDefered);
 	}
 
 	public static Task Respond(this IInteractionContext context,
@@ -17,7 +17,7 @@ public static class Responser
 		bool ephemeral = false,
 		bool isDefered = false)
 	{
-		return context.Respond(null, ephemeral, isDefered, embeds.Select(x => x.WithColor(new Color(43, 45, 49)).Build()).ToArray());
+		return context.Respond(null, ephemeral, isDefered, embeds.Select(x => x.WithColor(x.Color ?? new Color(43, 45, 49)).Build()).ToArray());
 	}
 
 	private static Task Respond(this IInteractionContext context,

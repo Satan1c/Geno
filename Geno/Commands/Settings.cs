@@ -3,7 +3,9 @@ using Database;
 using Discord;
 using Discord.Interactions;
 using Geno.Responsers.Success;
+using Geno.Utils.Extensions;
 using Geno.Utils.StaticData;
+using Geno.Utils.Types;
 
 namespace Geno.Commands;
 
@@ -17,11 +19,95 @@ public class Settings : InteractionModuleBase<ShardedInteractionContext>
 	{
 		m_databaseProvider = databaseProvider;
 	}
-	
-	[Group("set", "set commands sub group")]
-	public class SetUtils : InteractionModuleBase<ShardedInteractionContext>
+
+	[Group("genshin", "Genshin Impact functional settings")]
+	public class Genshin : InteractionModuleBase<ShardedInteractionContext>
 	{
-		[SlashCommand("voice_rooms_names", "Voice room name template; {Count},{DisplayName},{Username},{UserTag},{ActivityName}")]
+		[MessageCommand("Set rank-roles")]
+		[RequireUserPermission(GuildPermission.ManageRoles)]
+		[RequireBotPermission(GuildPermission.ManageRoles)]
+		public async Task SetRankRoles(IMessage message)
+		{
+			//await Context.Interaction.DeferAsync();
+			var pairs = message.Content.Split('\n');
+			var cfg = await m_databaseProvider.GetConfig(Context.Guild.Id);
+			cfg.RankRoles = new Dictionary<string, ulong[]>();
+
+			for (byte i = 0; i < pairs.Length; i++)
+			{
+				var pair = pairs[i].Split('-');
+				var k = byte.Parse(pair[0]);
+				var v = pair[1].Split(',').Select(s => ulong.Parse(s)).ToArray();
+			
+				cfg.RankRoles[k.ToString()] = v;
+			}
+
+			await m_databaseProvider.SetConfig(cfg);
+			await RespondAsync("Done", ephemeral: true);
+		}
+		
+		[SlashCommand("set_rank", "set rank for user")]
+		[RequireUserPermission(GuildPermission.ManageRoles)]
+		[RequireBotPermission(GuildPermission.ManageRoles)]
+		public async Task Setup(
+			[Summary("user", "user to set rank for")]
+			IUser user,
+			[MinValue(1)] [MaxValue(60)]
+			[Summary("rank", "rank to set")]
+			byte rank)
+		{
+			var member = Context.Guild.GetUser(user.Id)!;
+			var config = await m_databaseProvider.GetConfig(Context.Guild.Id);
+			var role = config.RankRoles.GetPerfectRole(rank.ToString());
+			var remove = member.Roles
+				.Where(x => config.RankRoles.Values.Any(y => y.Contains(x.Id)))
+				.Where(x => !role.Contains(x.Id))
+				.Select(x => x.Id)
+				.ToArray();
+
+			if (remove.Any())
+				await member.RemoveRolesAsync(remove);
+
+			await member.AddRolesAsync(role);
+
+			await RespondAsync("Done", ephemeral: true);
+		}
+
+		[SlashCommand("get_ranks", "show current ranks config")]
+		[RequireUserPermission(GuildPermission.ManageGuild)]
+		public async Task GetConfig()
+		{
+			var config = await m_databaseProvider.GetConfig(Context.Guild.Id);
+
+			/*if (config.RankRoles.Count == 0)
+			{
+				await RespondAsync(
+					"message.ToString()",
+					ephemeral: true,
+					allowedMentions: AllowedMentions.None);
+				return;
+			}*/
+			
+			var message = new StringBuilder("Rank roles config:\n");
+			foreach (var (k, v) in config.RankRoles)
+			{
+				message.Append($"`{k}`");
+				message.Append(" - ");
+				message.Append(string.Join(',', v.Select(x => $"<@&{x}>")));
+				message.Append('\n');
+			}
+
+			await RespondAsync(
+				message.ToString(),
+				ephemeral: true,
+				allowedMentions: AllowedMentions.None);
+		}
+	}
+
+	[Group("voice_rooms", "Voice rooms settings")]
+	public class VoiceRooms : InteractionModuleBase<ShardedInteractionContext>
+	{
+		[SlashCommand("set_name", "Voice room name template; {Count},{DisplayName},{Username},{UserTag},{ActivityName}")]
 		[RequireBotPermission(BotPermissions.UtilsAddVoice)]
 		[RequireUserPermission(UserPermissions.UtilsAddVoice)]
 		public async Task SetVoiceChannelNames(
@@ -41,18 +127,16 @@ public class Settings : InteractionModuleBase<ShardedInteractionContext>
 			await m_databaseProvider.SetConfig(config);
 			await Context.Respond(new EmbedBuilder().WithDescription("Done"), true);
 		}
-	}
-	
-	[Group("add", "add commands sub group")]
-	public class AddUtils : InteractionModuleBase<ShardedInteractionContext>
-	{
-		[SlashCommand("voice_rooms_channel", "sets base voice-rooms channel")]
+
+		[SlashCommand("add_creator", "Add creator of voice room")]
 		[RequireBotPermission(BotPermissions.UtilsAddVoice)]
 		[RequireUserPermission(UserPermissions.UtilsAddVoice)]
-		public async Task AddVoiceChannel(
+		public async Task AddCreator(
+			[Summary("", "")]
 			IVoiceChannel channel,
-			[MinLength(1), MaxLength(50), Summary("template", "created channel name, default - Party #{Count}")]
-			string name = "Party #{Count}")
+			[MinLength(1), MaxLength(50),
+			 Summary("template", "created channel name, default - Party #{Count}")]
+			string name)
 		{
 			if (await channel.GetCategoryAsync() is not { } category)
 				throw new Exception("Voice channel must have a category");
@@ -66,15 +150,10 @@ public class Settings : InteractionModuleBase<ShardedInteractionContext>
 				allowedMentions: AllowedMentions.None,
 				ephemeral: true);
 		}
-	}
-
-	[Group("remove", "remove commands sub group")]
-	public class RemoveUtils : InteractionModuleBase<ShardedInteractionContext>
-	{
-		[SlashCommand("voice_rooms_channel", "removes base voice-rooms channel")]
-		[RequireBotPermission(ChannelPermission.ManageChannels)]
-		[RequireUserPermission(ChannelPermission.ManageChannels)]
-		public async Task RemoveVoiceChannel(
+		
+		[SlashCommand("remove_creator", "Remove creator of voice room")]
+		[RequireUserPermission(UserPermissions.UtilsAddVoice)]
+		public async Task RemoveCreator(
 			[Summary("", "")]
 			IVoiceChannel channel)
 		{
@@ -88,22 +167,17 @@ public class Settings : InteractionModuleBase<ShardedInteractionContext>
 
 			var config = await m_databaseProvider.GetConfig(Context.Guild.Id);
 			config.Channels.Remove(channel.Id.ToString());
-            config.VoicesNames.Remove(channel.Id.ToString());
+			config.VoicesNames.Remove(channel.Id.ToString());
 
-            await m_databaseProvider.SetConfig(config);
+			await m_databaseProvider.SetConfig(config);
 			await RespondAsync("Done",
 				allowedMentions: AllowedMentions.None,
 				ephemeral: true);
 		}
-	}
-
-	[Group("get", "get commands sub group")]
-	public class GetUtils : InteractionModuleBase<ShardedInteractionContext>
-	{
-		[SlashCommand("voice_rooms_channel", "gets base voice-rooms channel")]
-		[RequireBotPermission(ChannelPermission.ManageChannels)]
-		[RequireUserPermission(ChannelPermission.ManageChannels)]
-		public async Task GetVoiceChannel()
+		
+		[SlashCommand("get_creators", "Get creators of voice rooms")]
+		[RequireUserPermission(UserPermissions.UtilsAddVoice)]
+		public async Task GetCreators()
 		{
 			var config = await m_databaseProvider.GetConfig(Context.Guild.Id);
 			if (config.Channels.Count < 1)
@@ -115,7 +189,8 @@ public class Settings : InteractionModuleBase<ShardedInteractionContext>
 			}
 
 			var txt = new StringBuilder();
-			foreach (var (k, _) in config.Channels) txt.Append("<#").Append(k).Append('>').Append('\n');
+			foreach (var (k, _) in config.Channels)
+				txt.Append("<#").Append(k).Append('>').Append('\n');
 
 			await RespondAsync(txt.ToString(),
 				allowedMentions: AllowedMentions.None,
