@@ -1,11 +1,8 @@
-﻿RUN apt-get update && apt-get install -y docker.io
-
-# Build image
+﻿# Build image
 FROM mcr.microsoft.com/dotnet/sdk:7.0 AS build
 WORKDIR /app
 COPY . .
-RUN dotnet restore
-RUN dotnet publish ./Geno/Geno.csproj -o ./Geno/bin/Publish/linux-x64/ -c Release -r linux-x64 --sc /p:PublishReadyToRun=true /p:PublishSingleFile=true /p:PublishTrimmed=true /p:IncludeAllContent=true /p:ForSelfExtract=true /p:IncludeNativeLibrariesForSelfExtract=true
+RUN dotnet restore && dotnet publish ./Geno/Geno.csproj -o ./Geno/bin/Publish/linux-x64/ -c Release -r linux-x64 --sc /p:PublishReadyToRun=true /p:PublishSingleFile=true /p:PublishTrimmed=true /p:IncludeAllContent=true /p:ForSelfExtract=true /p:IncludeNativeLibrariesForSelfExtract=true
 
 # Runtime image
 FROM mcr.microsoft.com/dotnet/sdk:7.0 AS runtime
