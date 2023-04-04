@@ -6,9 +6,9 @@ RUN dotnet restore
 COPY . /app/.
 
 RUN dotnet build -c Release
-COPY . /app
+COPY . /app/.
 
 RUN dotnet publish ./Geno/Geno.csproj -o ./Geno/bin/Publish/linux-x64/ -c Release -r linux-x64 --sc /p:PublishReadyToRun=true /p:PublishSingleFile=true /p:PublishTrimmed=true /p:IncludeAllContent=true /p:ForSelfExtract=true /p:IncludeNativeLibrariesForSelfExtract=true
+COPY . /app
 
-COPY --from=build /app/Geno/bin/Publish/linux-x64 /app
 ENTRYPOINT ["./Geno"]
