@@ -28,7 +28,7 @@ public class DatabaseProvider
 	{
 		return await m_guildConfigs.HasDocument(
 			s_guildsCache,
-			Builders<GuildDocument>.Filter.Eq((document => document.Id), id),
+			Builders<GuildDocument>.Filter.Eq(document => document.Id, id),
 			id);
 	}
 
@@ -36,7 +36,7 @@ public class DatabaseProvider
 	{
 		return await m_usersConfigs.HasDocument(
 			s_usersCache,
-			Builders<UserDocument>.Filter.Eq((document => document.Id), id),
+			Builders<UserDocument>.Filter.Eq(document => document.Id, id),
 			id);
 	}
 
@@ -62,6 +62,6 @@ public class DatabaseProvider
 
 		s_guildsCache.Put(document.Id.ToString(), document);
 
-		await m_guildConfigs.InsertOrReplaceOne(x => x.Id == document.Id, document);
+		await m_guildConfigs.InsertOrReplaceOne(Builders<GuildDocument>.Filter.Eq(d => d.Id, document.Id), document);
 	}
 }

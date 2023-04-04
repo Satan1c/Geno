@@ -74,7 +74,7 @@ public static class SfwCategoryExtension
 			SfwCategory.Poke => nameof(SfwCategory.Poke),
 			SfwCategory.Dance => nameof(SfwCategory.Dance),
 			SfwCategory.Cringe => nameof(SfwCategory.Cringe),
-			_ => throw new ArgumentOutOfRangeException(nameof(category), category, null)
+			_ => ""
 		};
 	}
 }

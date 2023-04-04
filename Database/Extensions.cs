@@ -1,6 +1,4 @@
-﻿using System.Linq.Expressions;
-using CacheManager.Core;
-using Database.Models;
+﻿using CacheManager.Core;
 using MongoDB.Driver;
 
 namespace Database;
@@ -11,7 +9,7 @@ public static class Extensions
 	{
 		return EqualityComparer<T>.Default.Equals(left, right);
 	}
-	
+
 	public static async ValueTask<bool> HasDocument<TDocument>(this IMongoCollection<TDocument> collection,
 		ICacheManager<TDocument> cacheManager,
 		FilterDefinition<TDocument> filterDefinition,
@@ -20,7 +18,7 @@ public static class Extensions
 		var itemId = id.ToString();
 		if (cacheManager.Exists(itemId))
 			return true;
-		
+
 		var item = await collection.Find(filterDefinition).FirstOrDefaultAsync();
 		if (item == null) return false;
 
@@ -28,17 +26,16 @@ public static class Extensions
 		return true;
 	}
 
-	public static async ValueTask CreateDeletionIndex<TDocument>(this IMongoCollection<TDocument> collection,
+	private static async ValueTask CreateDeletionIndex<TDocument>(this IMongoCollection<TDocument> collection,
 		TimeSpan expirationTime,
 		IndexKeysDefinition<TDocument> indexKeys,
 		string name = "deletion_index")
 	{
-		var indexOptions = new CreateIndexOptions
+		var indexModel = new CreateIndexModel<TDocument>(indexKeys, new CreateIndexOptions
 		{
 			ExpireAfter = expirationTime,
 			Name = name
-		};
-		var indexModel = new CreateIndexModel<TDocument>(indexKeys, indexOptions);
+		});
 
 		await collection.Indexes.CreateOneAsync(indexModel);
 	}
@@ -60,24 +57,24 @@ public static class Extensions
 	}
 
 	public static async ValueTask InsertOrReplaceOne<TDocument>(this IMongoCollection<TDocument> collection,
-		Expression<Func<TDocument, bool>> filter,
+		FilterDefinition<TDocument> filterDefinition,
 		TDocument document)
 	{
-		var item = await collection.FindOneAndReplaceAsync(filter, document);
+		var item = await collection.FindOneAndReplaceAsync(filterDefinition, document);
 
 		if (item == null)
 			await collection.InsertOneAsync(document);
 	}
 
 	public static async ValueTask<TDocument> FindOrInsert<TDocument>(this IMongoCollection<TDocument> collection,
-		Expression<Func<TDocument, bool>> filter,
+		FilterDefinition<TDocument> filterDefinition,
 		TDocument document)
 	{
-		var item = await collection.Find(filter).FirstOrDefaultAsync();
+		var item = await collection.Find(filterDefinition).FirstOrDefaultAsync();
 		if (item != null)
 			return item;
 
 		await collection.InsertOneAsync(document);
-		return await collection.Find(filter).FirstOrDefaultAsync();
+		return await collection.Find(filterDefinition).FirstOrDefaultAsync();
 	}
 }

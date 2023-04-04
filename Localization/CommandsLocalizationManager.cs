@@ -36,10 +36,10 @@ public sealed class CommandsLocalizationManager : ILocalizationManager
 		return GetValues(key, "name");
 	}
 
-	private string[] GetAllFiles()
+	/*private string[] GetAllFiles()
 	{
 		return Directory.GetFiles(m_basePath, "*.*.json", SearchOption.TopDirectoryOnly);
-	}
+	}*/
 
 	private IDictionary<string, string> GetValues(IList<string> key, string identifier)
 	{
@@ -68,7 +68,7 @@ public sealed class CommandsLocalizationManager : ILocalizationManager
 				if (str != null)
 					dict.Add(new KeyValuePair<string, string>(key1, str));
 			}
-			
+
 			start = ref Unsafe.Add(ref start, 1);
 		}
 

@@ -19,7 +19,7 @@ public class CommandHandlingService
 	public static InteractionService Interactions = null!;
 	public static IReadOnlyDictionary<Category, ModuleInfo[]> Private = null!;
 
-	private static readonly Embed s_emptyEmbed = new EmbedBuilder().Build();
+	//private static readonly Embed s_emptyEmbed = new EmbedBuilder().Build();
 
 	private readonly DiscordShardedClient m_client;
 	private readonly LocalizationManager m_localizationManager;
@@ -45,13 +45,11 @@ public class CommandHandlingService
 		var (priv, safe) = FilterModules(modules);
 
 		if (priv.TryGetValue(Category.Admin, out var module))
-		{
 			await Interactions.AddModulesToGuildAsync(648571219674923008, true, module);
-		}
 
 		Private = priv;
 		await Interactions.AddModulesGloballyAsync(true, safe);
-		
+
 		ErrorResolver.Init(assembly, m_localizationManager);
 		GC.Collect();
 	}
@@ -60,7 +58,7 @@ public class CommandHandlingService
 	{
 		var dict = new RefList<KeyValuePair<Category, LinkedList<ModuleInfo>>>(2);
 		var safeArray = new RefList<ModuleInfo>(5);
-		
+
 		ref var start = ref MemoryMarshal.GetArrayDataReference(modules);
 		ref var end = ref Unsafe.Add(ref start, modules.Length);
 
@@ -84,11 +82,12 @@ public class CommandHandlingService
 					safeArray.Add(start);
 				}
 			}
-			
+
 			start = ref Unsafe.Add(ref start, 1)!;
 		}
 
-		return (new Dictionary<Category, ModuleInfo[]>(dict.ToArray<Category, ModuleInfo>()).AsReadOnly(), safeArray.ToArray());
+		return (new Dictionary<Category, ModuleInfo[]>(dict.ToArray<Category, ModuleInfo>()).AsReadOnly(),
+			safeArray.ToArray());
 	}
 
 	private void RegisterEvents()

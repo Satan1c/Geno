@@ -26,7 +26,7 @@ public class GuildEvents
 		    || !await m_databaseProvider.HasGuild(guildUser.Guild.Id))
 			return;
 
-		var config = await m_databaseProvider.GetConfig(guildUser.Guild.Id);
+		var config = await m_databaseProvider.GetConfig(guildUser.Guild.Id).ConfigureAwait(false);
 		var guildUserId = guildUser.Id.ToString();
 		var afterChannelId = after.VoiceChannel?.Id.ToString() ?? "";
 
@@ -47,25 +47,23 @@ public class GuildEvents
 		SocketGuildUser guildUser,
 		GuildDocument config)
 	{
-		var firstUser = before.ConnectedUsers.FirstOrDefault(x => !x.IsBot && x.Id != guildUser.Id);
-		if (firstUser is null)
+		if (before.ConnectedUsers.TryGetValue(guildUser.Id, out var firstUser))
+		{
+			var name = config.VoicesNames[before.Id.ToString()].FormatWith(firstUser);
+			var perms = before.PermissionOverwrites.GetPermissions(guildUser.Id, firstUser.Id);
+
+			await before.ModifyAsync(properties =>
+			{
+				properties.Name = name;
+				properties.PermissionOverwrites = perms;
+			});
+			config.Voices.Add(firstUser.Id.ToString(), before.Id);
+		}
+		else
 		{
 			await guildUser.Guild
 				.GetChannel(before.Id)
 				.DeleteAsync();
-		}
-		else
-		{
-			await before.ModifyAsync(properties =>
-			{
-				properties.Name = config.VoicesNames[before.Id.ToString()].FormatWith(firstUser);
-				properties.PermissionOverwrites = before.PermissionOverwrites
-					.Where(x => x.TargetType == PermissionTarget.User && x.TargetId != guildUser.Id)
-					.Append(new Overwrite(firstUser.Id, PermissionTarget.User,
-						new OverwritePermissions(manageChannel: PermValue.Allow)))
-					.ToArray();
-			});
-			config.Voices.Add(firstUser.Id.ToString(), before.Id);
 		}
 
 		config.Voices.Remove(guildUserId);
@@ -91,7 +89,7 @@ public class GuildEvents
 			properties =>
 			{
 				properties.CategoryId = categoryId;
-				properties.Position = afterVoiceChannel?.Position ?? 0;
+				properties.Position = afterVoiceChannel.Position;
 				properties.PermissionOverwrites = new Overwrite[]
 				{
 					new(guildUser.Id, PermissionTarget.User, new OverwritePermissions(manageChannel: PermValue.Allow))

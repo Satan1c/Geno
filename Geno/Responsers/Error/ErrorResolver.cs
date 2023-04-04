@@ -1,4 +1,6 @@
 ﻿using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using Discord;
 using Discord.Interactions;
 using Geno.Utils.Extensions;
@@ -13,13 +15,22 @@ public static class ErrorResolver
 
 	public static void Init(Assembly assembly, LocalizationManager localizationManager)
 	{
-		foreach (var definedType in assembly.DefinedTypes.ToArray())
-		{
-			if (!s_validType.IsAssignableFrom(definedType) || !definedType.IsClass) continue;
+		var types = assembly.DefinedTypes.ToArray();
 
-			var resolver = (definedType.DeclaredConstructors.First().Invoke(Array.Empty<object>()) as IErrorResolver)!;
-			resolver.LocalizationManager = localizationManager;
-			s_list[resolver.ModuleName] = resolver;
+		ref var start = ref MemoryMarshal.GetArrayDataReference(types);
+		ref var end = ref Unsafe.Add(ref start, types.Length);
+
+		while (Unsafe.IsAddressLessThan(ref start, ref end))
+		{
+			if (s_validType.IsAssignableFrom(start) && start.IsClass)
+			{
+				var args = Array.Empty<object>();
+				var resolver = (start.DeclaredConstructors.First(x => x.IsPublic).Invoke(args) as IErrorResolver)!;
+				resolver.LocalizationManager = localizationManager;
+				s_list[resolver.ModuleName] = resolver;
+			}
+
+			start = ref Unsafe.Add(ref start, 1);
 		}
 	}
 

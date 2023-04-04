@@ -12,6 +12,27 @@ namespace Geno.Commands;
 [Group("other", "other command group")]
 public class Other : InteractionModuleBase<ShardedInteractionContext>
 {
+	private static string GetUptime(ref TimeSpan time)
+	{
+		var days = TimeString(time.Days, 'd');
+		var hours = TimeString(time.Hours, 'h');
+		var minutes = TimeString(time.Minutes, 'm');
+		var seconds = TimeString(time.Seconds, 's', "`0`s");
+
+		return new StringBuilder().Append(days).Append(hours).Append(minutes).Append(seconds).ToString();
+	}
+
+	private static string TimeString(int value, char name, string? zero = null)
+	{
+		return value > 0
+			? new StringBuilder().Append('`')
+				.Append(value)
+				.Append('`')
+				.Append(name)
+				.Append(' ').ToString()
+			: zero ?? "";
+	}
+
 	[Group("bot", "commands group about bot")]
 	public class BotCommands : InteractionModuleBase<ShardedInteractionContext>
 	{
@@ -27,13 +48,13 @@ public class Other : InteractionModuleBase<ShardedInteractionContext>
 		{
 			if (clear && Context.User.Id == (await Context.Client.GetApplicationInfoAsync()).Owner.Id)
 				GC.Collect();
-			
+
 			var process = Process.GetCurrentProcess();
 			var ram = ((short)(process.WorkingSet64 / 1024 / 1024)).ToString();
 			var uptime = DateTime.UtcNow - process.StartTime;
 			var uptimeString = GetUptime(ref uptime);
 			var embed = new EmbedBuilder().WithTitle("Bot stats");
-			
+
 			embed.AddField("Servers: ", $"`{m_client.Shards.Select(x => x.Guilds.Count).Sum().ToString()}`", true)
 				.AddField("RAM usage:", $"`{ram}`mb", true)
 				.AddField("UP time:", uptimeString, true);
@@ -45,34 +66,13 @@ public class Other : InteractionModuleBase<ShardedInteractionContext>
 				embed.AddField("Current server shard:",
 					$"`{currentShard.ShardId.ToString()}`: `{currentShard.Latency.ToString()}`ms");
 			}
-			
+
 			foreach (var shard in Context.Client.Shards.ToArray())
 				embed.AddField($"`{shard.ShardId.ToString()}`:", $"`{shard.Latency.ToString()}`ms", true);
 
 			await RespondAsync(embed: embed.Build(),
 				allowedMentions: AllowedMentions.None);
 		}
-	}
-
-	private static string GetUptime(ref TimeSpan time)
-	{
-		var days = TimeString(time.Days, 'd');
-		var hours = TimeString(time.Hours, 'h');
-		var minutes = TimeString(time.Minutes, 'm');
-		var seconds = TimeString(time.Seconds, 's', "`0`s");
-		
-		return new StringBuilder().Append(days).Append(hours).Append(minutes).Append(seconds).ToString();
-	}
-	
-	private static string TimeString(int value, char name, string? zero = null)
-	{
-		return value > 0
-			? new StringBuilder().Append('`')
-				.Append(value)
-				.Append('`')
-				.Append(name)
-				.Append(' ').ToString()
-			: zero ?? "";
 	}
 
 	[Group("fetch", "fetch commands sub group")]

@@ -12,9 +12,9 @@ public struct UserDocument
 		DefaultRegion = GenshinRegion.Eu;
 	}
 
-	[BsonElement("_id")] public ulong Id { get; set; }
-	[BsonElement("genshin_ids")] public GenshinIds GenshinIds { get; set; }
-	[BsonElement("default_region")] public GenshinRegion DefaultRegion { get; set; }
+	[BsonElement("_id")] public ulong Id { get; set; } = default;
+	[BsonElement("genshin_ids")] public GenshinIds GenshinIds { get; set; } = default;
+	[BsonElement("default_region")] public GenshinRegion DefaultRegion { get; set; } = default;
 	[BsonElement("for_deletion")] public bool ForDeletion { get; set; } = false;
 	public uint DefaultGenshinId => GetGenshinId(DefaultRegion);
 
@@ -25,7 +25,7 @@ public struct UserDocument
 			GenshinRegion.Na => GenshinIds.Na,
 			GenshinRegion.Eu => GenshinIds.Eu,
 			GenshinRegion.As => GenshinIds.As,
-			_ => throw new ArgumentOutOfRangeException(nameof(region), region, null)
+			_ => GenshinIds.Eu
 		};
 	}
 }

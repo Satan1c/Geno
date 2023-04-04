@@ -8,7 +8,7 @@ public static class Extensions
 		{
 			Type.Sfw => nameof(Type.Sfw),
 			Type.Nsfw => nameof(Type.Nsfw),
-			_ => throw new ArgumentOutOfRangeException(nameof(type), type, null)
+			_ => ""
 		};
 	}
 
@@ -47,7 +47,7 @@ public static class Extensions
 			SfwCategory.Poke => nameof(SfwCategory.Poke),
 			SfwCategory.Dance => nameof(SfwCategory.Dance),
 			SfwCategory.Cringe => nameof(SfwCategory.Cringe),
-			_ => throw new ArgumentOutOfRangeException(nameof(category), category, null)
+			_ => ""
 		};
 	}
 
@@ -59,7 +59,7 @@ public static class Extensions
 			NsfwCategory.Neko => nameof(NsfwCategory.Neko),
 			NsfwCategory.Trap => nameof(NsfwCategory.Trap),
 			NsfwCategory.Blowjob => nameof(NsfwCategory.Blowjob),
-			_ => throw new ArgumentOutOfRangeException(nameof(category), category, null)
+			_ => ""
 		};
 	}
 }

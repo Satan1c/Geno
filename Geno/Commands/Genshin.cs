@@ -2,13 +2,11 @@
 using Database.Models;
 using Discord;
 using Discord.Interactions;
-using Discord.WebSocket;
 using EnkaAPI;
 using Geno.Responsers.Success.Modules;
 using Geno.Utils.Extensions;
-using Geno.Utils.Types;
 using Localization;
-using Category = Localization.Models.Category;
+using Localization.Models;
 
 namespace Geno.Commands;
 
@@ -43,9 +41,10 @@ public class Genshin : InteractionModuleBase<ShardedInteractionContext>
 	{
 		await DeferAsync();
 
-		var codes = message.Content.Split('\n');
-		CreateLinks(codes, out var links);
+		var content = message.Content!;
+		var codes = content.Split('\n');
 
+		CreateLinks(codes, out var links);
 		var components = new ComponentBuilder();
 
 		for (byte i = 0; i < links.Length; i++)
@@ -72,29 +71,14 @@ public class Genshin : InteractionModuleBase<ShardedInteractionContext>
 		var data = (await m_enkaApiClient.GetInfo(uid)).PlayerInfo;
 		var doc = await UpdateDoc(message, Context.User.Id.ToString());
 
-		await UpdateRoles(data.AdventureRank, doc, Context.Guild.GetUser(message.Author.Id));
+		await Context.Guild.GetUser(message.Author.Id).UpdateRoles(data.AdventureRank, doc);
 		await RespondAsync("Done", ephemeral: true);
-	}
-
-	private static async Task UpdateRoles(uint adventureRank, GuildDocument doc, SocketGuildUser member)
-	{
-		var role = doc.RankRoles.GetPerfectRole(adventureRank.ToString());
-		var remove = member.Roles
-			.Where(x => doc.RankRoles.Values.Any(y => y.Contains(x.Id)))
-			.Where(x => !role.Contains(x.Id))
-			.Select(x => x.Id)
-			.ToArray();
-
-		if (remove.Any())
-			await member.RemoveRolesAsync(remove);
-
-		await member.AddRolesAsync(role);
 	}
 
 	private async Task<GuildDocument> UpdateDoc(IMessage message, string userId)
 	{
 		var doc = await m_databaseProvider.GetConfig(Context.Guild.Id);
-		if (doc.UserScreens.ContainsKey(userId) && doc.UserScreens[userId] != message.Id)
+		if (doc.UserScreens.TryGetValue(userId, out var value) && value != message.Id)
 			await message.Channel.DeleteMessageAsync(doc.UserScreens[userId]);
 
 		doc.UserScreens[userId] = message.Id;

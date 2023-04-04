@@ -58,12 +58,12 @@ public class ShikimoriClient
 
 		var manga = (await GetManga(name, 1))?.FirstOrDefault();
 		if (manga != null)
-			s_cacheMangaRaw.Put(manga?.Name, manga!);
+			s_cacheMangaRaw.Put(manga.Name, manga);
 
 		return manga;
 	}
 
-	public async ValueTask<Manga[]?> GetManga(string name, byte limit = 1)
+	public async ValueTask<Manga[]?> GetManga(string name, byte limit)
 	{
 		if (!string.IsNullOrEmpty(name.Trim()) && s_cacheMangaRaw.Exists(name))
 			return new[] { s_cacheMangaRaw.Get(name) };
@@ -105,12 +105,12 @@ public class ShikimoriClient
 
 		var anime = (await GetAnime(name, 1))?.FirstOrDefault();
 		if (anime != null)
-			s_cacheAnimeRaw.Put(anime.Name, anime!);
+			s_cacheAnimeRaw.Put(anime.Name, anime);
 
 		return anime;
 	}
 
-	public async ValueTask<Anime[]?> GetAnime(string name, byte limit = 1)
+	public async ValueTask<Anime[]?> GetAnime(string name, byte limit)
 	{
 		if (!string.IsNullOrEmpty(name.Trim()) && s_cacheAnimeRaw.Exists(name))
 			return new[] { s_cacheAnimeRaw.Get(name) };

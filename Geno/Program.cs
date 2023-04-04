@@ -14,7 +14,7 @@ using SDC_Sharp;
 using SDC_Sharp.DiscordNet;
 using SDC_Sharp.Types;
 using Serilog;
-using ShikimoriSharp;
+using ShikimoriService;
 using WaifuPicsApi;
 using ILogger = Microsoft.Extensions.Logging.ILogger;
 using Logger = Microsoft.Extensions.Logging.Logger<Microsoft.Extensions.Logging.ILogger>;
@@ -23,9 +23,9 @@ Console.InputEncoding = Encoding.UTF8;
 Console.OutputEncoding = Encoding.UTF8;
 
 var env = Utils.GetEnv();
-var locals = Path.GetFullPath("../../../", AppDomain.CurrentDomain.BaseDirectory) + "Localizations";
-var jsons = locals + "/json";
-var csv = locals + "/csv";
+var locals = string.Concat(Path.GetFullPath("../../../", AppDomain.CurrentDomain.BaseDirectory), "Localizations");
+var jsons = string.Concat(locals, "/json");
+var csv = string.Concat(locals, "/csv");
 
 await using var service = new ServiceCollection()
 	.AddSingleton(new DiscordShardedClient(new DiscordSocketConfig
@@ -42,17 +42,15 @@ await using var service = new ServiceCollection()
 		LogLevel = LogSeverity.Info,
 		LogGatewayIntentWarnings = false
 	}))
-	.AddSingleton(services => new InteractionService(
-		services.GetRequiredService<DiscordShardedClient>(),
-		new InteractionServiceConfig
-		{
-			DefaultRunMode = RunMode.Async,
-			EnableAutocompleteHandlers = true,
-			LogLevel = LogSeverity.Verbose,
-			UseCompiledLambda = true,
-			LocalizationManager = new CommandsLocalizationManager(jsons)
-		})
-	)
+	.AddSingleton(new InteractionServiceConfig
+	{
+		DefaultRunMode = RunMode.Async,
+		EnableAutocompleteHandlers = true,
+		LogLevel = LogSeverity.Verbose,
+		UseCompiledLambda = true,
+		LocalizationManager = new CommandsLocalizationManager(jsons)
+	})
+	.AddSingleton<InteractionService>()
 	.AddSingleton<Serilog.ILogger>(new LoggerConfiguration()
 		.Enrich.FromLogContext()
 		.MinimumLevel.Verbose()
@@ -69,7 +67,7 @@ await using var service = new ServiceCollection()
 	.AddSingleton(new SdcSharpClient(new SdcConfig { Token = env["Sdc"] }))
 	.AddSingleton<SdcServices>()
 	.AddSingleton<EnkaApiClient>()
-	.AddSingleton<ShikimoriService.ShikimoriClient>()
+	.AddSingleton<ShikimoriClient>()
 	.AddSingleton<WaifuClient>()
 	.InitializeSdcServices()
 	.BuildServiceProvider();

@@ -1,7 +1,6 @@
 ﻿using Discord.Interactions;
 using Geno.Handlers;
 using Geno.Responsers.Success.Modules;
-using Geno.Utils.Types;
 using ShikimoriService;
 using ShikimoriSharp.Classes;
 

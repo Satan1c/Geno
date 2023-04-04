@@ -2,7 +2,11 @@
 
 public readonly struct GenshinIds
 {
-	public uint Eu { get; init; }
-	public uint Na { get; init; }
-	public uint As { get; init; }
+	public GenshinIds()
+	{
+	}
+
+	public uint Eu { get; init; } = default;
+	public uint Na { get; init; } = default;
+	public uint As { get; init; } = default;
 }

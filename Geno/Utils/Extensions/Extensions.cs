@@ -1,5 +1,4 @@
-﻿using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
+﻿using System.Text;
 using System.Text.RegularExpressions;
 using System.Web.UI.DataBinder;
 using Discord;
@@ -33,35 +32,11 @@ public static class Extensions
 		RegexOptions.Compiled | RegexOptions.Singleline
 	);*/
 
-	public static AutocompleteResult[] GetAutocompletesUnsafe<T, TT>(this T[] categories, ref TT param, ref Func<T, TT, (bool, AutocompleteResult)> checker)
-	{
-		var result = new AutocompleteResult[5];
-		ref var startResult = ref MemoryMarshal.GetArrayDataReference(result);
-		ref var endResult = ref Unsafe.Add(ref startResult, result.Length);
-		
-		ref var start = ref MemoryMarshal.GetArrayDataReference(categories);
-		ref var end = ref Unsafe.Add(ref start, categories.Length);
-
-		while (Unsafe.IsAddressLessThan(ref start, ref end) && Unsafe.IsAddressLessThan(ref startResult, ref endResult))
-		{
-			var (check, autocompleteResult) = checker(start, param);
-			if (check)
-			{
-				startResult = autocompleteResult;
-				startResult = ref Unsafe.Add(ref startResult, 1);
-			}
-			
-			start = ref Unsafe.Add(ref start, 1);
-		}
-		
-		return result;
-	}
-	
 	public static AutocompleteResult AutocompleteResultFrom(this AnimeMangaIdBase? animeManga, UserLocales locales)
 	{
 		if (animeManga == null)
 			return new AutocompleteResult();
-		
+
 		return new AutocompleteResult(
 			locales == UserLocales.Russian
 				? string.IsNullOrEmpty(animeManga.Russian)
@@ -102,10 +77,10 @@ public static class Extensions
 		return module;
 	}
 
-	public static ulong[] GetPerfectRole(this Dictionary<string, ulong[]> roles, string rank)
+	public static ulong[] GetPerfectRoles(this IDictionary<string, ulong[]> roles, string rank)
 	{
-		if (roles.ContainsKey(rank))
-			return roles[rank];
+		if (roles.TryGetValue(rank, out var value))
+			return value;
 
 		var keys = roles.Keys;
 		var first = keys.First();
@@ -114,7 +89,7 @@ public static class Extensions
 		return
 			rankByte >= byte.Parse(first)
 				? roles[first]
-				: roles[keys.Select(byte.Parse).FirstOrDefault(i => rankByte >= i).ToString()];
+				: roles[keys.Select(s => byte.Parse(s)).FirstLessEqual(rankByte).ToString()];
 	}
 
 	public static bool HasLink(this SocketMessage message)
@@ -240,12 +215,12 @@ public static class Extensions
 		return format.FormatWith(source, null);
 	}
 
-	public static string FormatWith<T>(this string format, T source, IFormatProvider? provider)
+	private static string FormatWith(this string format, object source, IFormatProvider? provider)
 	{
 		if (format == null)
 			throw new ArgumentNullException(nameof(format));
 
-		var values = new List<object>();
+		var values = new LinkedList<object>();
 		var rewrittenFormat = s_formatRegex.Replace(format, m =>
 		{
 			var leftBracket = m.Groups["start"];
@@ -255,7 +230,7 @@ public static class Extensions
 
 			try
 			{
-				values.Add(propertyName.Value == "0"
+				values.AddLast(propertyName.Value == "0"
 					? source
 					: DataBinder.Eval(source, propertyName.Value));
 			}
@@ -264,10 +239,12 @@ public static class Extensions
 				return m.ToString();
 			}
 
-			return new string('{', leftBracket.Captures.Count) +
-			       (values.Count - 1) +
-			       formatGroup.Value +
-			       new string('}', rightBracket.Captures.Count);
+			var index = (values.Count - 1).ToString();
+			return new StringBuilder()
+				.Append(leftBracket.Captures.Count > 0 ? '{' : new char())
+				.Append(index)
+				.Append(rightBracket.Captures.Count > 0 ? '}' : new char())
+				.ToString();
 		});
 
 		try

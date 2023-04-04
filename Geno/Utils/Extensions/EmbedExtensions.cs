@@ -75,7 +75,7 @@ public static class EmbedExtensions
 			.WithImageUrl(user.GetBannerUrl(ImageFormat.Auto, 2048))
 			.AddField("Id:", $"`{user.Id.ToString()}`")
 			.AddField("Is bot:", $"`{user.IsBot.ToString()}`")
-			.AddField("Badges:", $"`{string.Join("`, `", user.PublicFlags.PublicFlagsToString()!.Split(", "))}`")
+			.AddField("Badges:", $"`{string.Join("`, `", user.PublicFlags.PublicFlagsToString().Split(", "))}`")
 			.AddField("Created at:", $"<t:{user.CreatedAt.ToUnixTimeSeconds().ToString()}:R>");
 	}
 

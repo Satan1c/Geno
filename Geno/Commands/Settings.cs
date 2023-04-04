@@ -1,10 +1,12 @@
 ﻿using System.Text;
 using Database;
+using Database.Models;
 using Discord;
 using Discord.Interactions;
 using Geno.Responsers.Success;
 using Geno.Utils.Extensions;
 using Geno.Utils.StaticData;
+using Geno.Utils.Types;
 
 namespace Geno.Commands;
 
@@ -17,6 +19,23 @@ public class Settings : InteractionModuleBase<ShardedInteractionContext>
 	public Settings(DatabaseProvider databaseProvider)
 	{
 		s_databaseProvider = databaseProvider;
+	}
+
+	private static string GetMessage(ref GuildDocument config)
+	{
+		var message = new StringBuilder("Rank roles config:\n");
+		foreach (var (k, v) in config.RankRoles)
+		{
+			var mentions = new RefList<string>(v.Length);
+			foreach (var id in v)
+				mentions.Add(string.Format("<@&{0}>", id.ToString()));
+
+			message.AppendFormat("`{0}` - ", k)
+				.Append(string.Join(',', mentions.ToArray()))
+				.Append('\n');
+		}
+
+		return message.ToString();
 	}
 
 	[Group("genshin", "Genshin Impact functional settings")]
@@ -56,18 +75,8 @@ public class Settings : InteractionModuleBase<ShardedInteractionContext>
 		{
 			var member = Context.Guild.GetUser(user.Id)!;
 			var config = await s_databaseProvider.GetConfig(Context.Guild.Id);
-			var role = config.RankRoles.GetPerfectRole(rank.ToString());
-			var remove = member.Roles
-				.Where(x => config.RankRoles.Values.Any(y => y.Contains(x.Id)))
-				.Where(x => !role.Contains(x.Id))
-				.Select(x => x.Id)
-				.ToArray();
 
-			if (remove.Any())
-				await member.RemoveRolesAsync(remove);
-
-			await member.AddRolesAsync(role);
-
+			await member.UpdateRoles(rank, config);
 			await RespondAsync("Done", ephemeral: true);
 		}
 
@@ -86,17 +95,8 @@ public class Settings : InteractionModuleBase<ShardedInteractionContext>
 				return;
 			}*/
 
-			var message = new StringBuilder("Rank roles config:\n");
-			foreach (var (k, v) in config.RankRoles)
-			{
-				message.Append($"`{k}`");
-				message.Append(" - ");
-				message.Append(string.Join(',', v.Select(x => $"<@&{x}>")));
-				message.Append('\n');
-			}
-
 			await RespondAsync(
-				message.ToString(),
+				GetMessage(ref config),
 				ephemeral: true,
 				allowedMentions: AllowedMentions.None);
 		}

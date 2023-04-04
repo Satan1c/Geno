@@ -1,8 +1,6 @@
-﻿using System.Runtime.CompilerServices;
-using Discord;
+﻿using Discord;
 using Discord.Interactions;
 using Geno.Utils.Extensions;
-using Geno.Utils.Types;
 using Microsoft.Extensions.DependencyInjection;
 using ShikimoriService;
 using ShikimoriSharp.Bases;
@@ -11,7 +9,7 @@ namespace Geno.Handlers;
 
 public class ShikimoriAnimeAutocompleteHandler : AutocompleteHandler
 {
-	private static ShikimoriClient? s_shikimoriClient = null;
+	private static ShikimoriClient? s_shikimoriClient;
 
 	public override async Task<AutocompletionResult> GenerateSuggestionsAsync(
 		IInteractionContext context,
@@ -20,12 +18,13 @@ public class ShikimoriAnimeAutocompleteHandler : AutocompleteHandler
 		IServiceProvider services)
 	{
 		s_shikimoriClient ??= services.GetRequiredService<ShikimoriClient>();
-		
+
 		try
 		{
 			var userInput = autocompleteInteraction.Data.Current.Value.ToString()!.Trim();
 			if (string.IsNullOrEmpty(userInput))
 				return AutocompletionResult.FromSuccess(Array.Empty<AutocompleteResult>());
+
 			var search = await s_shikimoriClient.GetAnime(userInput, 5);
 			if (search == null || search.Length < 1)
 				return AutocompletionResult.FromSuccess(Array.Empty<AutocompleteResult>());
@@ -33,7 +32,7 @@ public class ShikimoriAnimeAutocompleteHandler : AutocompleteHandler
 			var locale = context.GetLocale();
 			var tasks = await Task.WhenAll(
 				search.Select(async x =>
-					(AnimeMangaIdBase)await s_shikimoriClient.GetAnime(x.Id)).ToArray());
+					(AnimeMangaIdBase)(await s_shikimoriClient.GetAnime(x.Id))!).ToArray());
 
 			var results = tasks.FilterResultUnsafe(ref locale);
 			return AutocompletionResult.FromSuccess(results);
@@ -48,35 +47,5 @@ public class ShikimoriAnimeAutocompleteHandler : AutocompleteHandler
 					e));
 			return AutocompletionResult.FromError(e);
 		}
-	}
-}
-
-public static class UnsafeExtensions
-{
-	public static AutocompleteResult[] FilterResultUnsafe(this AnimeMangaIdBase?[] tasks, ref UserLocales locale)
-	{
-		var checker = (AnimeMangaIdBase? result, UserLocales locales) => (result != null, result.AutocompleteResultFrom(locales));
-		return tasks.GetAutocompletesUnsafe(ref locale, ref checker);
-		
-		/*var results = new AutocompleteResult[5];
-		ref var startResult = ref MemoryMarshal.GetArrayDataReference(results);
-		ref var endResult = ref Unsafe.Add(ref startResult, results.Length);
-
-		ref var start = ref MemoryMarshal.GetArrayDataReference(tasks);
-		ref var end = ref Unsafe.Add(ref start, tasks.Length);
-
-		while (Unsafe.IsAddressLessThan(ref start, ref end) && Unsafe.IsAddressLessThan(ref startResult, ref endResult))
-		{
-			var result = start.Result;
-			if (result != null)
-			{
-				startResult = result.AutocompleteResultFrom(locale);
-				startResult = ref Unsafe.Add(ref startResult, 1);
-			}
-
-			start = ref Unsafe.Add(ref start, 1);
-		}
-
-		return results;*/
 	}
 }

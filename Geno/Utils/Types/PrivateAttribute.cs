@@ -30,7 +30,7 @@ public static class PrivateAttributeExtension
 			Category.Genshin => nameof(Category.Genshin),
 			Category.Images => nameof(Category.Images),
 			Category.Admin => nameof(Category.Admin),
-			_ => throw new ArgumentOutOfRangeException(nameof(category), category, null)
+			_ => ""
 		};
 	}
 }

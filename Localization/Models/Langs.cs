@@ -19,7 +19,7 @@ public static class LangsExtensions
 		{
 			Langs.Ru => nameof(Langs.Ru),
 			Langs.En => nameof(Langs.En),
-			_ => throw new ArgumentOutOfRangeException(nameof(langs), langs, null)
+			_ => ""
 		};
 	}
 }

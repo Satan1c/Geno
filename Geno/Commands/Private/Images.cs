@@ -113,7 +113,7 @@ public class Images : InteractionModuleBase<ShardedInteractionContext>
 			SfwCategory.Poke => CategoryFormat.User,
 			SfwCategory.Dance => CategoryFormat.Solo,
 			SfwCategory.Cringe => CategoryFormat.Solo,
-			_ => throw new ArgumentOutOfRangeException(nameof(category), category, null)
+			_ => CategoryFormat.Neutral
 		};
 	}
 
@@ -148,12 +148,12 @@ public class Images : InteractionModuleBase<ShardedInteractionContext>
 			SfwCategory.Dance => "{0} танцует",
 			SfwCategory.Cringe => "{0} кринжует",
 
-			SfwCategory.Waifu => "expr",
-			SfwCategory.Neko => "expr",
-			SfwCategory.Shinobu => "expr",
-			SfwCategory.Megumin => "expr",
-			SfwCategory.Awoo => "expr",
-			_ => throw new ArgumentOutOfRangeException(nameof(category), category, null)
+			SfwCategory.Waifu => nameof(SfwCategory.Waifu),
+			SfwCategory.Neko => nameof(SfwCategory.Neko),
+			SfwCategory.Shinobu => nameof(SfwCategory.Shinobu),
+			SfwCategory.Megumin => nameof(SfwCategory.Megumin),
+			SfwCategory.Awoo => nameof(SfwCategory.Awoo),
+			_ => ""
 		};
 	}
 }
@@ -174,7 +174,7 @@ public static class CategoryFormatExtensions
 			CategoryFormat.Neutral => nameof(CategoryFormat.Neutral),
 			CategoryFormat.Solo => nameof(CategoryFormat.Solo),
 			CategoryFormat.User => nameof(CategoryFormat.User),
-			_ => throw new ArgumentOutOfRangeException(nameof(format), format, null)
+			_ => ""
 		};
 	}
 }
