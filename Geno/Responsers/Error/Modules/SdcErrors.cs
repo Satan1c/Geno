@@ -10,11 +10,11 @@ public class SdcErrors : IErrorResolver
 {
 	private const string m_module = nameof(Sdc);
 	public string ModuleName => m_module;
-	public LocalizationManager localizationManager { get; set; } = null!;
+	public LocalizationManager LocalizationManager { get; set; } = null!;
 
 	public EmbedBuilder Resolve(IResult result, ICommandInfo command, IInteractionContext context, EmbedBuilder embed)
 	{
-		var locale = localizationManager.GetCategory("sdc").GetDataFor("sdc").GetForLocale(context);
+		var locale = LocalizationManager.GetCategory("sdc").GetDataFor("sdc").GetForLocale(context);
 		var defaultLocale = locale["default"].FormatWith(new { command.MethodName, result.Error, result.ErrorReason });
 
 		return new EmbedBuilder().WithTitle("Sdc error").WithDescription(

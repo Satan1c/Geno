@@ -1,4 +1,5 @@
-﻿using Discord;
+﻿using System.Runtime.CompilerServices;
+using Discord;
 using Discord.Interactions;
 using Geno.Utils.Extensions;
 using Geno.Utils.Types;
@@ -53,7 +54,7 @@ public static class UnsafeExtensions
 		var checker = (Task<AnimeMangaIdBase?> task, UserLocales locales) =>
 		{
 			var result = task.Result;
-			return (result != null, result.AutocompleteResultFrom(locales));
+			return (result == null, result.AutocompleteResultFrom(locales));
 		};
 		
 		return tasks.GetAutocompletesUnsafe(ref locale, ref checker);

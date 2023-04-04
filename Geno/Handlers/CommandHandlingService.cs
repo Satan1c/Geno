@@ -1,4 +1,6 @@
 ﻿using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using Discord;
 using Discord.Extensions.Interactions;
 using Discord.Interactions;
@@ -40,44 +42,53 @@ public class CommandHandlingService
 		Interactions.AddTypeConverter<ulong>(new UlongTypeConverter());
 
 		var modules = (await Interactions.AddModulesAsync(assembly, m_services)).ToArray();
-		var safe = new LinkedList<ModuleInfo>();
-		var priv = new Dictionary<Category, LinkedList<ModuleInfo>>();
+		var (priv, safe) = FilterModules(modules);
 
-		foreach (var m in modules)
+		if (priv.TryGetValue(Category.Admin, out var module))
 		{
-			if (m is null)
-				continue;
-
-			if (m.Attributes.FirstOrDefault(x => x is PrivateAttribute)
-				    is PrivateAttribute privateAttribute && !privateAttribute.IsDefaultAttribute())
-			{
-				if (privateAttribute.Categories.HasCategory(Category.Admin))
-					await Interactions.AddModulesToGuildAsync(648571219674923008, true, m);
-
-				if (!priv.ContainsKey(privateAttribute.Categories))
-					priv[privateAttribute.Categories] = new LinkedList<ModuleInfo>();
-
-				priv[privateAttribute.Categories].AddLast(m);
-
-				continue;
-			}
-
-			safe.AddLast(m);
+			await Interactions.AddModulesToGuildAsync(648571219674923008, true, module);
 		}
 
-		Private = new Dictionary<Category, ModuleInfo[]>(
-				priv
-					.Select(k =>
-						new KeyValuePair<Category, ModuleInfo[]>(k.Key, k.Value.ToArray())
-					)
-			) { { Category.None, Array.Empty<ModuleInfo>() } }
-			.AsReadOnly();
-
-		await Interactions.AddModulesGloballyAsync(true, safe.ToArray());
-
+		Private = priv;
+		await Interactions.AddModulesGloballyAsync(true, safe);
+		
 		ErrorResolver.Init(assembly, m_localizationManager);
-
 		GC.Collect();
+	}
+
+	private (IReadOnlyDictionary<Category, ModuleInfo[]>, ModuleInfo[]) FilterModules(ModuleInfo?[] modules)
+	{
+		var dict = new RefList<KeyValuePair<Category, LinkedList<ModuleInfo>>>(2);
+		var safeArray = new RefList<ModuleInfo>(5);
+		
+		ref var start = ref MemoryMarshal.GetArrayDataReference(modules);
+		ref var end = ref Unsafe.Add(ref start, modules.Length);
+
+		while (Unsafe.IsAddressLessThan(ref start, ref end))
+		{
+			if (start is not null)
+			{
+				var attributes = new RefList<Attribute>(start.Attributes);
+				if (attributes.FirstOrDefault(x => x is PrivateAttribute)
+					    is PrivateAttribute privateAttribute && !privateAttribute.IsDefaultAttribute())
+				{
+					if (!dict.TryGetValue(privateAttribute.Categories, out var category))
+						category = dict
+							.Add(new KeyValuePair<Category, LinkedList<ModuleInfo>>(privateAttribute.Categories,
+								new LinkedList<ModuleInfo>())).Value;
+
+					category.AddLast(start);
+				}
+				else
+				{
+					safeArray.Add(start);
+				}
+			}
+			
+			start = ref Unsafe.Add(ref start, 1)!;
+		}
+
+		return (new Dictionary<Category, ModuleInfo[]>(dict.ToArray<Category, ModuleInfo>()).AsReadOnly(), safeArray.ToArray());
 	}
 
 	private void RegisterEvents()

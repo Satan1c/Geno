@@ -18,7 +18,7 @@ public static class ErrorResolver
 			if (!s_validType.IsAssignableFrom(definedType) || !definedType.IsClass) continue;
 
 			var resolver = (definedType.DeclaredConstructors.First().Invoke(Array.Empty<object>()) as IErrorResolver)!;
-			resolver.localizationManager = localizationManager;
+			resolver.LocalizationManager = localizationManager;
 			s_list[resolver.ModuleName] = resolver;
 		}
 	}

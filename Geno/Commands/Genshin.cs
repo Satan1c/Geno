@@ -13,7 +13,6 @@ using Category = Localization.Models.Category;
 namespace Geno.Commands;
 
 [Group("genshin", "Genshin Impact commands")]
-[Private(Utils.Types.Category.Genshin)]
 public class Genshin : InteractionModuleBase<ShardedInteractionContext>
 {
 	private const string m_baseLink = "https://genshin.hoyoverse.com/en/gift?code=";
