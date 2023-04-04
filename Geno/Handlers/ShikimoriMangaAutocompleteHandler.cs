@@ -3,6 +3,7 @@ using Discord.Interactions;
 using Geno.Utils.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using ShikimoriService;
+using ShikimoriSharp.Bases;
 
 namespace Geno.Handlers;
 
@@ -25,12 +26,11 @@ public class ShikimoriMangaAutocompleteHandler : AutocompleteHandler
 			if (search == null || search.Length < 1)
 				return AutocompletionResult.FromSuccess(Array.Empty<AutocompleteResult>());
 
-			var tasks = search.Select(async x => await m_shikimoriClient.GetManga(x.Id)).ToArray();
+			var locale = context.GetLocale();
+			var tasks = search.Select(async x => (AnimeMangaIdBase)await m_shikimoriClient.GetManga(x.Id)).ToArray();
 			Task.WaitAll(tasks, CancellationToken.None);
-
-			var resultsRaw = tasks.Select(x => x.Result).Where(x => x != null).ToArray();
-			var results = resultsRaw.Select(x => x!.AutocompleteResultFrom(context.GetLocale()));
-			return AutocompletionResult.FromSuccess(results.Take(5));
+			
+			return AutocompletionResult.FromSuccess(tasks.FilterResultUnsafe(ref locale));
 		}
 		catch (Exception e)
 		{

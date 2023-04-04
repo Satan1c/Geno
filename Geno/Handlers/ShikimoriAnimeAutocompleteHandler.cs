@@ -4,7 +4,7 @@ using Geno.Utils.Extensions;
 using Geno.Utils.Types;
 using Microsoft.Extensions.DependencyInjection;
 using ShikimoriService;
-using ShikimoriSharp.Classes;
+using ShikimoriSharp.Bases;
 
 namespace Geno.Handlers;
 
@@ -28,7 +28,7 @@ public class ShikimoriAnimeAutocompleteHandler : AutocompleteHandler
 				return AutocompletionResult.FromSuccess(Array.Empty<AutocompleteResult>());
 
 			var locale = context.GetLocale();
-			var tasks = search.Select(async x => await s_shikimoriClient.GetAnime(x.Id)).ToArray();
+			var tasks = search.Select(async x => (AnimeMangaIdBase)await s_shikimoriClient.GetAnime(x.Id)).ToArray();
 			Task.WaitAll(tasks, CancellationToken.None);
 
 			return AutocompletionResult.FromSuccess(tasks.FilterResultUnsafe(ref locale));
@@ -46,11 +46,11 @@ public class ShikimoriAnimeAutocompleteHandler : AutocompleteHandler
 	}
 }
 
-file static class UnsafeExtensions
+public static class UnsafeExtensions
 {
-	public static AutocompleteResult[] FilterResultUnsafe(this Task<AnimeID?>[] tasks, ref UserLocales locale)
+	public static AutocompleteResult[] FilterResultUnsafe(this Task<AnimeMangaIdBase?>[] tasks, ref UserLocales locale)
 	{
-		var checker = (Task<AnimeID?> task, UserLocales locales) =>
+		var checker = (Task<AnimeMangaIdBase?> task, UserLocales locales) =>
 		{
 			var result = task.Result;
 			return (result != null, result.AutocompleteResultFrom(locales));
