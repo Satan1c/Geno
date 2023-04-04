@@ -1,5 +1,4 @@
-﻿using System.Text;
-using Database;
+﻿using Database;
 using Database.Models;
 using Discord;
 using Discord.Interactions;
@@ -9,25 +8,28 @@ using Geno.Responsers.Success.Modules;
 using Geno.Utils.Extensions;
 using Geno.Utils.Types;
 using Localization;
+using Category = Localization.Models.Category;
 
 namespace Geno.Commands;
 
 [Group("genshin", "Genshin Impact commands")]
-[Private(Category.Genshin)]
+[Private(Utils.Types.Category.Genshin)]
 public class Genshin : InteractionModuleBase<ShardedInteractionContext>
 {
 	private const string m_baseLink = "https://genshin.hoyoverse.com/en/gift?code=";
 	private readonly DatabaseProvider m_databaseProvider;
 	private readonly EnkaApiClient m_enkaApiClient;
-	private readonly Localization.Models.Category m_localizations;
+	private readonly Category m_localizations;
 
-	public Genshin(DatabaseProvider databaseProvider, EnkaApiClient enkaApiClient, LocalizationManager localizationManager)
+	public Genshin(DatabaseProvider databaseProvider,
+		EnkaApiClient enkaApiClient,
+		LocalizationManager localizationManager)
 	{
 		m_databaseProvider = databaseProvider;
 		m_enkaApiClient = enkaApiClient;
 		m_localizations = localizationManager.GetCategory("genshin");
 	}
-	
+
 	[UserCommand("Genshin profile")]
 	public async Task GenshinProfile(IUser user)
 	{
@@ -74,7 +76,7 @@ public class Genshin : InteractionModuleBase<ShardedInteractionContext>
 		await UpdateRoles(data.AdventureRank, doc, Context.Guild.GetUser(message.Author.Id));
 		await RespondAsync("Done", ephemeral: true);
 	}
-	
+
 	private static async Task UpdateRoles(uint adventureRank, GuildDocument doc, SocketGuildUser member)
 	{
 		var role = doc.RankRoles.GetPerfectRole(adventureRank.ToString());

@@ -1,13 +1,12 @@
 ﻿using Discord;
 using Discord.Interactions;
-using Geno.Handlers;
 using Geno.Utils.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using ShikimoriService;
 
-namespace Geno.Utils.Types;
+namespace Geno.Handlers;
 
-public class ShikimoriAnimeAutocompleteHandler : AutocompleteHandler
+public class ShikimoriMangaAutocompleteHandler : AutocompleteHandler
 {
 	private ShikimoriClient? m_shikimoriClient;
 
@@ -22,11 +21,11 @@ public class ShikimoriAnimeAutocompleteHandler : AutocompleteHandler
 		try
 		{
 			var userInput = autocompleteInteraction.Data.Current.Value.ToString()!;
-			var search = await m_shikimoriClient.GetAnime(userInput, 5);
+			var search = await m_shikimoriClient.GetManga(userInput, 5);
 			if (search == null || search.Length < 1)
 				return AutocompletionResult.FromSuccess(Array.Empty<AutocompleteResult>());
 
-			var tasks = search.Select(async x => await m_shikimoriClient.GetAnime(x.Id)).ToArray();
+			var tasks = search.Select(async x => await m_shikimoriClient.GetManga(x.Id)).ToArray();
 			Task.WaitAll(tasks, CancellationToken.None);
 
 			var resultsRaw = tasks.Select(x => x.Result).Where(x => x != null).ToArray();
@@ -38,7 +37,7 @@ public class ShikimoriAnimeAutocompleteHandler : AutocompleteHandler
 			await ClientEvents.OnLog(
 				new LogMessage(
 					LogSeverity.Error,
-					nameof(ShikimoriAnimeAutocompleteHandler) + " " + nameof(GenerateSuggestionsAsync),
+					nameof(ShikimoriMangaAutocompleteHandler) + " " + nameof(GenerateSuggestionsAsync),
 					e.Message,
 					e));
 			return AutocompletionResult.FromError(e);

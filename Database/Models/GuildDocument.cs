@@ -19,10 +19,10 @@ public class GuildDocument : BaseDocument
 
 	protected override bool Equals(BaseDocument? other)
 	{
-		return Equals((GuildDocument) other);
+		return Equals((GuildDocument)other!);
 	}
 
-	public bool Equals(GuildDocument? other)
+	public bool Equals(GuildDocument? other = null)
 	{
 		return base.Equals(other)
 		       && other is not null

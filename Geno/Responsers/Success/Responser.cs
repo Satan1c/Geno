@@ -17,7 +17,8 @@ public static class Responser
 		bool ephemeral = false,
 		bool isDefered = false)
 	{
-		return context.Respond(null, ephemeral, isDefered, embeds.Select(x => x.WithColor(x.Color ?? new Color(43, 45, 49)).Build()).ToArray());
+		return context.Respond(null, ephemeral, isDefered,
+			embeds.Select(x => x.WithColor(x.Color ?? new Color(43, 45, 49)).Build()).ToArray());
 	}
 
 	private static Task Respond(this IInteractionContext context,

@@ -20,8 +20,8 @@ public class CommandHandlingService
 	private static readonly Embed s_emptyEmbed = new EmbedBuilder().Build();
 
 	private readonly DiscordShardedClient m_client;
-	private readonly IServiceProvider m_services;
 	private readonly LocalizationManager m_localizationManager;
+	private readonly IServiceProvider m_services;
 
 	public CommandHandlingService(IServiceProvider services)
 	{
@@ -70,7 +70,7 @@ public class CommandHandlingService
 					.Select(k =>
 						new KeyValuePair<Category, ModuleInfo[]>(k.Key, k.Value.ToArray())
 					)
-				) { { Category.None, Array.Empty<ModuleInfo>() } }
+			) { { Category.None, Array.Empty<ModuleInfo>() } }
 			.AsReadOnly();
 
 		await Interactions.AddModulesGloballyAsync(true, safe.ToArray());

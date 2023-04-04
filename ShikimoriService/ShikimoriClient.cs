@@ -23,7 +23,6 @@ public class ShikimoriClient
 		part.WithMicrosoftMemoryCacheHandle().WithExpiration(ExpirationMode.Sliding, TimeSpan.FromMinutes(10)));
 
 	private readonly TimeLimiter m_firstLimit = TimeLimiter.GetFromMaxCountByInterval(5, TimeSpan.FromSeconds(1));
-	private readonly TimeLimiter m_secondLimit = TimeLimiter.GetFromMaxCountByInterval(5, TimeSpan.FromSeconds(1));
 
 	private readonly ShikimoriSharp.ShikimoriClient m_shikimoriClient;
 
@@ -42,7 +41,6 @@ public class ShikimoriClient
 		if (s_cacheManga.Exists(mangaId)) return s_cacheManga.Get(mangaId);
 
 		await m_firstLimit;
-		await m_secondLimit;
 
 		var manga = await m_shikimoriClient.Mangas.GetById(id);
 		if (manga != null)
@@ -53,10 +51,10 @@ public class ShikimoriClient
 
 	public async Task<Manga?> GetManga(string name)
 	{
-		if (!string.IsNullOrEmpty(name.Trim()) && s_cacheMangaRaw.Exists(name)) return s_cacheMangaRaw.Get(name);
+		if (!string.IsNullOrEmpty(name.Trim()) && s_cacheMangaRaw.Exists(name))
+			return s_cacheMangaRaw.Get(name);
 
 		await m_firstLimit;
-		await m_secondLimit;
 
 		var manga = (await GetManga(name, 1))?.FirstOrDefault();
 		if (manga != null)
@@ -71,12 +69,11 @@ public class ShikimoriClient
 			return new[] { s_cacheMangaRaw.Get(name) };
 
 		await m_firstLimit;
-		await m_secondLimit;
 
 		var manga = await m_shikimoriClient.Mangas.GetBySearch(new MangaRequestSettings
 		{
 			search = name,
-			limit = limit > 0 ? limit : 1
+			limit = limit > 0 ? limit > 50 ? 50 : limit : 1
 		});
 
 		foreach (var m in manga)
@@ -92,7 +89,6 @@ public class ShikimoriClient
 		if (s_cacheAnime.Exists(animeId)) return s_cacheAnime.Get(animeId);
 
 		await m_firstLimit;
-		await m_secondLimit;
 
 		var anime = await m_shikimoriClient.Animes.GetAnime(id);
 		if (anime != null)
@@ -106,11 +102,10 @@ public class ShikimoriClient
 		if (!string.IsNullOrEmpty(name.Trim()) && s_cacheAnimeRaw.Exists(name)) return s_cacheAnimeRaw.Get(name);
 
 		await m_firstLimit;
-		await m_secondLimit;
 
 		var anime = (await GetAnime(name, 1))?.FirstOrDefault();
 		if (anime != null)
-			s_cacheAnimeRaw.Put(anime?.Name, anime!);
+			s_cacheAnimeRaw.Put(anime.Name, anime!);
 
 		return anime;
 	}
@@ -121,7 +116,6 @@ public class ShikimoriClient
 			return new[] { s_cacheAnimeRaw.Get(name) };
 
 		await m_firstLimit;
-		await m_secondLimit;
 
 		var anime = await m_shikimoriClient.Animes.GetAnime(new AnimeRequestSettings
 		{

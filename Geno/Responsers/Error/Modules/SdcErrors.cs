@@ -10,7 +10,7 @@ public class SdcErrors : IErrorResolver
 {
 	private const string m_module = nameof(Sdc);
 	public string ModuleName => m_module;
-	public LocalizationManager localizationManager { get; set; }
+	public LocalizationManager localizationManager { get; set; } = null!;
 
 	public EmbedBuilder Resolve(IResult result, ICommandInfo command, IInteractionContext context, EmbedBuilder embed)
 	{

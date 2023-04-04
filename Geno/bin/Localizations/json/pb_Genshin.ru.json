@@ -2,13 +2,11 @@
 	"Make code links": {
 		"name": "Ссылки кодов"
 	},
-	
 	"Rank info": {
 		"name": "Роли за ранг"
 	},
-	
 	"genshin": {
 		"name": "геншин",
-		"description": "Команды связанные с Genshin Impact",
+		"description": "Команды связанные с Genshin Impact"
 	}
 }

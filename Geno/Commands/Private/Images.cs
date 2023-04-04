@@ -78,7 +78,6 @@ public class Images : InteractionModuleBase<ShardedInteractionContext>
 		}
 	}
 
-
 	private static CategoryFormat GetCategoryFormat(SfwCategory category)
 	{
 		return category switch
@@ -156,54 +155,6 @@ public class Images : InteractionModuleBase<ShardedInteractionContext>
 			SfwCategory.Awoo => "expr",
 			_ => throw new ArgumentOutOfRangeException(nameof(category), category, null)
 		};
-	}
-
-	public class SfwAutocompleteHandler : AutocompleteHandler
-	{
-		private IEnumerable<AutocompleteResult> m_sfwCategories = Array.Empty<AutocompleteResult>();
-
-		public override async Task<AutocompletionResult> GenerateSuggestionsAsync(
-			IInteractionContext context,
-			IAutocompleteInteraction autocompleteInteraction,
-			IParameterInfo parameter,
-			IServiceProvider services)
-		{
-			try
-			{
-				if (!m_sfwCategories.Any())
-				{
-					var res = new AutocompleteResult[31];
-					for (var i = 0; i < 31; i++)
-					{
-						if (!Enum.TryParse<SfwCategory>(i.ToString(), out var category)) continue;
-
-						var name = category.EnumToString();
-						res[i] = new AutocompleteResult(name, name);
-					}
-
-					m_sfwCategories = res;
-				}
-
-				var userInput = autocompleteInteraction.Data.Current.Value.ToString()!;
-				var results =
-					m_sfwCategories.Where(x =>
-						x.Name.StartsWith(userInput,
-							StringComparison
-								.InvariantCultureIgnoreCase));
-
-				return AutocompletionResult.FromSuccess(results.Take(5));
-			}
-			catch (Exception e)
-			{
-				await ClientEvents.OnLog(
-					new LogMessage(
-						LogSeverity.Error,
-						nameof(SfwAutocompleteHandler) + " " + nameof(GenerateSuggestionsAsync),
-						e.Message,
-						e));
-				return AutocompletionResult.FromError(e);
-			}
-		}
 	}
 }
 

@@ -8,7 +8,7 @@ public class UserDocument : BaseDocument
 	[BsonElement("genshin_ids")] public GenshinIds GenshinIds { get; set; }
 	[BsonElement("default_region")] public GenshinRegion DefaultRegion { get; set; }
 	public uint DefaultGenshinId => GetGenshinId(DefaultRegion);
-	
+
 	public uint GetGenshinId(GenshinRegion region)
 	{
 		return region switch

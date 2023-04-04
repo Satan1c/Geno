@@ -32,7 +32,7 @@
         <PackageReference Include="RateLimiter" Version="2.2.0" />
         <PackageReference Include="SDC_Sharp" Version="3.1.2" />
         <PackageReference Include="SDC_Sharp.DiscordNet" Version="3.1.2" />
-        <PackageReference Include="Serilog" Version="3.0.0-dev-01939" />
+        <PackageReference Include="Serilog" Version="3.0.0-dev-01958" />
         <PackageReference Include="Serilog.Extensions.Logging" Version="3.1.1-dev-10338" />
         <PackageReference Include="Serilog.Sinks.Console" Version="4.1.1-dev-00910" />
         <PackageReference Include="Stack247.System.Web.UI.DataBinder" Version="1.0.0" />

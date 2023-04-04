@@ -25,7 +25,7 @@ public class LocalizationManager
 			}
 		}
 	}
-	
+
 	private void Load(string[] filesPaths)
 	{
 		foreach (var filesPath in filesPaths)
@@ -44,7 +44,7 @@ public class LocalizationManager
 				m_categories[category] = new Category(name, lines);
 		}
 	}
-	
+
 	public Category GetCategory(string category)
 	{
 		if (m_categories.TryGetValue(category, out var value))

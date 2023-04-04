@@ -11,7 +11,8 @@ public class ClientEvents
 	private readonly DiscordShardedClient m_client;
 	private readonly CommandHandlingService m_handlingService;
 
-	public ClientEvents(DiscordShardedClient client, ILogger logger,
+	public ClientEvents(DiscordShardedClient client,
+		ILogger logger,
 		CommandHandlingService handlingService)
 	{
 		m_client = client;
@@ -29,12 +30,14 @@ public class ClientEvents
 			"[{Source}]\t{Message} {Trace} {InnerTrace}",
 			message.Source,
 			message.Message,
-			(message.Exception != null ? $"\n{message.Exception.StackTrace?.Replace("\n", "\n\t\t\t")}" : ""),
-			(message.Exception is { StackTrace: { } } ? $"\n{message.Exception.StackTrace.Replace("\n", "\n\t\t\t")}" : ""));
-		
+			message.Exception != null ? $"\n{message.Exception.StackTrace?.Replace("\n", "\n\t\t\t")}" : "",
+			message.Exception is { StackTrace: { } }
+				? $"\n{message.Exception.StackTrace.Replace("\n", "\n\t\t\t")}"
+				: "");
+
 		return Task.CompletedTask;
 	}
-	
+
 	private static LogEventLevel SeverityToLevel(LogSeverity severity)
 	{
 		return severity switch

@@ -1,4 +1,6 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 using System.Web.UI.DataBinder;
 using Discord;
 using Discord.Interactions;
@@ -21,7 +23,7 @@ public static class Extensions
 		"(http|ftp|https):\\/\\/([\\w_-]+(?:(?:\\.[\\w_-]+)+))([\\w.,@?^=%&:\\/~+#-]*[\\w@?^=%&\\/~+#-])",
 		RegexOptions.Compiled | RegexOptions.Singleline
 	);
-	
+
 	private static readonly Regex s_formatRegex =
 		new(@"(?<start>\{)+(?<property>[\w\.\[\]]+)(?<format>:[^}]+)?(?<end>\})+",
 			RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
@@ -31,8 +33,35 @@ public static class Extensions
 		RegexOptions.Compiled | RegexOptions.Singleline
 	);*/
 
-	public static AutocompleteResult AutocompleteResultFrom(this AnimeMangaIdBase animeManga, UserLocales locales)
+	public static AutocompleteResult[] GetAutocompletesUnsafe<T, TT>(this T[] categories, ref TT param, ref Func<T, TT, (bool, AutocompleteResult)> checker)
 	{
+		var result = new AutocompleteResult[5];
+		ref var startResult = ref MemoryMarshal.GetArrayDataReference(result);
+		ref var endResult = ref Unsafe.Add(ref startResult, result.Length);
+		
+		ref var start = ref MemoryMarshal.GetArrayDataReference(categories);
+		ref var end = ref Unsafe.Add(ref start, categories.Length);
+
+		while (Unsafe.IsAddressLessThan(ref start, ref end) && Unsafe.IsAddressLessThan(ref startResult, ref endResult))
+		{
+			var (check, autocompleteResult) = checker(start, param);
+			if (check)
+			{
+				startResult = autocompleteResult;
+				startResult = ref Unsafe.Add(ref startResult, 1);
+			}
+			
+			start = ref Unsafe.Add(ref start, 1);
+		}
+		
+		return result;
+	}
+	
+	public static AutocompleteResult AutocompleteResultFrom(this AnimeMangaIdBase? animeManga, UserLocales locales)
+	{
+		if (animeManga == null)
+			return new AutocompleteResult();
+		
 		return new AutocompleteResult(
 			locales == UserLocales.Russian
 				? string.IsNullOrEmpty(animeManga.Russian)
@@ -184,7 +213,8 @@ public static class Extensions
 		}
 	}
 
-	public static async ValueTask<bool> HasInvite(this IDiscordClient client, SocketUserMessage message,
+	public static async ValueTask<bool> HasInvite(this IDiscordClient client,
+		SocketUserMessage message,
 		bool fetchForValidation = false,
 		bool ignoreCurrentServer = false)
 	{
@@ -204,17 +234,17 @@ public static class Extensions
 
 		return !ignoreCurrentServer || invite.GuildId != (message.Author as SocketGuildUser)?.Guild.Id;
 	}
-	
+
 	public static string FormatWith<T>(this string format, T source)
 	{
 		return format.FormatWith(source, null);
 	}
-	
+
 	public static string FormatWith<T>(this string format, T source, IFormatProvider? provider)
 	{
 		if (format == null)
 			throw new ArgumentNullException(nameof(format));
-		
+
 		var values = new List<object>();
 		var rewrittenFormat = s_formatRegex.Replace(format, m =>
 		{
@@ -225,15 +255,15 @@ public static class Extensions
 
 			try
 			{
-				values.Add((propertyName.Value == "0")
+				values.Add(propertyName.Value == "0"
 					? source
 					: DataBinder.Eval(source, propertyName.Value));
 			}
-			catch (Exception _)
+			catch
 			{
 				return m.ToString();
 			}
-			
+
 			return new string('{', leftBracket.Captures.Count) +
 			       (values.Count - 1) +
 			       formatGroup.Value +
@@ -248,8 +278,9 @@ public static class Extensions
 
 			return res;
 		}
-		catch (Exception e)
+		catch
 		{
+			// ignored
 		}
 
 		return rewrittenFormat;

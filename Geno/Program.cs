@@ -34,6 +34,7 @@ await using var service = new ServiceCollection()
 		AlwaysDownloadDefaultStickers = false,
 		AlwaysResolveStickers = false,
 		GatewayIntents = GatewayIntents.Guilds
+		                 | GatewayIntents.GuildInvites
 		                 | GatewayIntents.GuildMembers
 		                 | GatewayIntents.GuildMessages
 		                 | GatewayIntents.GuildVoiceStates,

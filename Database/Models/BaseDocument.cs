@@ -9,15 +9,15 @@ public abstract class BaseDocument
 
 	public static bool operator ==(BaseDocument? aBaseDocument, BaseDocument? bDocument)
 	{
-		return aBaseDocument?.Equals(bDocument)
-		       ?? (aBaseDocument is null && bDocument is not null) || (aBaseDocument is not null && bDocument is null);
+		return aBaseDocument?.Equals(bDocument) ??
+		       ((aBaseDocument is not null && bDocument is not null) || (aBaseDocument is null && bDocument is null));
 	}
 
 	public static bool operator !=(BaseDocument? aBaseDocument, BaseDocument? bDocument)
 	{
 		return !(aBaseDocument == bDocument);
 	}
-	
+
 	protected virtual bool Equals(BaseDocument? other)
 	{
 		return other is not null
@@ -28,7 +28,7 @@ public abstract class BaseDocument
 	{
 		if (ReferenceEquals(null, obj)) return false;
 		if (ReferenceEquals(this, obj)) return true;
-		return obj.GetType() == this.GetType() && Equals((BaseDocument)obj);
+		return obj.GetType() == GetType() && Equals((BaseDocument)obj);
 	}
 
 	public override int GetHashCode()

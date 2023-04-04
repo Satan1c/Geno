@@ -15,10 +15,10 @@ public static class GenshinResponse
 
 		var abyssTitle = locals["abyss_title"];
 		var abyssValue = locals["abyss_value"].FormatWith(player);
-		
+
 		var arTitle = locals["ar_title"];
 		var arValue = locals["ar_value"].FormatWith(player);
-		
+
 		var embed = new EmbedBuilder()
 			.WithAuthor(player.Nickname)
 			.WithDescription(player.Description)

@@ -2,30 +2,24 @@
 	"sdc": {
 		"name": "sdc",
 		"description": "команды связанные с https://sdc.su/",
-		
 		"monitoring": {
 			"name": "монитроинг",
 			"description": "команды мониторинга",
-			
 			"guild_info": {
 				"name": "сервер_инфо",
 				"description": "информация о сервере",
-				
 				"id": {
 					"name": "id",
 					"description": "айди сервера"
 				}
 			}
 		},
-		
 		"nika": {
 			"name": "nika",
 			"description": "команды Ники",
-			
 			"warns": {
 				"name": "варны",
 				"description": "выводит кол-во варнов в системе Ника",
-				
 				"user": {
 					"name": "пользователь",
 					"description": "айди/пользователь чье кол-во варнов вы хотите узнать"

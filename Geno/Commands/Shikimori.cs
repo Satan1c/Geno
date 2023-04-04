@@ -1,4 +1,5 @@
 ﻿using Discord.Interactions;
+using Geno.Handlers;
 using Geno.Responsers.Success.Modules;
 using Geno.Utils.Types;
 using ShikimoriService;
@@ -21,24 +22,20 @@ public class Shikimori : InteractionModuleBase<ShardedInteractionContext>
 
 		[SlashCommand("anime", "search anime by name")]
 		public async Task SearchAnime(
-			[Autocomplete(typeof(ShikimoriAnimeAutocompleteHandler))]
-			[Summary("anime_name", "Anime name")]
+			[Autocomplete(typeof(ShikimoriAnimeAutocompleteHandler))] [Summary("anime_name", "Anime name")]
 			string query)
 		{
 			await Context.Interaction.DeferAsync();
-			query = query.ToLower();
 
 			await Context.SearchResult(await FetchAnime(query));
 		}
 
 		[SlashCommand("manga", "search manga by name")]
 		public async Task SearchManga(
-			[Autocomplete(typeof(ShikimoriMangaAutocompleteHandler))]
-			[Summary("manga_name", "Manga name")]
+			[Autocomplete(typeof(ShikimoriMangaAutocompleteHandler))] [Summary("manga_name", "Manga name")]
 			string query)
 		{
 			await Context.Interaction.DeferAsync();
-			query = query.ToLower();
 
 			await Context.SearchResult(await FetchManga(query));
 		}

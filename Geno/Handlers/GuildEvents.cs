@@ -33,19 +33,19 @@ public class GuildEvents
 		if (before.VoiceChannel is { } beforeChannel
 		    && config.Voices.TryGetValue(guildUserId, out var voiceId)
 		    && beforeChannel.Id == voiceId)
-		{
 			await OnDeleteChannel(beforeChannel, guildUserId, guildUser, config);
-		}
 
-		if (after.VoiceChannel is { } afterVoiceChannel && config.Channels.TryGetValue(afterChannelId, out var categoryId))
-		{
+		if (after.VoiceChannel is { } afterVoiceChannel &&
+		    config.Channels.TryGetValue(afterChannelId, out var categoryId))
 			await OnCreateChannel(afterChannelId, afterVoiceChannel, categoryId, config, guildUser);
-		}
 
 		await m_databaseProvider.SetConfig(config);
 	}
 
-	private static async Task OnDeleteChannel(SocketVoiceChannel before, string guildUserId, SocketGuildUser guildUser, GuildDocument config)
+	private static async Task OnDeleteChannel(SocketVoiceChannel before,
+		string guildUserId,
+		SocketGuildUser guildUser,
+		GuildDocument config)
 	{
 		var firstUser = before.ConnectedUsers.FirstOrDefault(x => !x.IsBot && x.Id != guildUser.Id);
 		if (firstUser is null)
@@ -61,7 +61,8 @@ public class GuildEvents
 				properties.Name = config.VoicesNames[before.Id.ToString()].FormatWith(firstUser);
 				properties.PermissionOverwrites = before.PermissionOverwrites
 					.Where(x => x.TargetType == PermissionTarget.User && x.TargetId != guildUser.Id)
-					.Append(new Overwrite(firstUser.Id, PermissionTarget.User, new OverwritePermissions(manageChannel: PermValue.Allow)))
+					.Append(new Overwrite(firstUser.Id, PermissionTarget.User,
+						new OverwritePermissions(manageChannel: PermValue.Allow)))
 					.ToArray();
 			});
 			config.Voices.Add(firstUser.Id.ToString(), before.Id);
@@ -70,8 +71,11 @@ public class GuildEvents
 		config.Voices.Remove(guildUserId);
 	}
 
-
-	private static async Task OnCreateChannel(string afterChannelId, IGuildChannel afterVoiceChannel, ulong categoryId, GuildDocument config, SocketGuildUser guildUser)
+	private static async Task OnCreateChannel(string afterChannelId,
+		IGuildChannel afterVoiceChannel,
+		ulong categoryId,
+		GuildDocument config,
+		SocketGuildUser guildUser)
 	{
 		var formatSource = new
 		{
@@ -81,7 +85,7 @@ public class GuildEvents
 			UserTag = guildUser.UserTag(),
 			ActivityName = guildUser.Activities.FirstOrDefault()?.Name ?? "Discord"
 		};
-		
+
 		var voice = await guildUser.Guild.CreateVoiceChannelAsync(
 			config.VoicesNames[afterChannelId].FormatWith(formatSource),
 			properties =>
@@ -90,13 +94,12 @@ public class GuildEvents
 				properties.Position = afterVoiceChannel?.Position ?? 0;
 				properties.PermissionOverwrites = new Overwrite[]
 				{
-					new(guildUser.Id, PermissionTarget.User, new OverwritePermissions(manageChannel: PermValue.Allow)),
+					new(guildUser.Id, PermissionTarget.User, new OverwritePermissions(manageChannel: PermValue.Allow))
 				};
 			});
 
 		config.Voices[guildUser.Id.ToString()] = voice.Id;
-		
-		
+
 		await guildUser.ModifyAsync(x => x.Channel = voice);
 	}
 }
