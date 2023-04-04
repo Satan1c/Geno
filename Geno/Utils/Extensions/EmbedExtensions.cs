@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Runtime.CompilerServices;
+using System.Text;
 using Discord;
 using Discord.Rest;
 using Discord.WebSocket;

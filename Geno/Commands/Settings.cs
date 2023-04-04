@@ -7,6 +7,7 @@ using Geno.Responsers.Success;
 using Geno.Utils.Extensions;
 using Geno.Utils.StaticData;
 using Geno.Utils.Types;
+using Microsoft.Extensions.Primitives;
 
 namespace Geno.Commands;
 
@@ -26,12 +27,14 @@ public class Settings : InteractionModuleBase<ShardedInteractionContext>
 		var message = new StringBuilder("Rank roles config:\n");
 		foreach (var (k, v) in config.RankRoles)
 		{
-			var mentions = new RefList<string>(v.Length);
+			//var mentions = new RefList<string>(v.Length);
+			var mentions = new StringBuilder(v.Length * 20);
 			foreach (var id in v)
-				mentions.Add(string.Format("<@&{0}>", id.ToString()));
+				mentions.Append($"<@&{id.ToString()}>").Append(',');
 
-			message.AppendFormat("`{0}` - ", k)
-				.Append(string.Join(',', mentions.ToArray()))
+			mentions.Remove(mentions.Length - 1, 1);
+			message.Append($"`{k}` - ")
+				.Append(mentions)
 				.Append('\n');
 		}
 
@@ -186,7 +189,7 @@ public class Settings : InteractionModuleBase<ShardedInteractionContext>
 
 			var txt = new StringBuilder();
 			foreach (var (k, _) in config.Channels)
-				txt.Append("<#").Append(k).Append('>').Append('\n');
+				txt.Append($"<#{k}>\n");
 
 			await RespondAsync(txt.ToString(),
 				allowedMentions: AllowedMentions.None,

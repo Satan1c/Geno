@@ -60,6 +60,7 @@ public class Genshin : InteractionModuleBase<ShardedInteractionContext>
 
 	[MessageCommand("Rank info")]
 	[RequireBotPermission(GuildPermission.ManageRoles)]
+	[EnabledInDm(false)]
 	public async Task RankInfo(IMessage message)
 	{
 		if (!uint.TryParse(message.Content, out var uid))

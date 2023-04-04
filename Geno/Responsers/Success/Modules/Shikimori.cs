@@ -27,12 +27,12 @@ public static class Shikimori
 
 	private static EmbedBuilder GetAnimeEmbed(this AnimeID anime)
 	{
-		var url = $"https://shikimori.one{anime.Url}";
-		var descriptionBuilder = new StringBuilder($"Status: `{anime.Status}`\n");
+		var url = string.Concat("https://shikimori.one", anime.Url);
+		var descriptionBuilder = new StringBuilder().Append($"Status: `{anime.Status}`\n");
 
 		if (anime is { Episodes: > 0, EpisodesAired: > 0 })
 			descriptionBuilder.Append(
-				$"Episodes: `{anime.EpisodesAired.ToString()}{(anime.Status != "released" ? $"` / `{anime.Episodes.ToString()}" : "")}`\n");
+				$"Episodes: `{anime.EpisodesAired.ToString()}{(anime.Status != "released" ? string.Concat("` / `", anime.Episodes.ToString()) : "")}`\n");
 		else
 			descriptionBuilder.Append("Episodes: `0`\n");
 
@@ -51,16 +51,16 @@ public static class Shikimori
 		descriptionBuilder.Append($"\n{anime.Description ?? anime.DescriptionSource ?? ""}");
 
 		return new EmbedBuilder()
-			.WithTitle($"{(string.IsNullOrEmpty(anime.Russian) ? "" : $"{anime.Russian} /")}{anime.Name}")
+			.WithTitle(string.Concat(string.IsNullOrEmpty(anime.Russian) ? "" : string.Concat(anime.Russian, " / "), anime.Name))
 			.WithUrl(url)
-			.WithImageUrl($"https://shikimori.one{anime.Image?.Original}")
+			.WithImageUrl(string.Concat("https://shikimori.one", anime.Image?.Original))
 			.WithDescription(descriptionBuilder.ClearDescription());
 	}
 
 	private static EmbedBuilder GetMangaEmbed(this MangaID manga)
 	{
 		var descriptionBuilder =
-			new StringBuilder($"Volumes: `{manga.Volumes.ToString()}`\nChapters: `{manga.Chapters.ToString()}`\n");
+			new StringBuilder().Append($"Volumes: `{manga.Volumes.ToString()}`\nChapters: `{manga.Chapters.ToString()}`\n");
 
 		if (manga.Genres != null)
 			descriptionBuilder.Append($"\n `Genres`: `{string.Join("`, `", manga.Genres.Select(x => x.Name))}`");
@@ -75,12 +75,12 @@ public static class Shikimori
 		if (manga.Franchise != null)
 			descriptionBuilder.Append($"\n[Franchise](https://shikimori.one{manga.Url}/franchise)\n");
 
-		descriptionBuilder.Append($"\n{manga.Description ?? manga.DescriptionSource ?? ""}");
+		descriptionBuilder.Append($"\n{manga.English?.FirstOrDefault() ?? manga.Description ?? manga.DescriptionSource ?? ""}");
 
 		return new EmbedBuilder()
-			.WithTitle($"{(string.IsNullOrEmpty(manga.Russian) ? "" : $"{manga.Russian} /")}{manga.Name}")
-			.WithUrl($"https://shikimori.one{manga.Url}")
-			.WithImageUrl($"https://shikimori.one{manga.Image?.Original}")
+			.WithTitle(string.Concat(string.IsNullOrEmpty(manga.Russian) ? "" : string.Concat(manga.Russian, " / "), manga.Name))
+			.WithUrl(string.Concat("https://shikimori.one", manga.Url))
+			.WithImageUrl(string.Concat("https://shikimori.one", manga.Image?.Original))
 			.WithDescription(descriptionBuilder.ClearDescription());
 	}
 
