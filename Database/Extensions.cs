@@ -7,28 +7,32 @@ namespace Database;
 
 public static class Extensions
 {
-	public static async Task<bool> HasDocument<TDocument>(this IMongoCollection<TDocument> collection,
+	public static bool AreSame<T>(this T left, T right)
+	{
+		return EqualityComparer<T>.Default.Equals(left, right);
+	}
+	
+	public static async ValueTask<bool> HasDocument<TDocument>(this IMongoCollection<TDocument> collection,
 		ICacheManager<TDocument> cacheManager,
+		FilterDefinition<TDocument> filterDefinition,
 		ulong id)
-		where TDocument : BaseDocument
 	{
 		var itemId = id.ToString();
 		if (cacheManager.Exists(itemId))
 			return true;
-
-		var item = await collection.Find(x => x.Id == id).FirstOrDefaultAsync();
+		
+		var item = await collection.Find(filterDefinition).FirstOrDefaultAsync();
 		if (item == null) return false;
 
 		cacheManager.Put(itemId, item);
 		return true;
 	}
 
-	public static async Task CreateDeletionIndex<TDocument>(this IMongoCollection<TDocument> collection,
+	public static async ValueTask CreateDeletionIndex<TDocument>(this IMongoCollection<TDocument> collection,
 		TimeSpan expirationTime,
+		IndexKeysDefinition<TDocument> indexKeys,
 		string name = "deletion_index")
-		where TDocument : BaseDocument
 	{
-		var indexKeys = Builders<TDocument>.IndexKeys.Ascending(x => x.ForDeletion);
 		var indexOptions = new CreateIndexOptions
 		{
 			ExpireAfter = expirationTime,
@@ -39,23 +43,23 @@ public static class Extensions
 		await collection.Indexes.CreateOneAsync(indexModel);
 	}
 
-	public static async Task RemoveIndex<TDocument>(this IMongoCollection<TDocument> collection,
+	public static async ValueTask RemoveIndex<TDocument>(this IMongoCollection<TDocument> collection,
 		string name = "deletion_index")
 	{
 		await collection.Indexes.DropOneAsync(name);
 	}
 
-	public static async Task ModifyIndex<TDocument>(this IMongoCollection<TDocument> collection,
+	public static async ValueTask ModifyIndex<TDocument>(this IMongoCollection<TDocument> collection,
 		TimeSpan expirationTime,
+		IndexKeysDefinition<TDocument> indexKeys,
 		string name = "deletion_index",
 		string? oldName = null)
-		where TDocument : BaseDocument
 	{
 		await collection.RemoveIndex(oldName ?? name);
-		await collection.CreateDeletionIndex(expirationTime, name);
+		await collection.CreateDeletionIndex(expirationTime, indexKeys, name);
 	}
 
-	public static async Task InsertOrReplaceOne<TDocument>(this IMongoCollection<TDocument> collection,
+	public static async ValueTask InsertOrReplaceOne<TDocument>(this IMongoCollection<TDocument> collection,
 		Expression<Func<TDocument, bool>> filter,
 		TDocument document)
 	{
@@ -65,7 +69,7 @@ public static class Extensions
 			await collection.InsertOneAsync(document);
 	}
 
-	public static async Task<TDocument> FindOrInsert<TDocument>(this IMongoCollection<TDocument> collection,
+	public static async ValueTask<TDocument> FindOrInsert<TDocument>(this IMongoCollection<TDocument> collection,
 		Expression<Func<TDocument, bool>> filter,
 		TDocument document)
 	{

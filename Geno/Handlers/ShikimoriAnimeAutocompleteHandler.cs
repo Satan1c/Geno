@@ -23,16 +23,20 @@ public class ShikimoriAnimeAutocompleteHandler : AutocompleteHandler
 		
 		try
 		{
-			var userInput = autocompleteInteraction.Data.Current.Value.ToString()!;
+			var userInput = autocompleteInteraction.Data.Current.Value.ToString()!.Trim();
+			if (string.IsNullOrEmpty(userInput))
+				return AutocompletionResult.FromSuccess(Array.Empty<AutocompleteResult>());
 			var search = await s_shikimoriClient.GetAnime(userInput, 5);
 			if (search == null || search.Length < 1)
 				return AutocompletionResult.FromSuccess(Array.Empty<AutocompleteResult>());
 
 			var locale = context.GetLocale();
-			var tasks = search.Select(async x => (AnimeMangaIdBase)await s_shikimoriClient.GetAnime(x.Id)).ToArray();
-			Task.WaitAll(tasks, CancellationToken.None);
+			var tasks = await Task.WhenAll(
+				search.Select(async x =>
+					(AnimeMangaIdBase)await s_shikimoriClient.GetAnime(x.Id)).ToArray());
 
-			return AutocompletionResult.FromSuccess(tasks.FilterResultUnsafe(ref locale));
+			var results = tasks.FilterResultUnsafe(ref locale);
+			return AutocompletionResult.FromSuccess(results);
 		}
 		catch (Exception e)
 		{
@@ -49,14 +53,9 @@ public class ShikimoriAnimeAutocompleteHandler : AutocompleteHandler
 
 public static class UnsafeExtensions
 {
-	public static AutocompleteResult[] FilterResultUnsafe(this Task<AnimeMangaIdBase?>[] tasks, ref UserLocales locale)
+	public static AutocompleteResult[] FilterResultUnsafe(this AnimeMangaIdBase?[] tasks, ref UserLocales locale)
 	{
-		var checker = (Task<AnimeMangaIdBase?> task, UserLocales locales) =>
-		{
-			var result = task.Result;
-			return (result == null, result.AutocompleteResultFrom(locales));
-		};
-		
+		var checker = (AnimeMangaIdBase? result, UserLocales locales) => (result != null, result.AutocompleteResultFrom(locales));
 		return tasks.GetAutocompletesUnsafe(ref locale, ref checker);
 		
 		/*var results = new AutocompleteResult[5];

@@ -1,6 +1,6 @@
 ﻿namespace Localization.Models;
 
-public struct Category
+public readonly struct Category
 {
 	private readonly IDictionary<string, Data> m_data = new Dictionary<string, Data>();
 

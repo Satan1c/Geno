@@ -28,7 +28,7 @@ var jsons = locals + "/json";
 var csv = locals + "/csv";
 
 await using var service = new ServiceCollection()
-	.AddSingleton(new DiscordSocketConfig
+	.AddSingleton(new DiscordShardedClient(new DiscordSocketConfig
 	{
 		AlwaysDownloadUsers = false,
 		AlwaysDownloadDefaultStickers = false,
@@ -41,37 +41,35 @@ await using var service = new ServiceCollection()
 		MessageCacheSize = 1,
 		LogLevel = LogSeverity.Info,
 		LogGatewayIntentWarnings = false
-	})
-	.AddSingleton<DiscordShardedClient>()
+	}))
+	.AddSingleton(services => new InteractionService(
+		services.GetRequiredService<DiscordShardedClient>(),
+		new InteractionServiceConfig
+		{
+			DefaultRunMode = RunMode.Async,
+			EnableAutocompleteHandlers = true,
+			LogLevel = LogSeverity.Verbose,
+			UseCompiledLambda = true,
+			LocalizationManager = new CommandsLocalizationManager(jsons)
+		})
+	)
 	.AddSingleton<Serilog.ILogger>(new LoggerConfiguration()
 		.Enrich.FromLogContext()
 		.MinimumLevel.Verbose()
 		.WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u4}]\t{Message:lj}{NewLine}{Exception}")
 		.CreateLogger()
 	)
-	.AddSingleton<ILogger>(provider => NullLogger.Instance)
-	.AddSingleton(new InteractionServiceConfig
-	{
-		DefaultRunMode = RunMode.Async,
-		EnableAutocompleteHandlers = true,
-		LogLevel = LogSeverity.Verbose,
-		UseCompiledLambda = true,
-		LocalizationManager = new CommandsLocalizationManager(jsons)
-	})
+	.AddSingleton<ILogger>(_ => NullLogger.Instance)
 	.AddSingleton(new LocalizationManager(csv))
-	.AddSingleton<InteractionService>()
-	.AddSingleton(MongoClientSettings.FromConnectionString(env["Mongo"]))
-	.AddSingleton<IMongoClient, MongoClient>()
+	.AddSingleton<IMongoClient>(new MongoClient(MongoClientSettings.FromConnectionString(env["Mongo"])))
 	.AddSingleton<DatabaseProvider>()
 	.AddSingleton<CommandHandlingService>()
 	.AddSingleton<ClientEvents>()
 	.AddSingleton<GuildEvents>()
-	.AddSingleton(new SdcConfig { Token = env["Sdc"] })
-	.AddSingleton<SdcSharpClient>()
+	.AddSingleton(new SdcSharpClient(new SdcConfig { Token = env["Sdc"] }))
 	.AddSingleton<SdcServices>()
 	.AddSingleton<EnkaApiClient>()
 	.AddSingleton<ShikimoriService.ShikimoriClient>()
-	.AddSingleton<ShikimoriClient>()
 	.AddSingleton<WaifuClient>()
 	.InitializeSdcServices()
 	.BuildServiceProvider();

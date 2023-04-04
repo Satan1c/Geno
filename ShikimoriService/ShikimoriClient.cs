@@ -35,21 +35,21 @@ public class ShikimoriClient
 		));
 	}
 
-	public async Task<MangaID?> GetManga(long id)
+	public async ValueTask<MangaID?> GetManga(long id)
 	{
 		var mangaId = id.ToString();
 		if (s_cacheManga.Exists(mangaId)) return s_cacheManga.Get(mangaId);
 
 		await m_firstLimit;
 
-		var manga = await m_shikimoriClient.Mangas.GetById(id);
+		var manga = await m_shikimoriClient.Mangas.GetById(id).ConfigureAwait(false);
 		if (manga != null)
 			s_cacheManga.Put(manga.Id.ToString(), manga);
 
 		return manga;
 	}
 
-	public async Task<Manga?> GetManga(string name)
+	public async ValueTask<Manga?> GetManga(string name)
 	{
 		if (!string.IsNullOrEmpty(name.Trim()) && s_cacheMangaRaw.Exists(name))
 			return s_cacheMangaRaw.Get(name);
@@ -63,7 +63,7 @@ public class ShikimoriClient
 		return manga;
 	}
 
-	public async Task<Manga[]?> GetManga(string name, byte limit = 1)
+	public async ValueTask<Manga[]?> GetManga(string name, byte limit = 1)
 	{
 		if (!string.IsNullOrEmpty(name.Trim()) && s_cacheMangaRaw.Exists(name))
 			return new[] { s_cacheMangaRaw.Get(name) };
@@ -83,7 +83,7 @@ public class ShikimoriClient
 		return manga;
 	}
 
-	public async Task<AnimeID?> GetAnime(long id)
+	public async ValueTask<AnimeID?> GetAnime(long id)
 	{
 		var animeId = id.ToString();
 		if (s_cacheAnime.Exists(animeId)) return s_cacheAnime.Get(animeId);
@@ -97,7 +97,7 @@ public class ShikimoriClient
 		return anime;
 	}
 
-	public async Task<Anime?> GetAnime(string name)
+	public async ValueTask<Anime?> GetAnime(string name)
 	{
 		if (!string.IsNullOrEmpty(name.Trim()) && s_cacheAnimeRaw.Exists(name)) return s_cacheAnimeRaw.Get(name);
 
@@ -110,7 +110,7 @@ public class ShikimoriClient
 		return anime;
 	}
 
-	public async Task<Anime[]?> GetAnime(string name, byte limit = 1)
+	public async ValueTask<Anime[]?> GetAnime(string name, byte limit = 1)
 	{
 		if (!string.IsNullOrEmpty(name.Trim()) && s_cacheAnimeRaw.Exists(name))
 			return new[] { s_cacheAnimeRaw.Get(name) };

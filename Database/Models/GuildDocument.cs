@@ -2,39 +2,25 @@
 
 namespace Database.Models;
 
-public class GuildDocument : BaseDocument
+public struct GuildDocument
 {
+	public GuildDocument()
+	{
+		Id = 0;
+	}
+
+	[BsonElement("_id")] public ulong Id { get; set; }
 	[BsonElement("voices")] public Dictionary<string, ulong> Voices { get; set; } = new();
 	[BsonElement("voices_names")] public Dictionary<string, string> VoicesNames { get; set; } = new();
 	[BsonElement("channels")] public Dictionary<string, ulong> Channels { get; set; } = new();
 	[BsonElement("rank_roles")] public Dictionary<string, ulong[]> RankRoles { get; set; } = new();
 	[BsonElement("users_screens")] public Dictionary<string, ulong> UserScreens { get; set; } = new();
+	[BsonElement("for_deletion")] public bool ForDeletion { get; set; } = false;
 
 	public static GuildDocument GetDefault(ulong id)
 	{
 		var document = new GuildDocument();
 		document.Id = id;
 		return document;
-	}
-
-	protected override bool Equals(BaseDocument? other)
-	{
-		return Equals((GuildDocument)other!);
-	}
-
-	public bool Equals(GuildDocument? other = null)
-	{
-		return base.Equals(other)
-		       && other is not null
-		       && Voices.Equals(other.Voices)
-		       && VoicesNames.Equals(other.VoicesNames)
-		       && Channels.Equals(other.Channels)
-		       && RankRoles.Equals(other.RankRoles)
-		       && UserScreens.Equals(other.UserScreens);
-	}
-
-	public override int GetHashCode()
-	{
-		return HashCode.Combine(Id, Voices, VoicesNames, Channels, RankRoles, UserScreens);
 	}
 }

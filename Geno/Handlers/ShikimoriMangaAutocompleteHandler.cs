@@ -27,10 +27,12 @@ public class ShikimoriMangaAutocompleteHandler : AutocompleteHandler
 				return AutocompletionResult.FromSuccess(Array.Empty<AutocompleteResult>());
 
 			var locale = context.GetLocale();
-			var tasks = search.Select(async x => (AnimeMangaIdBase)await m_shikimoriClient.GetManga(x.Id)).ToArray();
-			Task.WaitAll(tasks, CancellationToken.None);
-			
-			return AutocompletionResult.FromSuccess(tasks.FilterResultUnsafe(ref locale));
+			var tasks = await Task.WhenAll(
+				search.Select(async x =>
+					(AnimeMangaIdBase)await m_shikimoriClient.GetManga(x.Id)).ToArray());
+
+			var results = tasks.FilterResultUnsafe(ref locale);
+			return AutocompletionResult.FromSuccess(results);
 		}
 		catch (Exception e)
 		{

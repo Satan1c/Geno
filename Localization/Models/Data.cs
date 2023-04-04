@@ -3,7 +3,7 @@ using Newtonsoft.Json;
 
 namespace Localization.Models;
 
-public struct Data
+public readonly struct Data
 {
 	private readonly IDictionary<Langs, IDictionary<string, string>> m_data =
 		new Dictionary<Langs, IDictionary<string, string>>();

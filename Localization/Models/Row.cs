@@ -1,8 +1,8 @@
 ﻿namespace Localization.Models;
 
-public struct Row
+public readonly struct Row
 {
-	public string Key { get; set; }
-	public string Ru { get; set; }
-	public string En { get; set; }
+	public string Key { get; init; }
+	public string Ru { get; init; }
+	public string En { get; init; }
 }

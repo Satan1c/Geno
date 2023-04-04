@@ -24,17 +24,23 @@ public class DatabaseProvider
 		m_usersConfigs = mainDb.GetCollection<UserDocument>("users");
 	}
 
-	public Task<bool> HasGuild(ulong id)
+	public async ValueTask<bool> HasGuild(ulong id)
 	{
-		return m_guildConfigs.HasDocument(s_guildsCache, id);
+		return await m_guildConfigs.HasDocument(
+			s_guildsCache,
+			Builders<GuildDocument>.Filter.Eq((document => document.Id), id),
+			id);
 	}
 
-	public Task<bool> HasUser(ulong id)
+	public async ValueTask<bool> HasUser(ulong id)
 	{
-		return m_usersConfigs.HasDocument(s_usersCache, id);
+		return await m_usersConfigs.HasDocument(
+			s_usersCache,
+			Builders<UserDocument>.Filter.Eq((document => document.Id), id),
+			id);
 	}
 
-	public async Task<GuildDocument> GetConfig(ulong id, bool fetch = true)
+	public async ValueTask<GuildDocument> GetConfig(ulong id, bool fetch = true)
 	{
 		var itemId = id.ToString();
 		if (s_guildsCache.Exists(itemId))
@@ -46,11 +52,12 @@ public class DatabaseProvider
 		return GuildDocument.GetDefault(id);
 	}
 
-	public async Task SetConfig(GuildDocument document, GuildDocument? before = null)
+	public async ValueTask SetConfig(GuildDocument document, GuildDocument before = default)
 	{
-		before ??= await GetConfig(document.Id, false);
+		if (before.AreSame(default))
+			before = await GetConfig(document.Id, false);
 
-		if (document == before)
+		if (document.AreSame(before))
 			return;
 
 		s_guildsCache.Put(document.Id.ToString(), document);

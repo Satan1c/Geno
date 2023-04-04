@@ -18,20 +18,20 @@ public class WaifuClient
 		);
 	}
 
-	private async Task<string> Request(Type type, string category)
+	private async ValueTask<string> Request(Type type, string category)
 	{
 		var response = await m_client.GetAsync($"{type.EnumToString().ToLower()}/{category}");
 		response.EnsureSuccessStatusCode();
 		return JsonConvert.DeserializeObject<ImageResponse>(await response.Content.ReadAsStringAsync())!.Url;
 	}
 
-	public async Task<string> GetImageAsync(SfwCategory category)
+	public ValueTask<string> GetImageAsync(SfwCategory category)
 	{
-		return await Request(Type.Sfw, category.EnumToString().ToLower());
+		return Request(Type.Sfw, category.EnumToString().ToLower());
 	}
 
-	public async Task<string> GetImageAsync(NsfwCategory category)
+	public ValueTask<string> GetImageAsync(NsfwCategory category)
 	{
-		return await Request(Type.Nsfw, category.EnumToString().ToLower());
+		return Request(Type.Nsfw, category.EnumToString().ToLower());
 	}
 }
