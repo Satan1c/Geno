@@ -23,7 +23,7 @@ Console.InputEncoding = Encoding.UTF8;
 Console.OutputEncoding = Encoding.UTF8;
 
 var env = Utils.GetEnv();
-var locals = Path.GetFullPath("../../", AppDomain.CurrentDomain.BaseDirectory) + "Localizations";
+var locals = Path.GetFullPath("../../../", AppDomain.CurrentDomain.BaseDirectory) + "Localizations";
 var jsons = locals + "/json";
 var csv = locals + "/csv";
 
