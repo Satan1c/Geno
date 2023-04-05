@@ -26,13 +26,9 @@ public class ShikimoriClient
 
 	private readonly ShikimoriSharp.ShikimoriClient m_shikimoriClient;
 
-	public ShikimoriClient(ILogger logger)
+	public ShikimoriClient(ILogger logger, ShikimoriSharp.ShikimoriClient client)
 	{
-		m_shikimoriClient = new ShikimoriSharp.ShikimoriClient(logger, new ClientSettings(
-			"Geno",
-			"mkGRM2ud5xmOqUl5bvZkUbFV-zqjQimkQ-W5hhPBFR0",
-			"OlOUNsD14GN2TM6WHwaUaEuqrkFS7LGKJfwtHvyf6Ck"
-		));
+		m_shikimoriClient = client;
 	}
 
 	public async ValueTask<MangaID?> GetManga(long id)

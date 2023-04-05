@@ -15,6 +15,7 @@ using SDC_Sharp.DiscordNet;
 using SDC_Sharp.Types;
 using Serilog;
 using ShikimoriService;
+using ShikimoriSharp.Bases;
 using WaifuPicsApi;
 using ILogger = Microsoft.Extensions.Logging.ILogger;
 using Logger = Microsoft.Extensions.Logging.Logger<Microsoft.Extensions.Logging.ILogger>;
@@ -67,8 +68,14 @@ await using var service = new ServiceCollection()
 	.AddSingleton(new SdcSharpClient(new SdcConfig { Token = env["Sdc"] }))
 	.AddSingleton<SdcServices>()
 	.AddSingleton<EnkaApiClient>()
-	.AddSingleton<ShikimoriClient>()
 	.AddSingleton<WaifuClient>()
+	.AddSingleton(new ClientSettings(
+		env["ShikimoriClientName"],
+		env["ShikimoriClientId"],
+		env["ShikimoriClientSecret"]
+	))
+	.AddSingleton<ShikimoriSharp.ShikimoriClient>()
+	.AddSingleton<ShikimoriClient>()
 	.InitializeSdcServices()
 	.BuildServiceProvider();
 
