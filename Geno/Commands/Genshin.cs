@@ -16,15 +16,12 @@ public class Genshin : InteractionModuleBase<ShardedInteractionContext>
 	private const string m_baseLink = "https://genshin.hoyoverse.com/en/gift?code=";
 	private readonly DatabaseProvider m_databaseProvider;
 	private readonly EnkaApiClient m_enkaApiClient;
-	private readonly Category m_localizations;
 
 	public Genshin(DatabaseProvider databaseProvider,
-		EnkaApiClient enkaApiClient,
-		LocalizationManager localizationManager)
+		EnkaApiClient enkaApiClient)
 	{
 		m_databaseProvider = databaseProvider;
 		m_enkaApiClient = enkaApiClient;
-		m_localizations = localizationManager.GetCategory("genshin");
 	}
 
 	[UserCommand("Genshin profile")]
@@ -33,7 +30,7 @@ public class Genshin : InteractionModuleBase<ShardedInteractionContext>
 		const uint uid = 700289769;
 
 		var data = await m_enkaApiClient.GetInfo(uid);
-		await Context.Profile(data, m_localizations);
+		await Context.Profile(data);
 	}
 
 	[MessageCommand("Make code links")]

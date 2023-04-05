@@ -51,6 +51,7 @@ public class CommandHandlingService
 		await Interactions.AddModulesGloballyAsync(true, safe);
 
 		ErrorResolver.Init(assembly, m_localizationManager);
+		Responser.Init(m_localizationManager);
 		GC.Collect();
 	}
 
@@ -97,22 +98,22 @@ public class CommandHandlingService
 		Interactions.Log += ClientEvents.OnLog;
 	}
 
-	private static Task InteractionExecuted(ICommandInfo commandInfo, IInteractionContext context, IResult resultRaw)
+	private static async Task InteractionExecuted(ICommandInfo commandInfo, IInteractionContext context, IResult resultRaw)
 	{
 		if (resultRaw is Result result)
-			return context.Respond(result.Builder, result.IsEphemeral, result.IsDefered);
+			await context.Respond(result.Builder, result.IsEphemeral, result.IsDefered).ConfigureAwait(false);
 
 		if (resultRaw.Error is null)
-			return Task.CompletedTask;
+			return;
 
 		var embed = ErrorResolver.Resolve(resultRaw, commandInfo, context);
 
-		return context.Respond(embed, true);
+		await context.Respond(embed, true).ConfigureAwait(false);
 	}
 
-	private Task OnInteractionCreated(SocketInteraction arg)
+	private async Task OnInteractionCreated(SocketInteraction arg)
 	{
 		var ctx = new ShardedInteractionContext(m_client, arg);
-		return Interactions.ExecuteCommandAsync(ctx, m_services);
+		await Interactions.ExecuteCommandAsync(ctx, m_services).ConfigureAwait(false);
 	}
 }
