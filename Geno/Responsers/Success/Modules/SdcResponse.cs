@@ -1,16 +1,26 @@
-﻿using Discord;
+﻿using System.Text;
+using Discord;
 using Discord.Interactions;
 using Geno.Utils.Extensions;
 using Geno.Utils.Types;
+using Localization;
 using SDC_Sharp.DiscordNet.Types;
 using SDC_Sharp.Types;
 using SDC_Sharp.Types.Enums;
+using Category = Localization.Models.Category;
 
 namespace Geno.Responsers.Success.Modules;
 
 public static class SdcResponse
 {
-	public static Task GuildInfo(this ShardedInteractionContext context, Guild guild)
+	private static Category s_category;
+
+	public static void Init(LocalizationManager localizationManager)
+	{
+		s_category = localizationManager.GetCategory("genshin");
+	}
+	
+	public static ValueTask GuildInfo(this ShardedInteractionContext context, Guild guild)
 	{
 		var embed = context.GetLocale() switch
 		{
@@ -35,7 +45,7 @@ public static class SdcResponse
 		return context.Respond(embed);
 	}
 
-	public static Task WarnsInfo(this ShardedInteractionContext context, UserWarns warns)
+	public static ValueTask WarnsInfo(this ShardedInteractionContext context, UserWarns warns)
 	{
 		var embed = context.GetLocale() switch
 		{
@@ -47,7 +57,7 @@ public static class SdcResponse
 		return context.Respond(embed);
 	}
 
-	public static async Task GuildRatesInfo(this ShardedInteractionContext context,
+	public static async ValueTask GuildRatesInfo(this ShardedInteractionContext context,
 		Task<Guild> guildTask,
 		Task<Dictionary<User, Rate>> ratesTask)
 	{
@@ -66,9 +76,11 @@ public static class SdcResponse
 		foreach (var (k, v) in rates)
 		{
 			var user = k.Instance;
-			embed.AddField($"`{user?.Username ?? "unknown"}`#`{user?.Discriminator ?? "unknown"}`", v.RateToString());
+			embed.AddField(new StringBuilder()
+					.AppendFormat("`{0}`#`{1}`", user?.Username ?? "unknown", user?.Discriminator ?? "unknown").ToString(),
+				v.RateToString());
 		}
 
-		await context.Respond(embed, false, true);
+		await context.Respond(embed, false, true).ConfigureAwait(false);
 	}
 }

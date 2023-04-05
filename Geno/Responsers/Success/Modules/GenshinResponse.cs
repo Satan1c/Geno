@@ -1,17 +1,25 @@
 ﻿using Discord;
 using EnkaAPI.Types;
 using Geno.Utils.Extensions;
+using Localization;
 using Localization.Models;
 
 namespace Geno.Responsers.Success.Modules;
 
 public static class GenshinResponse
 {
-	public static Task Profile(this IInteractionContext context, Info info, Category localizations)
+	private static Category s_category;
+
+	public static void Init(LocalizationManager localizationManager)
+	{
+		s_category = localizationManager.GetCategory("genshin");
+	}
+	
+	public static ValueTask Profile(this IInteractionContext context, Info info)
 	{
 		var player = info.PlayerInfo;
 		var avatars = info.PlayerInfo.AvatarInfoList.ToArray();
-		var locals = localizations.GetDataFor("profile").GetForLocale(context);
+		var locals = s_category.GetDataFor("profile").GetForLocale(context);
 
 		var abyssTitle = locals["abyss_title"];
 		var abyssValue = locals["abyss_value"].FormatWith(player);

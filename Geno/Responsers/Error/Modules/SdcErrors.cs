@@ -3,6 +3,7 @@ using Discord.Interactions;
 using Geno.Commands;
 using Geno.Utils.Extensions;
 using Localization;
+using Localization.Models;
 
 namespace Geno.Responsers.Error.Modules;
 
@@ -10,11 +11,16 @@ public class SdcErrors : IErrorResolver
 {
 	private const string m_module = nameof(Sdc);
 	public string ModuleName => m_module;
-	public LocalizationManager LocalizationManager { get; set; } = null!;
+	private static Category s_category;
+
+	public LocalizationManager LocalizationManager
+	{
+		set => s_category = value.GetCategory("sdc");
+	}
 
 	public EmbedBuilder Resolve(IResult result, ICommandInfo command, IInteractionContext context, EmbedBuilder embed)
 	{
-		var locale = LocalizationManager.GetCategory("sdc").GetDataFor("sdc").GetForLocale(context);
+		var locale = s_category.GetDataFor("sdc").GetForLocale(context);
 		var defaultLocale = locale["default"].FormatWith(new { command.MethodName, result.Error, result.ErrorReason });
 
 		return new EmbedBuilder().WithTitle("Sdc error").WithDescription(
