@@ -1,0 +1,26 @@
+﻿{
+	"shikimori": {
+		"name": "шикимори",
+		"description": "Команды связанные с сервисом шикимори",
+		"search": {
+			"name": "поиск",
+			"description": "Ищет аниме или мангу по имени",
+			"anime": {
+				"name": "аниме",
+				"description": "Ищет аниме по имени",
+				"anime_name": {
+					"name": "имя",
+					"description": "Имя аниме"
+				}
+			},
+			"manga": {
+				"name": "манга",
+				"description": "Ищет мангу по имени",
+				"manga_name": {
+					"name": "имя",
+					"description": "Имя манги"
+				}
+			}
+		}
+	}
+}
