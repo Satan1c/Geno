@@ -20,7 +20,7 @@ public static class Extensions
 		if (cacheManager.Exists(itemId))
 			return true;
 
-		var item = await (await collection.FindAsync(filterDefinition)).FirstOrDefaultAsync();
+		var item = await collection.Find(filterDefinition).FirstOrDefaultAsync();
 		if (item.AreSame(default)) return false;
 
 		cacheManager.Put(itemId, item);
