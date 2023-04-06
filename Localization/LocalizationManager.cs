@@ -46,11 +46,14 @@ public class LocalizationManager
 
 		while (Unsafe.IsAddressLessThan(ref filesPath, ref end))
 		{
-			var path = filesPath.Replace('\\', '/');
-			var split = path.Split('/')[^1].Split('.');
-			var category = split[0];
-			var name = split[1];
-			var file = File.ReadAllText(path);
+			var path = filesPath.Replace('\\', '/').AsSpan();
+			
+			var split = path[(path.LastIndexOf('/') + 1)..];
+			
+			var category = new string(split[..split.IndexOf('.')]);
+			var name = new string(split[(split.IndexOf('.') + 1)..split.LastIndexOf('.')]);
+			
+			var file = File.ReadAllText(new string(path));
 			var lines = new CsvReader(new StringReader(file), CultureInfo.InvariantCulture).GetRecords<Row>().ToArray().AsSpan();
 
 			ref var value = ref CollectionsMarshal.GetValueRefOrAddDefault(categories, category, out var exists);
@@ -66,6 +69,8 @@ public class LocalizationManager
 	public Category GetCategory(string category)
 	{
 		ref var value = ref CollectionsMarshal.GetValueRefOrNullRef(m_categories, category);
-		return Unsafe.IsNullRef(ref value) ? throw new NullReferenceException($"{category} category not found, {string.Join(',', m_categories.Keys)}") : value;
+		return Unsafe.IsNullRef(ref value)
+			? throw new NullReferenceException($"{category} category not found, {string.Join(',', m_categories.Keys)}")
+			: value;
 	}
 }
