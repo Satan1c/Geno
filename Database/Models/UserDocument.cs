@@ -7,12 +7,17 @@ public struct UserDocument
 {
 	public UserDocument()
 	{
-		Id = 0;
-		GenshinIds = default;
-		DefaultRegion = GenshinRegion.Eu;
+	}
+	
+	public UserDocument(ulong id, GenshinIds genshinIds, GenshinRegion defaultRegion)
+	{
+		Id = id;
+		GenshinIds = genshinIds;
+		DefaultRegion = defaultRegion;
+		ForDeletion = false;
 	}
 
-	[BsonElement("_id")] public ulong Id { get; set; } = default;
+	[BsonElement("_id")] public ulong Id { get; set; } = 0;
 	[BsonElement("genshin_ids")] public GenshinIds GenshinIds { get; set; } = default;
 	[BsonElement("default_region")] public GenshinRegion DefaultRegion { get; set; } = default;
 	[BsonElement("for_deletion")] public bool ForDeletion { get; set; } = false;
