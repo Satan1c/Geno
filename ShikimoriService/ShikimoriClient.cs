@@ -2,7 +2,6 @@
 using ComposableAsync;
 using Microsoft.Extensions.Logging;
 using RateLimiter;
-using ShikimoriSharp.Bases;
 using ShikimoriSharp.Classes;
 using ShikimoriSharp.Settings;
 

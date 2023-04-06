@@ -4,6 +4,7 @@ using Discord;
 using Discord.Interactions;
 using Discord.Rest;
 using Discord.WebSocket;
+using Geno.Responsers.Success;
 using Geno.Utils.Extensions;
 using Geno.Utils.Types;
 
@@ -70,8 +71,7 @@ public class Other : InteractionModuleBase<ShardedInteractionContext>
 			foreach (var shard in Context.Client.Shards.ToArray())
 				embed.AddField($"`{shard.ShardId.ToString()}`:", $"`{shard.Latency.ToString()}`ms", true);
 
-			await RespondAsync(embed: embed.Build(),
-				allowedMentions: AllowedMentions.None);
+			await Context.Respond(embed);
 		}
 	}
 
@@ -99,6 +99,7 @@ public class Other : InteractionModuleBase<ShardedInteractionContext>
 			if (embed.Length < 1)
 				embed.WithDescription("Guild not found");
 
+			await Context.Respond(embed);
 			await RespondAsync(embed: embed.Build(),
 				allowedMentions: AllowedMentions.None);
 		}

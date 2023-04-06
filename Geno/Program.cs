@@ -24,7 +24,11 @@ Console.InputEncoding = Encoding.UTF8;
 Console.OutputEncoding = Encoding.UTF8;
 
 var env = Utils.GetEnv();
+#if DEBUG
+var locals = string.Concat(Path.GetFullPath("../../", AppDomain.CurrentDomain.BaseDirectory), "Localizations");
+#else
 var locals = string.Concat(Path.GetFullPath("../../../", AppDomain.CurrentDomain.BaseDirectory), "Localizations");
+#endif
 var jsons = string.Concat(locals, "/json");
 var csv = string.Concat(locals, "/csv");
 

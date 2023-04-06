@@ -1,4 +1,3 @@
 ﻿Key,En,Ru
 default,sdc unknown \n{MethodName} {Error} {ErrorReason},sdc неизвестная \n{commandMethodName} {result.Error} {result.ErrorReason}
 exception,Invalid guild id,Не верно указан айди
-,,

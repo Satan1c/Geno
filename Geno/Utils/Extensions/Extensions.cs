@@ -63,7 +63,8 @@ public static class Extensions
 
 	public static UserLocales GetLocale(this IInteractionContext context)
 	{
-		return JsonConvert.DeserializeObject<UserLocales>(JsonConvert.SerializeObject(context.Interaction.UserLocale));
+		return context.Interaction.UserLocale == "ru" ? UserLocales.Russian : UserLocales.English;
+		//JsonConvert.DeserializeObject<UserLocales>(JsonConvert.SerializeObject(context.Interaction.UserLocale));
 	}
 
 	public static ModuleInfo GetTopLevelModule(this ModuleInfo module)

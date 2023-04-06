@@ -1,5 +1,4 @@
-﻿using System.ComponentModel;
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Discord;
 using Geno.Responsers.Success.Modules;
@@ -52,6 +51,7 @@ public static class Responser
 		Embed[]? embeds = null)
 	{
 		if (isDefered)
+		{
 			await context.Interaction.ModifyOriginalResponseAsync(x =>
 				{
 					var flags = x.Flags.GetValueOrDefault() ?? MessageFlags.None;
@@ -61,12 +61,22 @@ public static class Responser
 					x.Flags = ephemeral ? flags ^ MessageFlags.Ephemeral : flags | MessageFlags.Ephemeral;
 				}
 			).ConfigureAwait(false);
+			
+			return;
+		}
 
-		await context.Interaction.RespondAsync(
-			embed: embed,
-			embeds: embeds,
-			allowedMentions: AllowedMentions.None,
-			ephemeral: ephemeral
-		).ConfigureAwait(false);
+		try
+		{
+			await context.Interaction.RespondAsync(
+				embed: embed,
+				embeds: embeds,
+				allowedMentions: AllowedMentions.None,
+				ephemeral: ephemeral
+			).ConfigureAwait(false);
+		}
+		catch (InvalidOperationException _)
+		{
+			await context.Respond(embed, ephemeral, true, embeds).ConfigureAwait(false);
+		}
 	}
 }

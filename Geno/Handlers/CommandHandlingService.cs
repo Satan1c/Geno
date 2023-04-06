@@ -87,8 +87,15 @@ public class CommandHandlingService
 			start = ref Unsafe.Add(ref start, 1)!;
 		}
 
-		return (new Dictionary<Category, ModuleInfo[]>(dict.ToArray<Category, ModuleInfo>()).AsReadOnly(),
-			safeArray.ToArray());
+		return (
+			new Dictionary<Category, ModuleInfo[]>(dict.ToArray<Category, ModuleInfo>())
+			{
+				{
+					Category.None, Array.Empty<ModuleInfo>()
+				}
+			}.AsReadOnly(),
+			safeArray.ToArray()
+		);
 	}
 
 	private void RegisterEvents()
@@ -98,10 +105,15 @@ public class CommandHandlingService
 		Interactions.Log += ClientEvents.OnLog;
 	}
 
-	private static async Task InteractionExecuted(ICommandInfo commandInfo, IInteractionContext context, IResult resultRaw)
+	private static async Task InteractionExecuted(ICommandInfo commandInfo,
+		IInteractionContext context,
+		IResult resultRaw)
 	{
 		if (resultRaw is Result result)
+		{
 			await context.Respond(result.Builder, result.IsEphemeral, result.IsDefered).ConfigureAwait(false);
+			return;
+		}
 
 		if (resultRaw.Error is null)
 			return;
