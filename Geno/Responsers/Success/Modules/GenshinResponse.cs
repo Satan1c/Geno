@@ -14,7 +14,7 @@ public static class GenshinResponse
 	{
 		s_category = localizationManager.GetCategory("genshin");
 	}
-	
+
 	public static ValueTask Profile(this IInteractionContext context, Info info)
 	{
 		var player = info.PlayerInfo;

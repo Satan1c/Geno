@@ -6,7 +6,6 @@ using Discord.Interactions;
 using Discord.Rest;
 using Discord.WebSocket;
 using Geno.Utils.Types;
-using Newtonsoft.Json;
 using ShikimoriSharp.Bases;
 
 namespace Geno.Utils.Extensions;

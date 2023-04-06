@@ -66,7 +66,7 @@ public sealed class CommandsLocalizationManager : ILocalizationManager
 				var selectSpan = select.AsSpan();
 				ref var selectStart = ref MemoryMarshal.GetReference(selectSpan);
 				ref var selectEnd = ref Unsafe.Add(ref selectStart, select.Length);
-				
+
 				var counter = 0;
 				while (Unsafe.IsAddressLessThan(ref selectStart, ref selectEnd))
 				{
@@ -82,7 +82,7 @@ public sealed class CommandsLocalizationManager : ILocalizationManager
 					counter++;
 					selectStart = ref Unsafe.Add(ref selectStart, 1);
 				}
-				
+
 				//var select = key.Select(x => "['" + x + "']");
 				var token = string.Join(".", select.ToArray()) + "." + identifier;
 				var str = JObject.Load(reader2).SelectToken(token)?.ToString() ?? null;

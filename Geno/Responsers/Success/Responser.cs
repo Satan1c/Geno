@@ -14,7 +14,7 @@ public static class Responser
 		GenshinResponse.Init(localizationManager);
 		GenshinResponse.Init(localizationManager);
 	}
-	
+
 	public static ValueTask Respond(this IInteractionContext context,
 		EmbedBuilder embed,
 		bool ephemeral = false,
@@ -36,11 +36,11 @@ public static class Responser
 		while (Unsafe.IsAddressLessThan(ref start, ref end))
 		{
 			resStart = start.WithColor(start.Color ?? new Color(43, 45, 49)).Build();
-			
+
 			start = ref Unsafe.Add(ref start, 1);
 			resStart = ref Unsafe.Add(ref resStart, 1);
 		}
-		
+
 		return context.Respond(null, ephemeral, isDefered, res);
 	}
 
@@ -61,7 +61,7 @@ public static class Responser
 					x.Flags = ephemeral ? flags ^ MessageFlags.Ephemeral : flags | MessageFlags.Ephemeral;
 				}
 			).ConfigureAwait(false);
-			
+
 			return;
 		}
 

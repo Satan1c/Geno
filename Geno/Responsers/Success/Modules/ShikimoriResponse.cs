@@ -12,13 +12,13 @@ public static class ShikimoriResponse
 {
 	private static Category s_category;
 
+	private static readonly Regex s_characterRegex =
+		new(@"\[(?:character=\w+|\/character)\]", RegexOptions.Compiled | RegexOptions.Singleline);
+
 	public static void Init(LocalizationManager localizationManager)
 	{
 		s_category = localizationManager.GetCategory("genshin");
 	}
-	
-	private static readonly Regex s_characterRegex =
-		new(@"\[(?:character=\w+|\/character)\]", RegexOptions.Compiled | RegexOptions.Singleline);
 
 	public static ValueTask SearchResult(this ShardedInteractionContext context, MangaID? manga = null)
 	{
@@ -81,15 +81,15 @@ public static class ShikimoriResponse
 		var url = string.Concat("https://shikimori.one", manga.Url);
 		var descriptionBuilder =
 			new StringBuilder();
-		
+
 		if (manga.Franchise != null)
 			descriptionBuilder.AppendFormat(
 				"\n[Franchise]({0}/franchise)\n", url);
-		
+
 		if (manga is { Volumes: > 0, Chapters: > 0 })
 			descriptionBuilder.AppendFormat(
 				"Volumes: `{0}`\nChapters: `{1}`\n", manga.Volumes.ToString(), manga.Chapters.ToString());
-		
+
 		if (manga.Genres != null)
 			descriptionBuilder.AppendFormat(
 				"\n `Genres`: `{0}`", string.Join("`, `", manga.Genres.Select(x => x.Name)));

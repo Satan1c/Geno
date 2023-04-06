@@ -1,9 +1,6 @@
-﻿using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using Discord;
+﻿using Discord;
 using Discord.Interactions;
 using Geno.Utils.Extensions;
-using WaifuPicsApi.Enums;
 
 namespace Geno.Handlers;
 

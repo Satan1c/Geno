@@ -1,5 +1,4 @@
-﻿using System.Diagnostics.Metrics;
-using System.Numerics;
+﻿using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Database.Models;
@@ -31,28 +30,28 @@ public static class UnsafeExtensions
 		{
 			var category = (SfwCategory)counter;
 			var name = category.EnumToString();
-			
+
 			categoriesList.Add(new AutocompleteResult(name, name));
 			counter++;
-			
+
 			start = ref Unsafe.Add(ref start, 1);
 		}
 
 		sfwCategories = categoriesList.ToArray();
 	}
-	
+
 	public static Overwrite[] GetPermissions(this IEnumerable<Overwrite> permissions, ulong user, ulong firstUser)
 	{
 		var result = new RefList<Overwrite>(2);
 		var list = new RefList<Overwrite>(permissions).AsSpan();
 		ref var start = ref MemoryMarshal.GetReference(list);
 		ref var end = ref Unsafe.Add(ref start, list.Length);
-		
+
 		while (Unsafe.IsAddressLessThan(ref start, ref end))
 		{
 			if (start.TargetType == PermissionTarget.User && start.TargetId != user)
 				result.Add(start);
-			
+
 			start = ref Unsafe.Add(ref start, 1);
 		}
 
@@ -139,7 +138,7 @@ public static class UnsafeExtensions
 
 		ref var id = ref MemoryMarshal.GetReference(ids);
 		ref var end = ref Unsafe.Add(ref id, ids.Length);
-		
+
 		while (Unsafe.IsAddressLessThan(ref id, ref end))
 		{
 			if (docList.Contains(id) && !perfectSpan.Contains(id))
@@ -147,7 +146,7 @@ public static class UnsafeExtensions
 
 			id = ref Unsafe.Add(ref id, 1);
 		}
-		
+
 		return result.ToArray();
 	}
 
@@ -164,7 +163,7 @@ public static class UnsafeExtensions
 		var listArray = list.ToArray().AsSpan();
 		var arr = new KeyValuePair<TKey, TValue[]>[listArray.Length];
 		var arrSpan = arr.AsSpan();
-		
+
 		ref var start = ref MemoryMarshal.GetReference(arrSpan);
 		ref var listRef = ref MemoryMarshal.GetReference(listArray);
 		ref var end = ref Unsafe.Add(ref start, arr.Length);
@@ -172,7 +171,7 @@ public static class UnsafeExtensions
 		while (Unsafe.IsAddressLessThan(ref start, ref end))
 		{
 			start = new KeyValuePair<TKey, TValue[]>(listRef.Key, listRef.Value.ToArray());
-			
+
 			start = ref Unsafe.Add(ref start, 1);
 			listRef = ref Unsafe.Add(ref listRef, 1);
 		}
@@ -186,7 +185,7 @@ public static class UnsafeExtensions
 	{
 		ref var start = ref MemoryMarshal.GetReference(list.AsSpan());
 		ref var end = ref Unsafe.Add(ref start, list.Count);
-		
+
 		while (Unsafe.IsAddressLessThan(ref start, ref end))
 		{
 			if (!AreSame(start.Key, category))

@@ -30,52 +30,52 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="ClrHeapAllocationAnalyzer" Version="3.0.0" />
-        <PackageReference Include="Discord.Net" Version="3.10.0" />
-        <PackageReference Include="Discord.Net.Analyzers" Version="3.7.0" />
-        <PackageReference Include="Discord.Net.Extensions" Version="1.2.1" />
-        <PackageReference Include="EnkaAPI" Version="1.1.0" />
-        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0-preview.2.23128.3" />
-        <PackageReference Include="RateLimiter" Version="2.2.0" />
-        <PackageReference Include="SDC_Sharp" Version="3.1.2" />
-        <PackageReference Include="SDC_Sharp.DiscordNet" Version="3.1.2" />
-        <PackageReference Include="Serilog" Version="3.0.0-dev-01958" />
-        <PackageReference Include="Serilog.Extensions.Logging" Version="3.1.1-dev-10338" />
-        <PackageReference Include="Serilog.Sinks.Console" Version="4.1.1-dev-00910" />
-        <PackageReference Include="Stack247.System.Web.UI.DataBinder" Version="1.0.0" />
+        <PackageReference Include="ClrHeapAllocationAnalyzer" Version="3.0.0"/>
+        <PackageReference Include="Discord.Net" Version="3.10.0"/>
+        <PackageReference Include="Discord.Net.Analyzers" Version="3.7.0"/>
+        <PackageReference Include="Discord.Net.Extensions" Version="1.2.1"/>
+        <PackageReference Include="EnkaAPI" Version="1.1.0"/>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0-preview.2.23128.3"/>
+        <PackageReference Include="RateLimiter" Version="2.2.0"/>
+        <PackageReference Include="SDC_Sharp" Version="3.1.2"/>
+        <PackageReference Include="SDC_Sharp.DiscordNet" Version="3.1.2"/>
+        <PackageReference Include="Serilog" Version="3.0.0-dev-01958"/>
+        <PackageReference Include="Serilog.Extensions.Logging" Version="3.1.1-dev-10338"/>
+        <PackageReference Include="Serilog.Sinks.Console" Version="4.1.1-dev-00910"/>
+        <PackageReference Include="Stack247.System.Web.UI.DataBinder" Version="1.0.0"/>
     </ItemGroup>
 
     <ItemGroup>
         <Content Include="..\.dockerignore">
-          <Link>.dockerignore</Link>
+            <Link>.dockerignore</Link>
         </Content>
-        <Content Include="bin\Localizations\csv\errors\error.sdc.csv" />
-        <Content Include="bin\Localizations\csv\success\genshin.profile.csv" />
-        <Content Include="bin\Localizations\json\pb_Genshin.ru.json" />
-        <Content Include="bin\Localizations\json\pb_Other.ru.json" />
-        <Content Include="bin\Localizations\json\pb_Sdc.ru.json" />
-        <Content Include="bin\Localizations\json\pb_Setting.ru.json" />
-        <Content Include="bin\Localizations\json\pb_Images.ru.json" />
-        <Content Include="bin\Localizations\json\pr_Shikimori.ru.json" />
+        <Content Include="bin\Localizations\csv\errors\error.sdc.csv"/>
+        <Content Include="bin\Localizations\csv\success\genshin.profile.csv"/>
+        <Content Include="bin\Localizations\json\pb_Genshin.ru.json"/>
+        <Content Include="bin\Localizations\json\pb_Other.ru.json"/>
+        <Content Include="bin\Localizations\json\pb_Sdc.ru.json"/>
+        <Content Include="bin\Localizations\json\pb_Setting.ru.json"/>
+        <Content Include="bin\Localizations\json\pb_Images.ru.json"/>
+        <Content Include="bin\Localizations\json\pr_Shikimori.ru.json"/>
     </ItemGroup>
 
     <ItemGroup>
-        <EmbeddedResource Remove="bin\Release\**" />
+        <EmbeddedResource Remove="bin\Release\**"/>
     </ItemGroup>
 
     <ItemGroup>
-        <None Remove="bin\Release\**" />
+        <None Remove="bin\Release\**"/>
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Database\Database.csproj" />
-        <ProjectReference Include="..\Localization\Localization.csproj" />
-        <ProjectReference Include="..\ShikimoriService\ShikimoriService.csproj" />
-        <ProjectReference Include="..\WaifuPicsApi\WaifuPicsApi.csproj" />
+        <ProjectReference Include="..\Database\Database.csproj"/>
+        <ProjectReference Include="..\Localization\Localization.csproj"/>
+        <ProjectReference Include="..\ShikimoriService\ShikimoriService.csproj"/>
+        <ProjectReference Include="..\WaifuPicsApi\WaifuPicsApi.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
-        <Folder Include="Responsers" />
+        <Folder Include="Responsers"/>
     </ItemGroup>
 
 </Project>

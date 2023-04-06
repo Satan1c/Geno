@@ -8,7 +8,7 @@ public struct UserDocument
 	public UserDocument()
 	{
 	}
-	
+
 	public UserDocument(ulong id, GenshinIds genshinIds, GenshinRegion defaultRegion)
 	{
 		Id = id;

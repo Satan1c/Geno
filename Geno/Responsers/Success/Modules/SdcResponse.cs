@@ -19,7 +19,7 @@ public static class SdcResponse
 	{
 		s_category = localizationManager.GetCategory("genshin");
 	}
-	
+
 	public static ValueTask GuildInfo(this ShardedInteractionContext context, Guild guild)
 	{
 		var embed = context.GetLocale() switch
@@ -77,7 +77,8 @@ public static class SdcResponse
 		{
 			var user = k.Instance;
 			embed.AddField(new StringBuilder()
-					.AppendFormat("`{0}`#`{1}`", user?.Username ?? "unknown", user?.Discriminator ?? "unknown").ToString(),
+					.AppendFormat("`{0}`#`{1}`", user?.Username ?? "unknown", user?.Discriminator ?? "unknown")
+					.ToString(),
 				v.RateToString());
 		}
 

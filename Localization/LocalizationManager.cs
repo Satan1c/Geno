@@ -13,7 +13,7 @@ public class LocalizationManager
 	public LocalizationManager(string filesPath)
 	{
 		var categories = new Dictionary<string, Category>();
-		
+
 		var files = Directory.GetFiles(filesPath, "*.csv");
 		if (files.Length > 0)
 		{
@@ -34,7 +34,7 @@ public class LocalizationManager
 				directory = ref Unsafe.Add(ref directory, 1);
 			}
 		}
-		
+
 		m_categories = categories;
 	}
 
@@ -47,14 +47,15 @@ public class LocalizationManager
 		while (Unsafe.IsAddressLessThan(ref filesPath, ref end))
 		{
 			var path = filesPath.Replace('\\', '/').AsSpan();
-			
+
 			var split = path[(path.LastIndexOf('/') + 1)..];
-			
+
 			var category = new string(split[..split.IndexOf('.')]);
 			var name = new string(split[(split.IndexOf('.') + 1)..split.LastIndexOf('.')]);
-			
+
 			var file = File.ReadAllText(new string(path));
-			var lines = new CsvReader(new StringReader(file), CultureInfo.InvariantCulture).GetRecords<Row>().ToArray().AsSpan();
+			var lines = new CsvReader(new StringReader(file), CultureInfo.InvariantCulture).GetRecords<Row>().ToArray()
+				.AsSpan();
 
 			ref var value = ref CollectionsMarshal.GetValueRefOrAddDefault(categories, category, out var exists);
 			if (exists)

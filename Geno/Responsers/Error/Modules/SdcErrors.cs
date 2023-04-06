@@ -10,8 +10,8 @@ namespace Geno.Responsers.Error.Modules;
 public class SdcErrors : IErrorResolver
 {
 	private const string m_module = nameof(Sdc);
-	public string ModuleName => m_module;
 	private static Data s_data;
+	public string ModuleName => m_module;
 
 	public LocalizationManager LocalizationManager
 	{

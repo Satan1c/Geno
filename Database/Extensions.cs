@@ -26,7 +26,7 @@ public static class Extensions
 		cacheManager.Put(itemId, item);
 		return true;
 	}
-	
+
 	public static async ValueTask InsertOrReplaceOne<TDocument>(this IMongoCollection<TDocument> collection,
 		FilterDefinition<TDocument> filterDefinition,
 		TDocument document)
