@@ -75,12 +75,12 @@ public ref struct RefList<T>
 
 	public Span<T> AsSpan()
 	{
-		return m_buffer.Slice(0, Count);
+		return m_buffer[..Count];
 	}
 
 	public T[] ToArray()
 	{
-		return m_buffer.Slice(0, Count).ToArray();
+		return AsSpan().ToArray();
 	}
 
 	private void AutoResize(int index)
