@@ -26,14 +26,14 @@ public sealed class CommandsLocalizationManager : ILocalizationManager
 		IList<string> key,
 		LocalizationTarget destinationType)
 	{
-		return GetValues(key, "description");
+		return GetValues(ref key, "description");
 	}
 
 	public IDictionary<string, string> GetAllNames(
 		IList<string> key,
 		LocalizationTarget destinationType)
 	{
-		return GetValues(key, "name");
+		return GetValues(ref key, "name");
 	}
 
 	/*private string[] GetAllFiles()
@@ -41,10 +41,11 @@ public sealed class CommandsLocalizationManager : ILocalizationManager
 		return Directory.GetFiles(m_basePath, "*.*.json", SearchOption.TopDirectoryOnly);
 	}*/
 
-	private IDictionary<string, string> GetValues(IList<string> key, string identifier)
+	private IDictionary<string, string> GetValues(ref IList<string> key, string identifier)
 	{
 		//var values = new Dictionary<string, string>();
-		var dict = new RefList<KeyValuePair<string, string>>();
+		var keys = CollectionsMarshal.AsSpan((List<string>)key);
+		var dict = new RefList<KeyValuePair<string, string>>(keys.Length);
 		var files = Directory.GetFiles(m_basePath, "*.*.json", SearchOption.TopDirectoryOnly);
 
 		ref var start = ref MemoryMarshal.GetArrayDataReference(files);
@@ -61,8 +62,29 @@ public sealed class CommandsLocalizationManager : ILocalizationManager
 				using var reader2 = new JsonTextReader(reader1);
 
 				//var token = string.Join(".", key.Select( (Func<string, string>)(x => "['" + x + "']") )) + "." + identifier;
-				var select = key.Select(x => "['" + x + "']");
-				var token = string.Join(".", select) + "." + identifier;
+				var select = new string[key.Count];
+				var selectSpan = select.AsSpan();
+				ref var selectStart = ref MemoryMarshal.GetReference(selectSpan);
+				ref var selectEnd = ref Unsafe.Add(ref selectStart, select.Length);
+				
+				var counter = 0;
+				while (Unsafe.IsAddressLessThan(ref selectStart, ref selectEnd))
+				{
+					var item = keys[counter];
+					selectStart = string.Create(item.Length + 4, item, (span, s) =>
+					{
+						span[0] = '[';
+						span[1] = '\'';
+						s.AsSpan().CopyTo(span[2..]);
+						span[^2] = '\'';
+						span[^1] = ']';
+					});
+					counter++;
+					selectStart = ref Unsafe.Add(ref selectStart, 1);
+				}
+				
+				//var select = key.Select(x => "['" + x + "']");
+				var token = string.Join(".", select.ToArray()) + "." + identifier;
 				var str = JObject.Load(reader2).SelectToken(token)?.ToString() ?? null;
 
 				if (str != null)

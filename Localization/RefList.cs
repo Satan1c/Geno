@@ -20,15 +20,9 @@ internal ref struct RefList<T>
 		Count = 0;
 	}
 
-	public RefList(IEnumerable<T> list)
+	public RefList(List<T> list)
 	{
-		m_buffer = list.ToArray();
-		Count = m_buffer.Length;
-	}
-
-	public RefList(IReadOnlyCollection<T> list)
-	{
-		m_buffer = list.ToArray();
+		m_buffer = CollectionsMarshal.AsSpan(list);
 		Count = m_buffer.Length;
 	}
 

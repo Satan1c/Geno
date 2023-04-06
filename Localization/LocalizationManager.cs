@@ -8,14 +8,16 @@ namespace Localization;
 
 public class LocalizationManager
 {
-	private readonly IDictionary<string, Category> m_categories = new Dictionary<string, Category>();
+	private readonly Dictionary<string, Category> m_categories;
 
 	public LocalizationManager(string filesPath)
 	{
+		var categories = new Dictionary<string, Category>();
+		
 		var files = Directory.GetFiles(filesPath, "*.csv");
 		if (files.Length > 0)
 		{
-			Load(files);
+			Load(ref files, ref categories);
 		}
 		else
 		{
@@ -27,17 +29,20 @@ public class LocalizationManager
 			while (Unsafe.IsAddressLessThan(ref directory, ref end))
 			{
 				files = Directory.GetFiles(directory, "*.csv");
-				Load(files);
+				Load(ref files, ref categories);
 
 				directory = ref Unsafe.Add(ref directory, 1);
 			}
 		}
+		
+		m_categories = categories;
 	}
 
-	private void Load(string[] filesPaths)
+	private static void Load(ref string[] filesPaths, ref Dictionary<string, Category> categories)
 	{
-		ref var filesPath = ref MemoryMarshal.GetArrayDataReference(filesPaths);
-		ref var end = ref Unsafe.Add(ref filesPath, filesPaths.Length);
+		var filesPathSpan = filesPaths.AsSpan();
+		ref var filesPath = ref MemoryMarshal.GetReference(filesPathSpan);
+		ref var end = ref Unsafe.Add(ref filesPath, filesPathSpan.Length);
 
 		while (Unsafe.IsAddressLessThan(ref filesPath, ref end))
 		{
@@ -46,12 +51,13 @@ public class LocalizationManager
 			var category = split[0];
 			var name = split[1];
 			var file = File.ReadAllText(path);
-			var lines = new CsvReader(new StringReader(file), CultureInfo.InvariantCulture).GetRecords<Row>().ToArray();
+			var lines = new CsvReader(new StringReader(file), CultureInfo.InvariantCulture).GetRecords<Row>().ToArray().AsSpan();
 
-			if (m_categories.TryGetValue(category, out var value))
-				value.Add(name, lines);
+			ref var value = ref CollectionsMarshal.GetValueRefOrAddDefault(categories, category, out var exists);
+			if (exists)
+				value.Add(ref name, ref lines);
 			else
-				m_categories[category] = new Category(name, lines);
+				value = new Category(ref name, ref lines);
 
 			filesPath = ref Unsafe.Add(ref filesPath, 1);
 		}
@@ -59,6 +65,7 @@ public class LocalizationManager
 
 	public Category GetCategory(string category)
 	{
-		return m_categories.TryGetValue(category, out var value) ? value : new Category();
+		ref var value = ref CollectionsMarshal.GetValueRefOrNullRef(m_categories, category);
+		return Unsafe.IsNullRef(ref value) ? throw new NullReferenceException($"{category} category not found, {string.Join(',', m_categories.Keys)}") : value;
 	}
 }

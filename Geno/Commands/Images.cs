@@ -1,14 +1,12 @@
 ﻿using Discord;
 using Discord.Interactions;
 using Geno.Handlers;
-using Geno.Utils.Types;
 using WaifuPicsApi;
 using WaifuPicsApi.Enums;
 
-namespace Geno.Commands.Private;
+namespace Geno.Commands;
 
 [Group("img", "images group")]
-[Private(Category.Images)]
 public class Images : InteractionModuleBase<ShardedInteractionContext>
 {
 	private readonly WaifuClient m_waifuClient;

@@ -46,13 +46,12 @@
 
     <ItemGroup>
         <Content Include="bin\Localizations\csv\errors\error.sdc.csv" />
-        <Content Include="bin\Localizations\csv\errors\error.settings_get_ranks.csv" />
         <Content Include="bin\Localizations\csv\success\genshin.profile.csv" />
         <Content Include="bin\Localizations\json\pb_Genshin.ru.json" />
         <Content Include="bin\Localizations\json\pb_Other.ru.json" />
         <Content Include="bin\Localizations\json\pb_Sdc.ru.json" />
         <Content Include="bin\Localizations\json\pb_Setting.ru.json" />
-        <Content Include="bin\Localizations\json\pr_Images.ru.json" />
+        <Content Include="bin\Localizations\json\pb_Images.ru.json" />
         <Content Include="bin\Localizations\json\pr_Shikimori.ru.json" />
     </ItemGroup>
 

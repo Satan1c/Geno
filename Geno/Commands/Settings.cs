@@ -6,8 +6,6 @@ using Discord.Interactions;
 using Geno.Responsers.Success;
 using Geno.Utils.Extensions;
 using Geno.Utils.StaticData;
-using Geno.Utils.Types;
-using Microsoft.Extensions.Primitives;
 
 namespace Geno.Commands;
 

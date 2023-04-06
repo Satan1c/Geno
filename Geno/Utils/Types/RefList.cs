@@ -1,4 +1,6 @@
-﻿using Database;
+﻿using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using Database;
 
 namespace Geno.Utils.Types;
 
@@ -21,7 +23,7 @@ public ref struct RefList<T>
 
 	public RefList(IEnumerable<T> list)
 	{
-		m_buffer = list.ToArray();
+		m_buffer = list.ToArray().AsSpan();
 		Count = m_buffer.Length;
 	}
 
@@ -39,14 +41,14 @@ public ref struct RefList<T>
 
 		set
 		{
-			AutoResize(index);
+			AutoResize(index + 1);
 			m_buffer[index] = value;
 		}
 	}
 
 	public T Add(T item)
 	{
-		AutoResize(Count);
+		AutoResize(Count + 1);
 
 		m_buffer[Count++] = item;
 		return item;
@@ -63,16 +65,22 @@ public ref struct RefList<T>
 
 	public bool Contains(T item)
 	{
+		ref var start = ref MemoryMarshal.GetReference(m_buffer);
 		for (var i = 0; i < Count; i++)
-			if (m_buffer[i].AreSame(item))
+			if (Unsafe.Add(ref start, i).AreSame(item))
 				return true;
 
 		return false;
 	}
 
+	public Span<T> AsSpan()
+	{
+		return m_buffer.Slice(0, Count);
+	}
+
 	public T[] ToArray()
 	{
-		return m_buffer[..Count].ToArray();
+		return m_buffer.Slice(0, Count).ToArray();
 	}
 
 	private void AutoResize(int index)

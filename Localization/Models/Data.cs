@@ -1,43 +1,74 @@
-﻿using Discord;
-using Newtonsoft.Json;
+﻿using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using Discord;
 
 namespace Localization.Models;
 
 public readonly struct Data
 {
-	private readonly IDictionary<Langs, IDictionary<string, string>> m_data =
-		new Dictionary<Langs, IDictionary<string, string>>();
+	internal readonly Dictionary<Langs, Dictionary<string, string>> RowsData;
 
-	public Data(Row[] rows)
+	internal Data(ref Data based, ref Span<Row> rows)
 	{
-		m_data[Langs.Ru] = new Dictionary<string, string>();
-		m_data[Langs.En] = new Dictionary<string, string>();
+		var baseData =
+			Unsafe.IsNullRef(ref based)
+				? new Dictionary<Langs, Dictionary<string, string>>
+				{
+					{ Langs.Ru, new Dictionary<string, string>() }, { Langs.En, new Dictionary<string, string>() }
+				}
+				: based.RowsData;
+		var ru = new Dictionary<string, string>(baseData[Langs.Ru]);
+		var en = new Dictionary<string, string>(baseData[Langs.En]);
 
-		foreach (var row in rows)
+		RowsData = DataFromRows(ref rows, ru, en);
+	}
+
+	internal Data(ref Span<Row> rows)
+	{
+		RowsData = DataFromRows(ref rows);
+	}
+
+	private static Dictionary<Langs, Dictionary<string, string>> DataFromRows(
+		ref Span<Row> rows,
+		Dictionary<string, string>? ru = null,
+		Dictionary<string, string>? en = null)
+	{
+		ru ??= new Dictionary<string, string>();
+		en ??= new Dictionary<string, string>();
+
+		ref var start = ref MemoryMarshal.GetReference(rows);
+		ref var end = ref Unsafe.Add(ref start, rows.Length);
+
+		while (Unsafe.IsAddressLessThan(ref start, ref end))
 		{
-			m_data[Langs.Ru][row.Key] = row.Ru.Replace("\\n", "\n");
-			m_data[Langs.En][row.Key] = row.En.Replace("\\n", "\n");
+			var key = start.Key;
+			ru[key] = start.Ru;
+			en[key] = start.En;
+
+			start = ref Unsafe.Add(ref start, 1);
 		}
+
+		return new Dictionary<Langs, Dictionary<string, string>>
+		{
+			{ Langs.Ru, ru },
+			{ Langs.En, en }
+		};
 	}
 
 	public IReadOnlyDictionary<string, string> GetForLocale(IInteractionContext context)
 	{
-		return GetForLocale(JsonConvert.SerializeObject(context.Interaction.UserLocale));
+		return GetForLocale(context.Interaction.UserLocale);
+		//GetForLocale(JsonConvert.SerializeObject(context.Interaction.UserLocale));
 	}
 
-	public IReadOnlyDictionary<string, string> GetForLocale(string locale)
+	private IReadOnlyDictionary<string, string> GetForLocale(string locale)
 	{
-		return GetForLocale(GetLocale(locale));
+		return GetForLocale(locale == "ru" ? Langs.Ru : Langs.En);
+		//GetForLocale(GetLocale(locale));
 	}
 
-	public IReadOnlyDictionary<string, string> GetForLocale(Langs locale)
+	private IReadOnlyDictionary<string, string> GetForLocale(Langs locale)
 	{
-		return m_data[locale].AsReadOnly();
-	}
-
-	private static Langs GetLocale(string locale)
-	{
-		var d = JsonConvert.DeserializeObject<Langs>(locale);
-		return d;
+		return RowsData[locale].AsReadOnly();
 	}
 }

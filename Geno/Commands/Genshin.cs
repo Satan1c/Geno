@@ -5,12 +5,10 @@ using Discord.Interactions;
 using EnkaAPI;
 using Geno.Responsers.Success.Modules;
 using Geno.Utils.Extensions;
-using Localization;
-using Localization.Models;
 
 namespace Geno.Commands;
 
-[Group("genshin", "Genshin Impact commands")]
+//[Group("genshin", "Genshin Impact commands")]
 public class Genshin : InteractionModuleBase<ShardedInteractionContext>
 {
 	private const string m_baseLink = "https://genshin.hoyoverse.com/en/gift?code=";
@@ -73,7 +71,7 @@ public class Genshin : InteractionModuleBase<ShardedInteractionContext>
 		await RespondAsync("Done", ephemeral: true);
 	}
 
-	private async Task<GuildDocument> UpdateDoc(IMessage message, string userId)
+	private async ValueTask<GuildDocument> UpdateDoc(IMessage message, string userId)
 	{
 		var doc = await m_databaseProvider.GetConfig(Context.Guild.Id);
 		if (doc.UserScreens.TryGetValue(userId, out var value) && value != message.Id)
