@@ -112,7 +112,7 @@ public class Settings : InteractionModuleBase<ShardedInteractionContext>
 		[RequireUserPermission(UserPermissions.UtilsAddVoice)]
 		public async Task SetVoiceChannelNames(
 			IVoiceChannel channel,
-			[MinLength(1)] [MaxLength(50)] [Summary("template", "created channel name, default - Party #{Count}")]
+			[MaxLength(50)] [Summary("template", "created channel name, default - Party #{Count}")]
 			string name = "Default - Party #{Count}")
 		{
 			if (await channel.GetCategoryAsync() is null)
