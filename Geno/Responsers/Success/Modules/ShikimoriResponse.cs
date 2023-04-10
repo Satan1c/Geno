@@ -23,15 +23,15 @@ public static class ShikimoriResponse
 	public static ValueTask SearchResult(this ShardedInteractionContext context, MangaID? manga = null)
 	{
 		return manga == null
-			? context.Respond(new EmbedBuilder().WithTitle("Nothing found"), true, true)
-			: context.Respond(manga.GetMangaEmbed(), isDefered: true);
+			? context.Respond(new EmbedBuilder().WithTitle("Nothing found"), ephemeral: true, isDefered: true)
+			: context.Respond(manga.GetMangaEmbed(), ephemeral: false, isDefered: true);
 	}
 
 	public static ValueTask SearchResult(this ShardedInteractionContext context, AnimeID? anime = null)
 	{
 		return anime == null
-			? context.Respond(new EmbedBuilder().WithTitle("Nothing found"), true, true)
-			: context.Respond(anime.GetAnimeEmbed(), isDefered: true);
+			? context.Respond(new EmbedBuilder().WithTitle("Nothing found"), ephemeral: true, isDefered: true)
+			: context.Respond(anime.GetAnimeEmbed(), ephemeral: false, isDefered: true);
 	}
 
 	private static EmbedBuilder GetAnimeEmbed(this AnimeID anime)

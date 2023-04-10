@@ -37,7 +37,7 @@ public static class ErrorResolver
 	public static EmbedBuilder Resolve(IResult result, ICommandInfo command, IInteractionContext ctx)
 	{
 		//ClientEvents.OnLog(new LogMessage(LogSeverity.Error, command.MethodName, result.ErrorReason));
-		var name = command.Module.GetTopLevelModule().Name!;
+		var name = command?.Module?.GetTopLevelModule()?.Name ?? "unknown";
 		var embed = new EmbedBuilder().WithColor(Color.Red);
 
 		return !s_list.ContainsKey(name)

@@ -82,6 +82,6 @@ public static class SdcResponse
 				v.RateToString());
 		}
 
-		await context.Respond(embed, false, true).ConfigureAwait(false);
+		await context.Respond(embed, ephemeral: false, isDefered: true).ConfigureAwait(false);
 	}
 }

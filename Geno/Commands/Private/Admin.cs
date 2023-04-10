@@ -23,11 +23,11 @@ public class Admin : InteractionModuleBase<ShardedInteractionContext>
 		{
 			await CommandHandlingService.Interactions.AddModulesToGuildAsync(guild, clear, modules);
 
-			await Context.Respond(new EmbedBuilder().WithDescription("Registered"), true, true);
+			await Context.Respond(new EmbedBuilder().WithDescription("Registered"), ephemeral: true, isDefered: true);
 			return;
 		}
 
-		await Context.Respond(new EmbedBuilder().WithDescription("Category not found"), true,
-			true);
+		await Context.Respond(new EmbedBuilder().WithDescription("Category not found"), ephemeral: true,
+			isDefered: true);
 	}
 }
