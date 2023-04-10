@@ -95,10 +95,10 @@ public static class UnsafeExtensions
 		ref Func<T, TT, (bool, AutocompleteResult)> checker)
 	{
 		var result = new AutocompleteResult[5];
-		ref var startResult = ref MemoryMarshal.GetArrayDataReference(result);
+		ref var startResult = ref MemoryMarshal.GetReference(result.AsSpan());
 		ref var endResult = ref Unsafe.Add(ref startResult, result.Length);
 
-		ref var start = ref MemoryMarshal.GetArrayDataReference(categories);
+		ref var start = ref MemoryMarshal.GetReference(categories.AsSpan());
 		ref var end = ref Unsafe.Add(ref start, categories.Length);
 
 		while (Unsafe.IsAddressLessThan(ref start, ref end) && Unsafe.IsAddressLessThan(ref startResult, ref endResult))

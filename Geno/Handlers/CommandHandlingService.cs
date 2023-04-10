@@ -111,16 +111,17 @@ public class CommandHandlingService
 	{
 		if (resultRaw is Result result)
 		{
-			await context.Respond(result.Builder, result.IsEphemeral, result.IsDefered).ConfigureAwait(false);
+			await context.Respond(result.Builder, ephemeral: result.IsEphemeral, isDefered: result.IsDefered)
+				.ConfigureAwait(false);
 			return;
 		}
 
-		if (resultRaw.Error is null)
+		if (resultRaw.Error is null or InteractionCommandError.UnknownCommand)
 			return;
 
 		var embed = ErrorResolver.Resolve(resultRaw, commandInfo, context);
 
-		await context.Respond(embed, true).ConfigureAwait(false);
+		await context.Respond(embed, ephemeral: true).ConfigureAwait(false);
 	}
 
 	private async Task OnInteractionCreated(SocketInteraction arg)

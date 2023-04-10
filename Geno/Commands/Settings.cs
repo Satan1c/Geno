@@ -87,15 +87,6 @@ public class Settings : InteractionModuleBase<ShardedInteractionContext>
 		{
 			var config = await s_databaseProvider.GetConfig(Context.Guild.Id);
 
-			/*if (config.RankRoles.Count == 0)
-			{
-				await RespondAsync(
-					"message.ToString()",
-					ephemeral: true,
-					allowedMentions: AllowedMentions.None);
-				return;
-			}*/
-
 			await RespondAsync(
 				GetMessage(ref config),
 				ephemeral: true,
@@ -117,7 +108,8 @@ public class Settings : InteractionModuleBase<ShardedInteractionContext>
 		{
 			if (await channel.GetCategoryAsync() is null)
 			{
-				await Context.Respond(new EmbedBuilder().WithDescription("Voice channel must have a category"), true);
+				await Context.Respond(new EmbedBuilder().WithDescription("Voice channel must have a category"),
+					ephemeral: true);
 				return;
 			}
 
@@ -125,7 +117,7 @@ public class Settings : InteractionModuleBase<ShardedInteractionContext>
 			config.VoicesNames[channel.Id.ToString()] = name;
 
 			await s_databaseProvider.SetConfig(config);
-			await Context.Respond(new EmbedBuilder().WithDescription("Done"), true);
+			await Context.Respond(new EmbedBuilder().WithDescription("Done"), ephemeral: true);
 		}
 
 		[SlashCommand("add_creator", "Add creator of voice room")]

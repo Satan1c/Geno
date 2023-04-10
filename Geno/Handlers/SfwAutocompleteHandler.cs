@@ -24,7 +24,7 @@ public class SfwAutocompleteHandler : AutocompleteHandler
 	{
 		try
 		{
-			var userInput = autocompleteInteraction.Data.Current.Value.ToString()!;
+			var userInput = autocompleteInteraction.Data.Current.Value.ToString()!.Trim();
 			return AutocompletionResult.FromSuccess(s_sfwCategories.FilterResultUnsafe(ref userInput));
 		}
 		catch (Exception e)
