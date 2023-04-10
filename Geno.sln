@@ -10,6 +10,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ShikimoriService", "Shikimo
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WaifuPicsApi", "WaifuPicsApi\WaifuPicsApi.csproj", "{3C938AED-A288-4965-BAFA-97A51E39938B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DemotivatorService", "DemotivatorService\DemotivatorService.csproj", "{9A8EA662-8AC9-4A08-B787-63F5ACF769D2}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -36,5 +38,9 @@ Global
 		{3C938AED-A288-4965-BAFA-97A51E39938B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3C938AED-A288-4965-BAFA-97A51E39938B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3C938AED-A288-4965-BAFA-97A51E39938B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9A8EA662-8AC9-4A08-B787-63F5ACF769D2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9A8EA662-8AC9-4A08-B787-63F5ACF769D2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9A8EA662-8AC9-4A08-B787-63F5ACF769D2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9A8EA662-8AC9-4A08-B787-63F5ACF769D2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

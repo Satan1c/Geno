@@ -69,6 +69,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\Database\Database.csproj"/>
+        <ProjectReference Include="..\DemotivatorService\DemotivatorService.csproj"/>
         <ProjectReference Include="..\Localization\Localization.csproj"/>
         <ProjectReference Include="..\ShikimoriService\ShikimoriService.csproj"/>
         <ProjectReference Include="..\WaifuPicsApi\WaifuPicsApi.csproj"/>

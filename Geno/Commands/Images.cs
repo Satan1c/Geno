@@ -1,6 +1,10 @@
-﻿using Discord;
+﻿using DemotivatorService;
+using Discord;
 using Discord.Interactions;
+using Discord.WebSocket;
 using Geno.Handlers;
+using Geno.Responsers.Success;
+using Geno.Utils.Types;
 using WaifuPicsApi;
 using WaifuPicsApi.Enums;
 
@@ -9,16 +13,81 @@ namespace Geno.Commands;
 [Group("img", "images group")]
 public class Images : InteractionModuleBase<ShardedInteractionContext>
 {
+	private readonly DiscordShardedClient m_client;
+
 	private readonly WaifuClient m_waifuClient;
 	//private IEnumerable<AutocompleteResult> m_sfwCategories = Array.Empty<AutocompleteResult>();
 
-	public Images(WaifuClient waifuClient)
+	public Images(DiscordShardedClient client, WaifuClient waifuClient)
 	{
+		m_client = client;
 		m_waifuClient = waifuClient;
 	}
 
+	[SlashCommand("demotivator", "generate demotivator")]
+	public async Task Demotivator(IAttachment? attachment = null,
+		string? upperText = "Текст",
+		string? lowerText = "Текст")
+	{
+		var url = attachment?.Url ??
+		          Context.Guild?.GetUser(Context.User.Id).GetDisplayAvatarUrl(ImageFormat.Png, 512) ??
+		          Context.User.GetAvatarUrl(ImageFormat.Png, 512);
+		var generator = new DemotivatorGenerator(url, upperText, lowerText);
+		var file = generator.GetResult();
+		var ids = new[] { "finish", "add", "add_text" };
+		var closeAt = DateTimeOffset.UtcNow.AddMinutes(1);
+		var timeout = TimeSpan.FromMinutes(1);
+
+		//await DeferAsync(true);
+		await Context.Respond(new EmbedBuilder().WithImageUrl("attachment://demotivator.png"),
+			file,
+			new ComponentBuilder().AddRow(new ActionRowBuilder()
+				.WithButton("Finish", ids[0], ButtonStyle.Success)
+				.WithButton("Add text", ids[1])
+			),
+			true);
+
+		while (DateTimeOffset.UtcNow < closeAt)
+		{
+			var interaction =
+				await InteractionUtility.WaitForInteractionAsync(m_client, timeout,
+					interaction => interaction is IComponentInteraction or IModalInteraction);
+
+			if (interaction is IComponentInteraction buttonInteraction)
+			{
+				var id = buttonInteraction.Data.CustomId;
+				if (id == ids[0] || id != ids[1])
+				{
+					await buttonInteraction.DeferAsync();
+					break;
+				}
+
+				closeAt = DateTimeOffset.UtcNow.AddMinutes(1);
+				await interaction.RespondWithModalAsync<DemotivatorTextModal>(ids[2]);
+			}
+			else if (interaction is IModalInteraction modalInteraction)
+			{
+				var id = modalInteraction.Data.CustomId;
+				if (id != "add_text") continue;
+
+				closeAt = DateTimeOffset.UtcNow.AddMinutes(1);
+				var comps = modalInteraction.Data.Components.ToArray();
+			}
+		}
+
+		var embed = new EmbedBuilder().WithImageUrl("attachment://demotivator.png");
+		file = generator.GetResult();
+		await Context.Respond(embed, file, new ComponentBuilder(), false, true);
+		/*await Context.Respond(
+			new EmbedBuilder().WithImageUrl("attachment://demotivator.png"),
+			generator.GetResult(),
+			new ComponentBuilder(),
+			isFolluwup: true);*/
+
+		generator.Dispose();
+	}
+
 	[SlashCommand("nsfw", "nsfw images")]
-	[EnabledInDm(false)]
 	[RequireNsfw]
 	public async Task NsfwCommands(NsfwCategory tag)
 	{
@@ -32,7 +101,6 @@ public class Images : InteractionModuleBase<ShardedInteractionContext>
 	}
 
 	[SlashCommand("sfw", "sfw images")]
-	[EnabledInDm(false)]
 	public async Task SfwCommands([Autocomplete(typeof(SfwAutocompleteHandler))] string tag, IUser? user = null)
 	{
 		try
