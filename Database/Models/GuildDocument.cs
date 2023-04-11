@@ -2,13 +2,8 @@
 
 namespace Database.Models;
 
-public struct GuildDocument
+public class GuildDocument
 {
-	public GuildDocument()
-	{
-	}
-
-	[BsonConstructor]
 	public GuildDocument(ulong id = 0,
 		Dictionary<string, ulong>? voices = default!,
 		Dictionary<string, string>? voicesNames = default!,

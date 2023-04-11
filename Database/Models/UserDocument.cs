@@ -3,13 +3,9 @@ using MongoDB.Bson.Serialization.Attributes;
 
 namespace Database.Models;
 
-public struct UserDocument
+public class UserDocument
 {
-	public UserDocument()
-	{
-	}
-
-	public UserDocument(ulong id, GenshinIds genshinIds, GenshinRegion defaultRegion)
+	public UserDocument(ulong id = 0, GenshinIds genshinIds = default, GenshinRegion defaultRegion = default)
 	{
 		Id = id;
 		GenshinIds = genshinIds;
@@ -23,6 +19,13 @@ public struct UserDocument
 	[BsonElement("for_deletion")] public bool ForDeletion { get; set; } = false;
 	public uint DefaultGenshinId => GetGenshinId(DefaultRegion);
 
+	public static UserDocument GetDefault(ulong id)
+	{
+		var document = new UserDocument();
+		document.Id = id;
+		return document;
+	}
+	
 	public uint GetGenshinId(GenshinRegion region)
 	{
 		return region switch

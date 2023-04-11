@@ -8,7 +8,7 @@ public class DatabaseProvider
 {
 	private static readonly ICacheManager<GuildDocument> s_guildsCache = CacheFactory.Build<GuildDocument>(part => part
 		.WithMicrosoftMemoryCacheHandle()
-		.WithExpiration(ExpirationMode.Sliding, TimeSpan.FromHours(1)));
+		.WithExpiration(ExpirationMode.Sliding, TimeSpan.FromDays(7)));
 
 	private static readonly ICacheManager<UserDocument> s_usersCache = CacheFactory.Build<UserDocument>(part => part
 		.WithMicrosoftMemoryCacheHandle()
@@ -24,9 +24,9 @@ public class DatabaseProvider
 		m_usersConfigs = mainDb.GetCollection<UserDocument>("users");
 	}
 
-	public async ValueTask<bool> HasGuild(ulong id)
+	public ValueTask<bool> HasGuild(ulong id)
 	{
-		return await m_guildConfigs.HasDocument(
+		return m_guildConfigs.HasDocument(
 			s_guildsCache,
 			Builders<GuildDocument>.Filter.Eq(document => document.Id, id),
 			id);
@@ -40,22 +40,26 @@ public class DatabaseProvider
 			id);
 	}
 
-	public async ValueTask<GuildDocument> GetConfig(ulong id, bool fetch = true)
+	public async ValueTask<GuildDocument> GetConfig(ulong id)
 	{
+		GuildDocument item;
 		var itemId = id.ToString();
-		if (s_guildsCache.Exists(itemId))
-			return s_guildsCache.Get(itemId);
+		if (await HasGuild(id))
+		{
+			item = s_guildsCache.Get(itemId);
+		}
+		else
+		{
+			item = GuildDocument.GetDefault(id);
+			s_guildsCache.Put(itemId, item);
+		}
 
-		if (fetch && await HasGuild(id))
-			return s_guildsCache.Get(itemId);
-
-		return GuildDocument.GetDefault(id);
+		return item;
 	}
 
-	public async ValueTask SetConfig(GuildDocument document, GuildDocument before = default)
+	public async ValueTask SetConfig(GuildDocument document, GuildDocument? before = null)
 	{
-		if (before.AreSame(default))
-			before = await GetConfig(document.Id, false);
+		before ??= await GetConfig(document.Id);
 
 		if (document.AreSame(before))
 			return;
