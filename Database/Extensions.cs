@@ -14,23 +14,21 @@ public static class Extensions
 		ICacheManager<TDocument> cacheManager,
 		FilterDefinition<TDocument> filterDefinition,
 		ulong id)
-		where TDocument : struct
 	{
 		var itemId = id.ToString();
 		if (cacheManager.Exists(itemId))
 			return true;
 
-		var item = await collection.Find(filterDefinition).FirstOrDefaultAsync();
-		if (item.AreSame(default)) return false;
+		var item = await collection.Find(filterDefinition).ToListAsync();
+		if (item.Count < 1) return false;
 
-		cacheManager.Put(itemId, item);
+		cacheManager.Put(itemId, item[0]);
 		return true;
 	}
 
 	public static async ValueTask InsertOrReplaceOne<TDocument>(this IMongoCollection<TDocument> collection,
 		FilterDefinition<TDocument> filterDefinition,
 		TDocument document)
-		where TDocument : struct
 	{
 		var item = await collection.FindOneAndReplaceAsync(filterDefinition, document);
 

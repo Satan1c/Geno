@@ -23,7 +23,7 @@ public class GuildEvents
 	{
 		if (user is not SocketGuildUser guildUser
 		    || guildUser.IsBot
-		    || !await m_databaseProvider.HasGuild(guildUser.Guild.Id))
+		    || !await m_databaseProvider.HasGuild(guildUser.Guild.Id).ConfigureAwait(false))
 			return;
 
 		var config = await m_databaseProvider.GetConfig(guildUser.Guild.Id).ConfigureAwait(false);
