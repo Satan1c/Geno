@@ -10,7 +10,7 @@ public static class Extensions
 		return EqualityComparer<T>.Default.Equals(left, right);
 	}
 
-	public static async ValueTask<bool> HasDocument<TDocument>(this IMongoCollection<TDocument> collection,
+	/*public static async ValueTask<bool> HasDocument<TDocument>(this IMongoCollection<TDocument> collection,
 		ICacheManager<TDocument> cacheManager,
 		FilterDefinition<TDocument> filterDefinition,
 		ulong id)
@@ -19,7 +19,23 @@ public static class Extensions
 		if (cacheManager.Exists(itemId))
 			return true;
 
-		var item = await collection.Find(filterDefinition).ToListAsync();
+		var item = await collection.Find(filterDefinition).ToListAsync().ConfigureAwait(false);
+		if (item.Count < 1) return false;
+
+		cacheManager.Put(itemId, item[0]);
+		return await collection.HasDocument(cacheManager, filterDefinition, itemId).ConfigureAwait(false);
+	}*/
+	
+	public static async ValueTask<bool> HasDocument<TDocument>(this IMongoCollection<TDocument> collection,
+		ICacheManager<TDocument> cacheManager,
+		FilterDefinition<TDocument> filterDefinition,
+		ulong id)
+	{
+		var itemId = id!.ToString();
+		if (cacheManager.Exists(itemId))
+			return true;
+
+		var item = await collection.Find(filterDefinition).ToListAsync().ConfigureAwait(false);
 		if (item.Count < 1) return false;
 
 		cacheManager.Put(itemId, item[0]);
@@ -30,9 +46,9 @@ public static class Extensions
 		FilterDefinition<TDocument> filterDefinition,
 		TDocument document)
 	{
-		var item = await collection.FindOneAndReplaceAsync(filterDefinition, document);
+		var item = await collection.FindOneAndReplaceAsync(filterDefinition, document).ConfigureAwait(false);
 
-		if (item.AreSame(default))
-			await collection.InsertOneAsync(document);
+		if (item == null)
+			await collection.InsertOneAsync(document).ConfigureAwait(false);
 	}
 }

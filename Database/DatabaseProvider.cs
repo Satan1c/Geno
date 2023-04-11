@@ -24,12 +24,12 @@ public class DatabaseProvider
 		m_usersConfigs = mainDb.GetCollection<UserDocument>("users");
 	}
 
-	public ValueTask<bool> HasGuild(ulong id)
+	public async ValueTask<bool> HasGuild(ulong id)
 	{
-		return m_guildConfigs.HasDocument(
+		return await m_guildConfigs.HasDocument(
 			s_guildsCache,
 			Builders<GuildDocument>.Filter.Eq(document => document.Id, id),
-			id);
+			id).ConfigureAwait(false);
 	}
 
 	public async ValueTask<bool> HasUser(ulong id)
@@ -37,14 +37,14 @@ public class DatabaseProvider
 		return await m_usersConfigs.HasDocument(
 			s_usersCache,
 			Builders<UserDocument>.Filter.Eq(document => document.Id, id),
-			id);
+			id).ConfigureAwait(false);
 	}
 
 	public async ValueTask<GuildDocument> GetConfig(ulong id)
 	{
 		GuildDocument item;
 		var itemId = id.ToString();
-		if (await HasGuild(id))
+		if (await HasGuild(id).ConfigureAwait(false))
 		{
 			item = s_guildsCache.Get(itemId);
 		}
@@ -59,13 +59,15 @@ public class DatabaseProvider
 
 	public async ValueTask SetConfig(GuildDocument document, GuildDocument? before = null)
 	{
-		before ??= await GetConfig(document.Id);
+		before ??= await GetConfig(document.Id).ConfigureAwait(false);
 
 		if (document.AreSame(before))
 			return;
 
 		s_guildsCache.Put(document.Id.ToString(), document);
 
-		await m_guildConfigs.InsertOrReplaceOne(Builders<GuildDocument>.Filter.Eq(d => d.Id, document.Id), document);
+		await m_guildConfigs.InsertOrReplaceOne(
+			Builders<GuildDocument>.Filter.Eq(d => d.Id, document.Id),
+			document).ConfigureAwait(false);
 	}
 }

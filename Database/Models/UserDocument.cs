@@ -13,10 +13,10 @@ public class UserDocument
 		ForDeletion = false;
 	}
 
-	[BsonElement("_id")] public ulong Id { get; set; } = 0;
-	[BsonElement("genshin_ids")] public GenshinIds GenshinIds { get; set; } = default;
-	[BsonElement("default_region")] public GenshinRegion DefaultRegion { get; set; } = default;
-	[BsonElement("for_deletion")] public bool ForDeletion { get; set; } = false;
+	[BsonElement("_id")] public ulong Id { get; set; }
+	[BsonElement("genshin_ids")] public GenshinIds GenshinIds { get; set; }
+	[BsonElement("default_region")] public GenshinRegion DefaultRegion { get; set; }
+	[BsonElement("for_deletion")] public bool ForDeletion { get; set; }
 	public uint DefaultGenshinId => GetGenshinId(DefaultRegion);
 
 	public static UserDocument GetDefault(ulong id)
