@@ -42,7 +42,7 @@ public static class SdcResponse
 				.AddField("Is bot on server", $"`{(guild.IsBotOnServer ? "Yes" : "No")}`")
 		};
 
-		return context.Respond(embed);
+		return context.Interaction.Respond(embed);
 	}
 
 	public static ValueTask WarnsInfo(this ShardedInteractionContext context, UserWarns warns)
@@ -54,7 +54,7 @@ public static class SdcResponse
 				.WithDescription(warns.Warns.ToString())
 		};
 
-		return context.Respond(embed);
+		return context.Interaction.Respond(embed);
 	}
 
 	public static async ValueTask GuildRatesInfo(this ShardedInteractionContext context,
@@ -82,6 +82,6 @@ public static class SdcResponse
 				v.RateToString());
 		}
 
-		await context.Respond(embed, ephemeral: false, isDefered: true).ConfigureAwait(false);
+		await context.Interaction.Respond(embed, ephemeral: false, isDefered: true).ConfigureAwait(false);
 	}
 }

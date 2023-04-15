@@ -37,6 +37,6 @@ public static class GenshinResponse
 			embed.AddField(avatar.AvatarId.ToString(),
 				$"`{avatar.Level.ToString()}`/`90`", true);
 
-		return context.Respond(embed, ephemeral: true);
+		return context.Interaction.Respond(embed, ephemeral: true);
 	}
 }

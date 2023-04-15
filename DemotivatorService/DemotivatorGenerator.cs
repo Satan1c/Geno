@@ -20,7 +20,7 @@ public class DemotivatorGenerator : IDisposable
 
 	public DemotivatorGenerator(string url, string? upperText = null, string? lowerText = null)
 	{
-		var stream = new HttpClient().GetStreamAsync(url).GetAwaiter().GetResult();
+		var stream = new HttpClient().GetAsync(url).GetAwaiter().GetResult().Content.ReadAsStream();
 		var sourceBitmap = SKBitmap.Decode(stream);
 		Draw(sourceBitmap, upperText, lowerText);
 		stream.Close();
@@ -41,7 +41,7 @@ public class DemotivatorGenerator : IDisposable
 		return new FileAttachment(file, "demotivator.png");
 	}
 
-	public FileAttachment OverDraw(string upperText = "", string lowerText = "")
+	public FileAttachment OverDraw(string? upperText = null, string? lowerText = null)
 	{
 		Draw(SKBitmap.FromImage(m_surface.Snapshot()), upperText, lowerText);
 		return GetResult();
@@ -55,34 +55,36 @@ public class DemotivatorGenerator : IDisposable
 
 		var upper = upperText?.Split('\n') ?? null;
 		var lower = lowerText?.Split('\n') ?? null;
+    
+		var upperPaint = TextData.GetPaint(TextData.GetTextSize(32, width, 4, m_cMaxSize));
+		var lowerPaint = TextData.GetPaint(TextData.GetTextSize(16, width, 3, m_cMaxSize));
 
 		if (upperText != null)
 		{
-			var textSize = TextData.GetTextSize(32, width, 4, m_cMaxSize);
-			var paint = TextData.GetPaint(textSize);
-			upper = WrapText(upperText, paint, width * .87f);
-			textHeight = upper.Length - 1;
+			upper = WrapText(upperText, upperPaint, width * .87f);
+			textHeight += upper.Length - 1;
 		}
 
 		if (lowerText != null)
 		{
-			var textSize = TextData.GetTextSize(16, width, 3, m_cMaxSize);
-			var paint = TextData.GetPaint(textSize);
-			lower = WrapText(lowerText, paint, width * .87f);
+			lower = WrapText(lowerText, lowerPaint, width * .87f);
 			textHeight += lower.Length - 1;
 		}
 
 		var heightAmplifier = .27f + .09f * textHeight;
 		var height = MathF.Round(sourceBitmap.Height * (1 + heightAmplifier), 0);
+
 		m_canvasSize = new SKSize(width, height);
 		m_surface = m_canvasSize.CreateBlank();
 		m_canvas = m_surface.Canvas;
 		m_imageRect = m_canvas.AddImage(sourceBitmap);
 
-		var upperPosition = sourceBitmap.Height * 1.105f / height;
-		var lowerPosition = (sourceBitmap.Height * 1.105f + 32 * (upper?.Length ?? 1) * 1.3f) / height;
-		m_upperTextData = new TextData(32, 4, upperPosition, m_canvasSize, m_cMaxSize);
-		m_lowerTextData = new TextData(16, 3, lowerPosition, m_canvasSize, m_cMaxSize);
+		var heightPosition = sourceBitmap.Height * 1.105f;
+		var upperPosition = heightPosition / height;
+		var lowerPosition = (heightPosition + 32 * (upper?.Length ?? 1) * 1.3f) / height;
+		
+		m_upperTextData = new TextData(upperPaint, upperPosition, m_canvasSize);
+		m_lowerTextData = new TextData(lowerPaint, lowerPosition, m_canvasSize);
 
 		AddBorder();
 		AddText(upper, lower);

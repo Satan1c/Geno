@@ -10,6 +10,14 @@ public readonly struct TextData
 	public float TextY { get; init; }
 	public SKFont Font { get; init; }
 
+	public TextData(SKPaint paint, float position, SKSize canvasSize)
+	{
+		Paint = paint;
+		TextX = canvasSize.Width / 2f;
+		TextY = canvasSize.Height * position + Paint.FontMetrics.CapHeight;
+		Font = GetFont(TextSize);
+	}
+
 	public TextData(float fontSize, float size, float position, SKSize canvasSize, int maxSize)
 	{
 		TextSize = GetTextSize(fontSize, canvasSize.Width, size, maxSize);

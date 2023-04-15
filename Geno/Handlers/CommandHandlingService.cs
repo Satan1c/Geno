@@ -111,7 +111,7 @@ public class CommandHandlingService
 	{
 		if (resultRaw is Result result)
 		{
-			await context.Respond(result.Builder, ephemeral: result.IsEphemeral, isDefered: result.IsDefered)
+			await context.Interaction.Respond(result.Builder, ephemeral: result.IsEphemeral, isDefered: result.IsDefered)
 				.ConfigureAwait(false);
 			return;
 		}
@@ -121,7 +121,7 @@ public class CommandHandlingService
 
 		var embed = ErrorResolver.Resolve(resultRaw, commandInfo, context);
 
-		await context.Respond(embed, ephemeral: true).ConfigureAwait(false);
+		await context.Interaction.Respond(embed, ephemeral: true).ConfigureAwait(false);
 	}
 
 	private async Task OnInteractionCreated(SocketInteraction arg)

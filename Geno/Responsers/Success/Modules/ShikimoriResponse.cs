@@ -12,6 +12,7 @@ public static class ShikimoriResponse
 {
 	private static Category s_category;
 
+	private const string c_baseUrl = "https://shikimori.me/";
 	private static readonly Regex s_characterRegex =
 		new(@"\[(?:character=\w+|\/character)\]", RegexOptions.Compiled | RegexOptions.Singleline);
 
@@ -23,20 +24,20 @@ public static class ShikimoriResponse
 	public static ValueTask SearchResult(this ShardedInteractionContext context, MangaID? manga = null)
 	{
 		return manga == null
-			? context.Respond(new EmbedBuilder().WithTitle("Nothing found"), ephemeral: true, isDefered: true)
-			: context.Respond(manga.GetMangaEmbed(), ephemeral: false, isDefered: true);
+			? context.Interaction.Respond(new EmbedBuilder().WithTitle("Nothing found"), ephemeral: true, isDefered: true)
+			: context.Interaction.Respond(manga.GetMangaEmbed(), ephemeral: false, isDefered: true);
 	}
 
 	public static ValueTask SearchResult(this ShardedInteractionContext context, AnimeID? anime = null)
 	{
 		return anime == null
-			? context.Respond(new EmbedBuilder().WithTitle("Nothing found"), ephemeral: true, isDefered: true)
-			: context.Respond(anime.GetAnimeEmbed(), ephemeral: false, isDefered: true);
+			? context.Interaction.Respond(new EmbedBuilder().WithTitle("Nothing found"), ephemeral: true, isDefered: true)
+			: context.Interaction.Respond(anime.GetAnimeEmbed(), ephemeral: false, isDefered: true);
 	}
 
 	private static EmbedBuilder GetAnimeEmbed(this AnimeID anime)
 	{
-		var url = string.Concat("https://shikimori.one", anime.Url);
+		var url = string.Concat(c_baseUrl, anime.Url);
 		var descriptionBuilder = new StringBuilder()
 			.AppendFormat("Status: `{0}`\n", anime.Status);
 
@@ -72,13 +73,13 @@ public static class ShikimoriResponse
 					? ""
 					: string.Concat(anime.Russian, " / "), anime.Name))
 			.WithUrl(url)
-			.WithImageUrl(string.Concat("https://shikimori.one", anime.Image?.Original))
+			.WithImageUrl(string.Concat(c_baseUrl, anime.Image?.Original))
 			.WithDescription(descriptionBuilder.ClearDescription());
 	}
 
 	private static EmbedBuilder GetMangaEmbed(this MangaID manga)
 	{
-		var url = string.Concat("https://shikimori.one", manga.Url);
+		var url = string.Concat(c_baseUrl, manga.Url);
 		var descriptionBuilder =
 			new StringBuilder();
 
@@ -112,7 +113,7 @@ public static class ShikimoriResponse
 					? ""
 					: string.Concat(manga.Russian, " / "), manga.Name))
 			.WithUrl(url)
-			.WithImageUrl(string.Concat("https://shikimori.one", manga.Image?.Original))
+			.WithImageUrl(string.Concat(c_baseUrl, manga.Image?.Original))
 			.WithDescription(descriptionBuilder.ClearDescription());
 	}
 
