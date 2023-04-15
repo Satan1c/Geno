@@ -5,7 +5,7 @@ using ShikimoriService;
 using ShikimoriSharp.Classes;
 
 namespace Geno.Commands;
-
+/*
 [Group("shikimori", "shikimori commands")]
 public class Shikimori : InteractionModuleBase<ShardedInteractionContext>
 {
@@ -51,4 +51,4 @@ public class Shikimori : InteractionModuleBase<ShardedInteractionContext>
 			return mangaRaw == null ? null : await m_shikimoriClient.GetManga(mangaRaw.Id);
 		}
 	}
-}
+}*/
