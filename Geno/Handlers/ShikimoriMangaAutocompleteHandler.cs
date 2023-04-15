@@ -32,7 +32,7 @@ public class ShikimoriMangaAutocompleteHandler : AutocompleteHandler
 			var locale = context.GetLocale();
 			var tasks = await Task.WhenAll(
 				search.Select(async x =>
-					(AnimeMangaIdBase)(await s_shikimoriClient.GetManga(x.Id))!).ToArray());
+					(AnimeMangaIdBase)(await s_shikimoriClient.GetManga(x.Id))!));
 
 			var results = tasks.FilterResultUnsafe(ref locale);
 			return AutocompletionResult.FromSuccess(results);
