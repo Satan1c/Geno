@@ -36,10 +36,10 @@ public class ClientEvents
 					text.Length + innerRaw.Length + 2,
 					(text, innerRaw), (span, source) =>
 					{
-						span[0] = ' ';
-						span[1] = '\n';
-						source.text.CopyTo(span[2..source.text.Length]);
-						source.innerRaw.CopyTo(span[(source.text.Length + 3)..]);
+						span[source.text.Length] = ' ';
+						span[source.text.Length + 1] = '\n';
+						source.text.CopyTo(span[..(source.text.Length - 1)]);
+						source.innerRaw.CopyTo(span[(source.text.Length + 2)..]);
 					});
 			}
 		}
