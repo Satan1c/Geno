@@ -55,7 +55,7 @@ public class DemotivatorGenerator : IDisposable
 
 		var upper = upperText?.Split('\n') ?? null;
 		var lower = lowerText?.Split('\n') ?? null;
-
+    
 		var upperPaint = TextData.GetPaint(TextData.GetTextSize(32, width, 4, m_cMaxSize));
 		var lowerPaint = TextData.GetPaint(TextData.GetTextSize(16, width, 3, m_cMaxSize));
 
@@ -73,7 +73,7 @@ public class DemotivatorGenerator : IDisposable
 
 		var heightAmplifier = .27f + .09f * textHeight;
 		var height = MathF.Round(sourceBitmap.Height * (1 + heightAmplifier), 0);
-		
+
 		m_canvasSize = new SKSize(width, height);
 		m_surface = m_canvasSize.CreateBlank();
 		m_canvas = m_surface.Canvas;

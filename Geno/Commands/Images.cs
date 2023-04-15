@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using DemotivatorService;
 using Discord;
 using Discord.Interactions;
@@ -54,6 +54,7 @@ public class Images : ModuleBase
 
         var closeAt = DateTimeOffset.UtcNow.AddMinutes(1);
 		var timeout = TimeSpan.FromMinutes(1);
+
 		while (DateTimeOffset.UtcNow < closeAt)
 		{
 			var interaction =
@@ -66,9 +67,10 @@ public class Images : ModuleBase
 				if (id == ids[0] || id != ids[1])
 				{
 					await buttonInteraction.DeferAsync();
-					
+
 					file = generator.GetResult();
 					await buttonInteraction.Respond(new EmbedBuilder().WithImageUrl("attachment://demotivator.png"), file, new ComponentBuilder(), false, true);
+
 					break;
 				}
 
@@ -81,11 +83,12 @@ public class Images : ModuleBase
 				if (id != "add_text") continue;
 
 				await modalInteraction.DeferAsync();
+
 				closeAt = DateTimeOffset.UtcNow.AddMinutes(1);
 				var comps = modalInteraction.Data.Components.ToArray();
 			}
 		}
-		
+
 		generator.Dispose();
 	}
 

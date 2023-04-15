@@ -22,7 +22,6 @@ public class Admin : ModuleBase
 		if (CommandHandlingService.Private.TryGetValue(category, out var modules))
 		{
 			await CommandHandlingService.Interactions.AddModulesToGuildAsync(guild, clear, modules);
-
 			await Respond(new EmbedBuilder().WithDescription("Registered"), ephemeral: true, isDefered: true);
 			return;
 		}
