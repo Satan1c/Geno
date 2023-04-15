@@ -11,7 +11,7 @@ using Geno.Utils.Types;
 namespace Geno.Commands;
 
 [Group("other", "other command group")]
-public class Other : InteractionModuleBase<ShardedInteractionContext>
+public class Other : ModuleBase
 {
 	private static string GetUptime(ref TimeSpan time)
 	{
@@ -35,7 +35,7 @@ public class Other : InteractionModuleBase<ShardedInteractionContext>
 	}
 
 	[Group("bot", "commands group about bot")]
-	public class BotCommands : InteractionModuleBase<ShardedInteractionContext>
+	public class BotCommands : ModuleBase
 	{
 		private readonly DiscordShardedClient m_client;
 
@@ -71,12 +71,12 @@ public class Other : InteractionModuleBase<ShardedInteractionContext>
 			foreach (var shard in Context.Client.Shards.ToArray())
 				embed.AddField($"`{shard.ShardId.ToString()}`:", $"`{shard.Latency.ToString()}`ms", true);
 
-			await Context.Respond(embed);
+			await Respond(embed);
 		}
 	}
 
 	[Group("fetch", "fetch commands sub group")]
-	public class FetchCommands : InteractionModuleBase<ShardedInteractionContext>
+	public class FetchCommands : ModuleBase
 	{
 		[SlashCommand("guild", "fetch guild information by invite")]
 		public async Task FetchGuild(string inviteCode)
@@ -99,7 +99,7 @@ public class Other : InteractionModuleBase<ShardedInteractionContext>
 			if (embed.Length < 1)
 				embed.WithDescription("Guild not found");
 
-			await Context.Respond(embed);
+			await Respond(embed);
 			await RespondAsync(embed: embed.Build(),
 				allowedMentions: AllowedMentions.None);
 		}

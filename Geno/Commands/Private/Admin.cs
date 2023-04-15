@@ -9,7 +9,7 @@ namespace Geno.Commands.Private;
 [Group("admin", "admin commands")]
 [Private(Category.Admin)]
 [RequireOwner]
-public class Admin : InteractionModuleBase<ShardedInteractionContext>
+public class Admin : ModuleBase
 {
 	[SlashCommand("reg_category", "slash categories registration")]
 	[RequireOwner]
@@ -23,11 +23,11 @@ public class Admin : InteractionModuleBase<ShardedInteractionContext>
 		{
 			await CommandHandlingService.Interactions.AddModulesToGuildAsync(guild, clear, modules);
 
-			await Context.Respond(new EmbedBuilder().WithDescription("Registered"), ephemeral: true, isDefered: true);
+			await Respond(new EmbedBuilder().WithDescription("Registered"), ephemeral: true, isDefered: true);
 			return;
 		}
 
-		await Context.Respond(new EmbedBuilder().WithDescription("Category not found"), ephemeral: true,
+		await Respond(new EmbedBuilder().WithDescription("Category not found"), ephemeral: true,
 			isDefered: true);
 	}
 }

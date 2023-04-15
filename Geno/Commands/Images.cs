@@ -1,4 +1,5 @@
-﻿using DemotivatorService;
+﻿using System.Diagnostics;
+using DemotivatorService;
 using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
@@ -11,7 +12,7 @@ using WaifuPicsApi.Enums;
 namespace Geno.Commands;
 
 [Group("img", "images group")]
-public class Images : InteractionModuleBase<ShardedInteractionContext>
+public class Images : ModuleBase
 {
 	private readonly DiscordShardedClient m_client;
 
@@ -29,24 +30,30 @@ public class Images : InteractionModuleBase<ShardedInteractionContext>
 		string? upperText = "Текст",
 		string? lowerText = "Текст")
 	{
+		await DeferAsync(true);
 		var url = attachment?.Url ??
 		          Context.Guild?.GetUser(Context.User.Id).GetDisplayAvatarUrl(ImageFormat.Png, 512) ??
 		          Context.User.GetAvatarUrl(ImageFormat.Png, 512);
+		var clock = Stopwatch.StartNew();
 		var generator = new DemotivatorGenerator(url, upperText, lowerText);
 		var file = generator.GetResult();
+		clock.Stop();
+		var end = clock.ElapsedMilliseconds;
+		await Log(new LogMessage(LogSeverity.Verbose, $"{nameof(Images)}.{nameof(Demotivator)}",
+			$"Generation elapsed time: {end.ToString()}ms"));
 		var ids = new[] { "finish", "add", "add_text" };
-		var closeAt = DateTimeOffset.UtcNow.AddMinutes(1);
-		var timeout = TimeSpan.FromMinutes(1);
 
-		//await DeferAsync(true);
-		await Context.Respond(new EmbedBuilder().WithImageUrl("attachment://demotivator.png"),
+		await Respond(new EmbedBuilder().WithImageUrl("attachment://demotivator.png"),
 			file,
 			new ComponentBuilder().AddRow(new ActionRowBuilder()
 				.WithButton("Finish", ids[0], ButtonStyle.Success)
 				.WithButton("Add text", ids[1])
 			),
+			true,
 			true);
 
+        var closeAt = DateTimeOffset.UtcNow.AddMinutes(1);
+		var timeout = TimeSpan.FromMinutes(1);
 		while (DateTimeOffset.UtcNow < closeAt)
 		{
 			var interaction =
@@ -59,6 +66,9 @@ public class Images : InteractionModuleBase<ShardedInteractionContext>
 				if (id == ids[0] || id != ids[1])
 				{
 					await buttonInteraction.DeferAsync();
+					
+					file = generator.GetResult();
+					await buttonInteraction.Respond(new EmbedBuilder().WithImageUrl("attachment://demotivator.png"), file, new ComponentBuilder(), false, true);
 					break;
 				}
 
@@ -70,20 +80,12 @@ public class Images : InteractionModuleBase<ShardedInteractionContext>
 				var id = modalInteraction.Data.CustomId;
 				if (id != "add_text") continue;
 
+				await modalInteraction.DeferAsync();
 				closeAt = DateTimeOffset.UtcNow.AddMinutes(1);
 				var comps = modalInteraction.Data.Components.ToArray();
 			}
 		}
-
-		var embed = new EmbedBuilder().WithImageUrl("attachment://demotivator.png");
-		file = generator.GetResult();
-		await Context.Respond(embed, file, new ComponentBuilder(), false, true);
-		/*await Context.Respond(
-			new EmbedBuilder().WithImageUrl("attachment://demotivator.png"),
-			generator.GetResult(),
-			new ComponentBuilder(),
-			isFolluwup: true);*/
-
+		
 		generator.Dispose();
 	}
 
@@ -94,10 +96,7 @@ public class Images : InteractionModuleBase<ShardedInteractionContext>
 		var img = await m_waifuClient.GetImageAsync(tag);
 		Console.WriteLine(img);
 
-		await RespondAsync(embed: new EmbedBuilder()
-				.WithImageUrl(img)
-				.Build(),
-			allowedMentions: AllowedMentions.None);
+		await Respond(embed: new EmbedBuilder().WithImageUrl(img));
 	}
 
 	[SlashCommand("sfw", "sfw images")]
@@ -110,8 +109,7 @@ public class Images : InteractionModuleBase<ShardedInteractionContext>
 			var ctf = GetCategoryFormat(category);
 			if (ctf == CategoryFormat.User && user == null)
 			{
-				await RespondAsync($"You must provide {nameof(user)} for this category");
-				return;
+				throw new ArgumentException($"You must provide {nameof(user)} for this category");
 			}
 
 			var embed = new EmbedBuilder();
@@ -127,11 +125,7 @@ public class Images : InteractionModuleBase<ShardedInteractionContext>
 
 			var img = await m_waifuClient.GetImageAsync(category);
 
-			await RespondAsync(embed: embed
-					.WithDescription(title)
-					.WithImageUrl(img)
-					.Build(),
-				allowedMentions: AllowedMentions.None);
+			await Respond(embed: embed.WithDescription(title).WithImageUrl(img));
 		}
 		catch (Exception e)
 		{

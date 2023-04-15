@@ -3,15 +3,15 @@ using Database;
 using Database.Models;
 using Discord;
 using Discord.Interactions;
-using Geno.Responsers.Success;
 using Geno.Utils.Extensions;
 using Geno.Utils.StaticData;
+using Geno.Utils.Types;
 
 namespace Geno.Commands;
 
 [Group("settings", "settings commands group")]
 [EnabledInDm(false)]
-public class Settings : InteractionModuleBase<ShardedInteractionContext>
+public class Settings : ModuleBase
 {
 	private static DatabaseProvider s_databaseProvider = null!;
 
@@ -40,7 +40,7 @@ public class Settings : InteractionModuleBase<ShardedInteractionContext>
 	}
 
 	[Group("genshin", "Genshin Impact functional settings")]
-	public class Genshin : InteractionModuleBase<ShardedInteractionContext>
+	public class Genshin : ModuleBase
 	{
 		[MessageCommand("Set rank-roles")]
 		[RequireUserPermission(GuildPermission.ManageRoles)]
@@ -62,7 +62,7 @@ public class Settings : InteractionModuleBase<ShardedInteractionContext>
 			}
 
 			await s_databaseProvider.SetConfig(cfg);
-			await RespondAsync("Done", ephemeral: true);
+			await Respond(new EmbedBuilder().WithDescription("Done"), ephemeral: true);
 		}
 
 		[SlashCommand("set_rank", "set rank for user")]
@@ -78,7 +78,7 @@ public class Settings : InteractionModuleBase<ShardedInteractionContext>
 			var config = await s_databaseProvider.GetConfig(Context.Guild.Id);
 
 			await member.UpdateRoles(rank, config);
-			await RespondAsync("Done", ephemeral: true);
+			await Respond(new EmbedBuilder().WithDescription("Done"), ephemeral: true);
 		}
 
 		[SlashCommand("get_ranks", "show current ranks config")]
@@ -87,15 +87,13 @@ public class Settings : InteractionModuleBase<ShardedInteractionContext>
 		{
 			var config = await s_databaseProvider.GetConfig(Context.Guild.Id);
 
-			await RespondAsync(
-				GetMessage(ref config),
-				ephemeral: true,
-				allowedMentions: AllowedMentions.None);
+			await Respond(new EmbedBuilder().WithDescription(GetMessage(ref config)),
+				ephemeral: true);
 		}
 	}
 
 	[Group("voice_rooms", "Voice rooms settings")]
-	public class VoiceRooms : InteractionModuleBase<ShardedInteractionContext>
+	public class VoiceRooms : ModuleBase
 	{
 		[SlashCommand("set_name",
 			"Voice room name template; {Count},{DisplayName},{Username},{UserTag},{ActivityName}")]
@@ -107,17 +105,13 @@ public class Settings : InteractionModuleBase<ShardedInteractionContext>
 			string name = "Default - Party #{Count}")
 		{
 			if (await channel.GetCategoryAsync() is null)
-			{
-				await Context.Respond(new EmbedBuilder().WithDescription("Voice channel must have a category"),
-					ephemeral: true);
-				return;
-			}
+				throw new Exception("Voice channel must have a category");
 
 			var config = await s_databaseProvider.GetConfig(Context.Guild.Id);
 			config.VoicesNames[channel.Id.ToString()] = name;
 
 			await s_databaseProvider.SetConfig(config);
-			await Context.Respond(new EmbedBuilder().WithDescription("Done"), ephemeral: true);
+			await Respond(new EmbedBuilder().WithDescription("Done"), ephemeral: true);
 		}
 
 		[SlashCommand("add_creator", "Add creator of voice room")]
@@ -136,8 +130,7 @@ public class Settings : InteractionModuleBase<ShardedInteractionContext>
 			config.VoicesNames[channel.Id.ToString()] = name;
 
 			await s_databaseProvider.SetConfig(config);
-			await RespondAsync("Done",
-				allowedMentions: AllowedMentions.None,
+			await Respond(new EmbedBuilder().WithDescription("Done"),
 				ephemeral: true);
 		}
 
@@ -147,20 +140,14 @@ public class Settings : InteractionModuleBase<ShardedInteractionContext>
 			[Summary("", "")] IVoiceChannel channel)
 		{
 			if (await channel.GetCategoryAsync() is null)
-			{
-				await RespondAsync("Voice channel must have a category",
-					allowedMentions: AllowedMentions.None,
-					ephemeral: true);
-				return;
-			}
+				throw new Exception("Voice channel must have a category");
 
 			var config = await s_databaseProvider.GetConfig(Context.Guild.Id);
 			config.Channels.Remove(channel.Id.ToString());
 			config.VoicesNames.Remove(channel.Id.ToString());
 
 			await s_databaseProvider.SetConfig(config);
-			await RespondAsync("Done",
-				allowedMentions: AllowedMentions.None,
+			await Respond(new EmbedBuilder().WithDescription("Done"),
 				ephemeral: true);
 		}
 
@@ -170,19 +157,13 @@ public class Settings : InteractionModuleBase<ShardedInteractionContext>
 		{
 			var config = await s_databaseProvider.GetConfig(Context.Guild.Id);
 			if (config.Channels.Count < 1)
-			{
-				await RespondAsync("None",
-					allowedMentions: AllowedMentions.None,
-					ephemeral: true);
-				return;
-			}
+				throw new Exception("No creators was found");
 
 			var txt = new StringBuilder();
 			foreach (var (k, _) in config.Channels)
 				txt.Append($"<#{k}>\n");
 
-			await RespondAsync(txt.ToString(),
-				allowedMentions: AllowedMentions.None,
+			await Respond(new EmbedBuilder().WithDescription(txt.ToString()),
 				ephemeral: true);
 		}
 	}

@@ -15,7 +15,7 @@ public static class Responser
 		GenshinResponse.Init(localizationManager);
 	}
 
-	public static ValueTask Respond(this IInteractionContext context,
+	public static ValueTask Respond(this IDiscordInteraction interaction,
 		EmbedBuilder embed,
 		FileAttachment? attachment = null,
 		ComponentBuilder? components = null,
@@ -23,7 +23,7 @@ public static class Responser
 		bool isDefered = false,
 		bool isFolluwup = false)
 	{
-		return context.Respond(embed.WithColor(embed.Color ?? new Color(43, 45, 49)).Build(),
+		return interaction.Respond(embed.WithColor(embed.Color ?? new Color(43, 45, 49)).Build(),
 			ephemeral,
 			isDefered,
 			isFolluwup,
@@ -32,7 +32,7 @@ public static class Responser
 			attachment);
 	}
 
-	public static ValueTask Respond(this IInteractionContext context,
+	public static ValueTask Respond(this IDiscordInteraction interaction,
 		EmbedBuilder[] embeds,
 		FileAttachment[]? attachments = null,
 		ComponentBuilder? components = null,
@@ -53,11 +53,11 @@ public static class Responser
 			resStart = ref Unsafe.Add(ref resStart, 1);
 		}
 
-		return context.Respond(null, ephemeral, isDefered, isFolluwup, res, components?.Build(),
+		return interaction.Respond(null, ephemeral, isDefered, isFolluwup, res, components?.Build(),
 			attachments: attachments);
 	}
 
-	private static async ValueTask Respond(this IInteractionContext context,
+	private static async ValueTask Respond(this IDiscordInteraction interaction,
 		Embed? embed = null,
 		bool ephemeral = false,
 		bool isDefered = false,
@@ -71,7 +71,7 @@ public static class Responser
 		{
 			if (attachments is { Length: > 0 })
 			{
-				await context.Interaction.FollowupWithFilesAsync(
+				await interaction.FollowupWithFilesAsync(
 						attachments,
 						embed: embed,
 						embeds: embeds,
@@ -84,7 +84,7 @@ public static class Responser
 
 			if (attachment is { })
 			{
-				await context.Interaction.FollowupWithFileAsync(
+				await interaction.FollowupWithFileAsync(
 						attachment.Value,
 						embed: embed,
 						embeds: embeds,
@@ -98,7 +98,7 @@ public static class Responser
 
 		if (isDefered)
 		{
-			await context.Interaction.ModifyOriginalResponseAsync(x =>
+			await interaction.ModifyOriginalResponseAsync(x =>
 				{
 					var flags = x.Flags.GetValueOrDefault() ?? MessageFlags.None;
 					x.Embed = embed;
@@ -117,7 +117,7 @@ public static class Responser
 		{
 			if (attachments is { Length: > 0 })
 			{
-				await context.Interaction.RespondWithFilesAsync(
+				await interaction.RespondWithFilesAsync(
 						attachments,
 						embed: embed,
 						embeds: embeds,
@@ -130,7 +130,7 @@ public static class Responser
 
 			if (attachment is { })
 			{
-				await context.Interaction.RespondWithFileAsync(
+				await interaction.RespondWithFileAsync(
 						attachment.Value,
 						embed: embed,
 						embeds: embeds,
@@ -141,7 +141,7 @@ public static class Responser
 				return;
 			}
 
-			await context.Interaction.RespondAsync(
+			await interaction.RespondAsync(
 				embed: embed,
 				embeds: embeds,
 				allowedMentions: AllowedMentions.None,
@@ -151,7 +151,7 @@ public static class Responser
 		}
 		catch (InvalidOperationException _)
 		{
-			await context.Respond(embed, ephemeral, true, isFolluwup, embeds, components, attachment, attachments)
+			await interaction.Respond(embed, ephemeral, true, isFolluwup, embeds, components, attachment, attachments)
 				.ConfigureAwait(false);
 		}
 	}
