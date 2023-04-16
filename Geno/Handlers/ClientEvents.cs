@@ -24,25 +24,11 @@ public class ClientEvents
 
 	public static Task OnLog(LogMessage message)
 	{
-		var text = "";
-
-		if (message.Exception is { StackTrace: { } })
-		{
-			text = message.Exception.StackTrace.Replace("\n", "\n\t\t\t");
-			if (message.Exception is { InnerException.StackTrace: { } })
-			{
-				var innerRaw = message.Exception.InnerException.StackTrace.Replace("\n", "\n\t\t\t");
-				text = string.Create(
-					text.Length + innerRaw.Length + 2,
-					(text, innerRaw), (span, source) =>
-					{
-						span[source.text.Length] = ' ';
-						span[source.text.Length + 1] = '\n';
-						source.text.CopyTo(span[..(source.text.Length - 1)]);
-						source.innerRaw.CopyTo(span[(source.text.Length + 2)..]);
-					});
-			}
-		}
+		var trace = message.Exception?.StackTrace?.Replace("\n", "\n\t\t\t");
+		trace = trace is null ? "" : trace + '\n';
+		var inner = message.Exception?.InnerException?.StackTrace?.Replace("\n", "\n\t\t\t");
+		
+		var text = $"{trace}{inner ?? ""}";
 
 		s_logger?.Write(
 			SeverityToLevel(message.Severity),
