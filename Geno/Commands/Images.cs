@@ -30,17 +30,20 @@ public class Images : ModuleBase
 		string? upperText = "Текст",
 		string? lowerText = "Текст")
 	{
-		await DeferAsync(true);
 		var url = attachment?.Url ??
 		          Context.Guild?.GetUser(Context.User.Id).GetDisplayAvatarUrl(ImageFormat.Png, 512) ??
 		          Context.User.GetAvatarUrl(ImageFormat.Png, 512);
+		
 		var clock = Stopwatch.StartNew();
+		
 		var generator = new DemotivatorGenerator(url, upperText, lowerText);
 		var file = generator.GetResult();
+		
 		clock.Stop();
-		var end = clock.ElapsedMilliseconds;
 		await Log(new LogMessage(LogSeverity.Verbose, $"{nameof(Images)}.{nameof(Demotivator)}",
-			$"Generation elapsed time: {end.ToString()}ms"));
+			$"Generation elapsed time: {clock.ElapsedMilliseconds.ToString()}ms"));
+		clock.Reset();
+		
 		var ids = new[] { "finish", "add", "add_text" };
 
 		await Respond(new EmbedBuilder().WithImageUrl("attachment://demotivator.png"),
