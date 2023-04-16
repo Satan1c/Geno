@@ -126,7 +126,14 @@ public class CommandHandlingService
 
 	private async Task OnInteractionCreated(SocketInteraction arg)
 	{
-		var ctx = new ShardedInteractionContext(m_client, arg);
-		await Interactions.ExecuteCommandAsync(ctx, m_services).ConfigureAwait(false);
+		try
+		{
+			var ctx = new ShardedInteractionContext(m_client, arg);
+			await Interactions.ExecuteCommandAsync(ctx, m_services).ConfigureAwait(false);
+		}
+		catch (Exception e)
+		{
+			await ClientEvents.OnLog(new LogMessage(LogSeverity.Error, nameof(OnInteractionCreated), e.Message));
+		}
 	}
 }
