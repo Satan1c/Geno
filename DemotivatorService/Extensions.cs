@@ -1,9 +1,123 @@
-﻿using SkiaSharp;
+﻿using System.Diagnostics;
+using System.Text;
+using SkiaSharp;
 
 namespace DemotivatorService;
 
 public static class Extensions
 {
+	internal const int MaxSize = 512;
+	internal const int MinSize = 200;
+	internal const int UpperSize = 40;
+	internal const int LowerSize = 20;
+	internal const float BorderThickness = 4.2f;
+
+	internal static readonly SKFont Arial = new(SKTypeface.FromFamilyName("Arial"), UpperSize);
+	internal static readonly SKFont Times = new(SKTypeface.FromFamilyName("Times New Roman"), LowerSize);
+
+	internal static readonly SKPaint UpperPaint = new()
+	{
+		Color = SKColors.White,
+		TextSize = UpperSize,
+		TextAlign = SKTextAlign.Center,
+		IsAntialias = true
+	};
+	internal static readonly SKPaint LowerPaint = new()
+	{
+		Color = SKColors.White,
+		TextSize = LowerSize,
+		TextAlign = SKTextAlign.Center,
+		IsAntialias = true
+	};
+	internal static readonly SKPaint BorderPaint = new()
+	{
+		Color = SKColors.White, StrokeWidth = BorderThickness, IsAntialias = true, Style = SKPaintStyle.Stroke
+	};
+	
+	internal static void AddText(this SKCanvas canvas, ref SKSize canvasSize, ref TextData upperTextData, ref TextData lowerTextData, string[]? upperText = null, string[]? lowerText = null)
+	{
+		var clock = Stopwatch.StartNew();
+		
+		if (upperText != null) canvas.DrawText(Times, ref canvasSize, ref upperTextData, upperText);
+		if (lowerText != null) canvas.DrawText(Arial, ref canvasSize, ref lowerTextData, lowerText);
+		
+		clock.Stop();
+		Console.WriteLine($"AddText time: {clock.ElapsedMilliseconds}");
+		clock.Reset();
+	}
+
+	internal static void AddBorder(this SKCanvas canvas, ref SKRect imageRect)
+	{
+		var clock = Stopwatch.StartNew();
+		
+		var borderRect = SKRect.Create(imageRect.Location, imageRect.Size);
+		canvas.DrawRect(borderRect, BorderPaint);
+		
+		clock.Stop();
+		Console.WriteLine($"AddBorder time: {clock.ElapsedMilliseconds}");
+		clock.Reset();
+	}
+
+	internal static void DrawText(this SKCanvas canvas, SKFont font, ref SKSize canvasSize, ref TextData data, string[] text)
+	{
+		var clock = Stopwatch.StartNew();
+		
+		var y = data.TextY;
+		var x = data.TextX;
+		var paint = data.Paint;
+		var lineHeight = paint.FontSpacing;
+		var maxWidth = canvasSize.Width * .87f;
+
+		foreach (var line in text)
+		{
+			var words = line.Split(' ');
+			var currentLine = new StringBuilder();
+			foreach (var word in words)
+			{
+				var current = currentLine.ToString();
+				var width = paint.MeasureText(current + ' ' + word);
+				if (width > maxWidth)
+				{
+					canvas.DrawText(current, x, y, paint);
+					y += lineHeight;
+					currentLine.Clear();
+				}
+
+				currentLine.Append(word).Append(' ');
+			}
+
+			canvas.DrawText(currentLine.ToString(), x, y, font, paint);
+			y += lineHeight;
+		}
+		
+		clock.Stop();
+		Console.WriteLine($"DrawText time: {clock.ElapsedMilliseconds}");
+		clock.Reset();
+	}
+	
+	internal static string[] WrapText(string text, SKPaint paint, float width)
+	{
+		var lines = new LinkedList<string>();
+		if (string.IsNullOrWhiteSpace(text)) return lines.ToArray();
+
+		var words = text.Split(' ');
+		var currentLine = new StringBuilder();
+		foreach (var word in words)
+		{
+			var current = currentLine.ToString();
+			if (currentLine.Length > 0 && paint.MeasureText(current + ' ' + word) > width)
+			{
+				lines.AddLast(current);
+				currentLine.Clear();
+			}
+
+			currentLine.Append(word).Append(' ');
+		}
+
+		lines.AddLast(currentLine.ToString());
+		return lines.ToArray();
+	}
+	
 	public static SKBitmap ResizeImage(this SKBitmap sourceBitmap, int maxSize, int minSize)
 	{
 		var (width, height) = (sourceBitmap.Width, sourceBitmap.Height);
@@ -39,18 +153,30 @@ public static class Extensions
 
 	public static SKRect AddImage(this SKCanvas canvas, SKBitmap sourceBitmap)
 	{
+		var clock = Stopwatch.StartNew();
+		
 		var imageRect = SKRect.Create(sourceBitmap.Width * 0.15f, sourceBitmap.Height * 0.07f, sourceBitmap.Width,
 			sourceBitmap.Height);
 		canvas.DrawBitmap(sourceBitmap, imageRect);
 
+		clock.Stop();
+		Console.WriteLine($"AddImage time: {clock.ElapsedMilliseconds}");
+		clock.Reset();
+		
 		return imageRect;
 	}
 
 	public static SKSurface CreateBlank(this SKSize canvasSize)
 	{
+		var clock = Stopwatch.StartNew();
+		
 		var surface = SKSurface.Create(new SKImageInfo((int)canvasSize.Width, (int)canvasSize.Height));
 		var canvas = surface.Canvas;
 		canvas.Clear(SKColors.Black);
+		
+		clock.Stop();
+		Console.WriteLine($"CreateBlank time: {clock.ElapsedMilliseconds}");
+		clock.Reset();
 
 		return surface;
 	}
