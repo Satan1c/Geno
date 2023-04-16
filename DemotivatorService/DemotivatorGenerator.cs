@@ -79,7 +79,7 @@ public class DemotivatorGenerator : IDisposable
 
 		var heightPosition = sourceBitmap.Height * 1.105f;
 		var upperPosition = heightPosition / height;
-		var lowerPosition = (heightPosition + 32 * (upper?.Length ?? 1) * 1.3f) / height;
+		var lowerPosition = (heightPosition + UpperSize * (upper?.Length ?? 1) * 1.105f) / height;
 		
 		m_upperTextData = new TextData(UpperPaint, upperPosition, m_canvasSize);
 		m_lowerTextData = new TextData(LowerPaint, lowerPosition, m_canvasSize);

@@ -9,7 +9,7 @@ public static class Extensions
 	internal const int MaxSize = 512;
 	internal const int MinSize = 200;
 	internal const int UpperSize = 42;
-	internal const int LowerSize = 21;
+	internal const int LowerSize = 23;
 	internal const float BorderThickness = 4.2f;
 
 	internal static readonly SKFont Arial = new(SKTypeface.FromFamilyName("Arial"), LowerSize);
