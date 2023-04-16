@@ -3,6 +3,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Discord;
 using Discord.Interactions;
+using Geno.Handlers;
 using Geno.Utils.Extensions;
 using Localization;
 
@@ -36,7 +37,7 @@ public static class ErrorResolver
 
 	public static EmbedBuilder Resolve(IResult result, ICommandInfo command, IInteractionContext ctx)
 	{
-		//ClientEvents.OnLog(new LogMessage(LogSeverity.Error, command.MethodName, result.ErrorReason));
+		ClientEvents.OnLog(new LogMessage(LogSeverity.Error, command.MethodName, result.ErrorReason));
 		var name = command?.Module?.GetTopLevelModule()?.Name ?? "unknown";
 		var embed = new EmbedBuilder().WithColor(Color.Red);
 
