@@ -18,21 +18,10 @@ public class DemotivatorGenerator : IDisposable
 
 	public DemotivatorGenerator(string url, string? upperText = null, string? lowerText = null)
 	{
-		var clock = Stopwatch.StartNew();
-		
 		var stream = new HttpClient().GetAsync(url).GetAwaiter().GetResult().Content.ReadAsStream();
-		
-		clock.Stop();
-		Console.WriteLine($"Image download: {clock.ElapsedMilliseconds}");
-		
-		clock.Restart();
-		
+
 		var sourceBitmap = SKBitmap.Decode(stream);
 		Draw(sourceBitmap, upperText, lowerText);
-		
-		clock.Stop();
-		Console.WriteLine($"Constructor draw: {clock.ElapsedMilliseconds}");
-		clock.Reset();
 		
 		stream.Close();
 		stream.Dispose();
@@ -49,16 +38,8 @@ public class DemotivatorGenerator : IDisposable
 
 	public FileAttachment GetResult()
 	{
-		var clock = Stopwatch.StartNew();
-		
 		var file = m_surface.Snapshot().Encode(SKEncodedImageFormat.Png, 100).AsStream();
-		var attach = new FileAttachment(file, "demotivator.png");
-		
-		clock.Stop();
-		Console.WriteLine($"Result draw: {clock.ElapsedMilliseconds}");
-		clock.Reset();
-		
-		return attach;
+		return new FileAttachment(file, "demotivator.png");
 	}
 
 	public FileAttachment OverDraw(string? upperText = null, string? lowerText = null)
@@ -69,8 +50,6 @@ public class DemotivatorGenerator : IDisposable
 
 	private void Draw(SKBitmap sourceBitmap, string? upperText = null, string? lowerText = null)
 	{
-		var clock = Stopwatch.StartNew();
-		
 		sourceBitmap = sourceBitmap.ResizeImage(MaxSize, MinSize);
 		var width = MathF.Round(sourceBitmap.Width * 1.3f, 0);
 		var textHeight = 0;
@@ -100,16 +79,12 @@ public class DemotivatorGenerator : IDisposable
 
 		var heightPosition = sourceBitmap.Height * 1.105f;
 		var upperPosition = heightPosition / height;
-		var lowerPosition = (heightPosition + UpperSize * (upper?.Length ?? 1) * 1.3f) / height;
+		var lowerPosition = (heightPosition + UpperSize * (upper?.Length ?? 1) * 1.105f) / height;
 		
 		m_upperTextData = new TextData(UpperPaint, upperPosition, m_canvasSize);
 		m_lowerTextData = new TextData(LowerPaint, lowerPosition, m_canvasSize);
 
 		m_canvas.AddBorder(ref m_imageRect);
 		m_canvas.AddText(ref m_canvasSize, ref m_upperTextData, ref m_lowerTextData, upper, lower);
-		
-		clock.Stop();
-		Console.WriteLine($"Draw time: {clock.ElapsedMilliseconds}");
-		clock.Reset();
 	}
 }
