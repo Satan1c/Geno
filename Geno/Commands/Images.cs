@@ -35,16 +35,8 @@ public class Images : ModuleBase
         		          Context.Guild?.GetUser(Context.User.Id).GetDisplayAvatarUrl(ImageFormat.Png, 512) ??
         		          Context.User.GetAvatarUrl(ImageFormat.Png, 512);
         		
-        		var clock = Stopwatch.StartNew();
-        		
         		var generator = new DemotivatorGenerator(url, upperText, lowerText);
         		var file = generator.GetResult();
-        		
-        		clock.Stop();
-        		await Log(new LogMessage(LogSeverity.Verbose, $"{nameof(Images)}.{nameof(Demotivator)}",
-        			$"Generation elapsed time: {clock.ElapsedMilliseconds.ToString()}ms"));
-        		clock.Reset();
-        		
         		var ids = new[] { "finish", "add", "add_text" };
         
         		await Respond(new EmbedBuilder().WithImageUrl("attachment://demotivator.png"),
@@ -53,7 +45,6 @@ public class Images : ModuleBase
         				.WithButton("Finish", ids[0], ButtonStyle.Success)
         				.WithButton("Add text", ids[1])
         			),
-        			true,
         			true);
         
                 var closeAt = DateTimeOffset.UtcNow.AddMinutes(1);
