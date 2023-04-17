@@ -1,7 +1,6 @@
 ﻿using Discord;
 using Discord.Interactions;
 using Geno.Handlers;
-using Geno.Responsers.Success;
 using Geno.Utils.Types;
 
 namespace Geno.Commands.Private;

@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using Discord;
+﻿using Discord;
 using SkiaSharp;
 using static DemotivatorService.Extensions;
 
@@ -7,8 +6,8 @@ namespace DemotivatorService;
 
 public class DemotivatorGenerator : IDisposable
 {
-	private SKCanvas m_canvas = null!;
-	private SKSurface m_surface = null!;
+	private SKCanvas? m_canvas;
+	private SKSurface? m_surface;
 	
 	private SKSize m_canvasSize;
 	private SKRect m_imageRect;
@@ -29,33 +28,34 @@ public class DemotivatorGenerator : IDisposable
 
 	public virtual void Dispose()
 	{
-		m_surface.Dispose();
-		m_canvas.Dispose();
-		GC.SuppressFinalize(m_surface);
-		GC.SuppressFinalize(m_canvas);
-		GC.SuppressFinalize(this);
+		m_surface?.Dispose();
+		m_canvas?.Dispose();
+		m_surface = null;
+		m_canvas = null;
 	}
 
 	public FileAttachment GetResult()
 	{
-		var file = m_surface.Snapshot().Encode(SKEncodedImageFormat.Png, 100).AsStream();
+		var file = m_surface!.Snapshot().Encode(SKEncodedImageFormat.Png, 100).AsStream();
 		return new FileAttachment(file, "demotivator.png");
 	}
 
 	public FileAttachment OverDraw(string? upperText = null, string? lowerText = null)
 	{
-		Draw(SKBitmap.FromImage(m_surface.Snapshot()), upperText, lowerText);
+		Draw(SKBitmap.FromImage(m_surface!.Snapshot()), upperText, lowerText);
 		return GetResult();
 	}
 
 	private void Draw(SKBitmap sourceBitmap, string? upperText = null, string? lowerText = null)
 	{
+		upperText = upperText?.Trim();
+		lowerText = lowerText?.Trim();
 		sourceBitmap = sourceBitmap.ResizeImage(MaxSize, MinSize);
 		var width = MathF.Round(sourceBitmap.Width * 1.3f, 0);
 		var textHeight = 0;
 
-		var upper = upperText?.Split('\n') ?? null;
-		var lower = lowerText?.Split('\n') ?? null;
+		string[]? upper = null;
+		string[]? lower = null;
     
 		if (upperText != null)
 		{
