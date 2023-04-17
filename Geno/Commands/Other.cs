@@ -4,7 +4,6 @@ using Discord;
 using Discord.Interactions;
 using Discord.Rest;
 using Discord.WebSocket;
-using Geno.Responsers.Success;
 using Geno.Utils.Extensions;
 using Geno.Utils.Types;
 

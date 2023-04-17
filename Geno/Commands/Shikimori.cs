@@ -1,10 +1,4 @@
-﻿using Discord.Interactions;
-using Geno.Handlers;
-using Geno.Responsers.Success.Modules;
-using ShikimoriService;
-using ShikimoriSharp.Classes;
-
-namespace Geno.Commands;
+﻿namespace Geno.Commands;
 /*
 [Group("shikimori", "shikimori commands")]
 public class Shikimori : InteractionModuleBase<ShardedInteractionContext>

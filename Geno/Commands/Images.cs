@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using DemotivatorService;
 using Discord;
 using Discord.Interactions;
@@ -30,64 +29,66 @@ public class Images : ModuleBase
 		string? upperText = null,
 		string? lowerText = null)
 	{
-		try{
-			var url = attachment?.Url ??
-			          Context.Guild?.GetUser(Context.User.Id).GetDisplayAvatarUrl(ImageFormat.Png, 512) ??
-			          Context.User.GetAvatarUrl(ImageFormat.Png, 512);
-        		
-			var generator = new DemotivatorGenerator(url, upperText, lowerText);
-			var file = generator.GetResult();
-			var ids = new[] { "finish", "add", "add_text" };
-        
-			await Respond(new EmbedBuilder().WithImageUrl("attachment://demotivator.png"),
-				file,
-				new ComponentBuilder().AddRow(new ActionRowBuilder()
-					.WithButton("Finish", ids[0], ButtonStyle.Success)
-					.WithButton("Add text", ids[1])
-				),
-				true);
-        
-			var closeAt = DateTimeOffset.UtcNow.AddMinutes(1);
-			var timeout = TimeSpan.FromMinutes(1);
-        
-			while (DateTimeOffset.UtcNow < closeAt)
+		var closeAt = DateTimeOffset.UtcNow.AddMinutes(1);
+		var timeout = TimeSpan.FromMinutes(1);
+		var ids = new[] {"finish", "add", "add_text"};
+		IDiscordInteraction interaction = Context.Interaction;
+
+		var url = attachment?.Url ??
+		          Context.Guild?.GetUser(Context.User.Id).GetDisplayAvatarUrl(ImageFormat.Png, 512) ??
+		          Context.User.GetAvatarUrl(ImageFormat.Png, 512);
+
+		var generator = new DemotivatorGenerator(url, upperText, lowerText);
+		var file = generator.GetResult();
+
+		await Respond(new EmbedBuilder().WithImageUrl("attachment://demotivator.png"),
+			file,
+			new ComponentBuilder().AddRow(new ActionRowBuilder()
+				.WithButton("Finish", ids[0], ButtonStyle.Success)
+				.WithButton("Add text", ids[1])
+			),
+			true);
+
+		while (DateTimeOffset.UtcNow < closeAt)
+		{
+			interaction =
+				await InteractionUtility.WaitForInteractionAsync(m_client, timeout,
+					inter => inter is IComponentInteraction or IModalInteraction);
+
+			if (interaction is IComponentInteraction buttonInteraction)
 			{
-				var interaction =
-					await InteractionUtility.WaitForInteractionAsync(m_client, timeout,
-						interaction => interaction is IComponentInteraction or IModalInteraction);
-        
-				if (interaction is IComponentInteraction buttonInteraction)
+				var id = buttonInteraction.Data.CustomId;
+				if (id == ids[0] || id != ids[1])
 				{
-					var id = buttonInteraction.Data.CustomId;
-					if (id == ids[0] || id != ids[1])
-					{
-						await buttonInteraction.DeferAsync();
-        
-						file = generator.GetResult();
-						await buttonInteraction.Respond(new EmbedBuilder().WithImageUrl("attachment://demotivator.png"), file, new ComponentBuilder(), false, true);
-        
-						break;
-					}
-        
-					closeAt = DateTimeOffset.UtcNow.AddMinutes(1);
-					await interaction.RespondWithModalAsync<DemotivatorTextModal>(ids[2]);
+					await buttonInteraction.DeferAsync();
+
+					file = generator.GetResult();
+					break;
 				}
-				else if (interaction is IModalInteraction modalInteraction)
-				{
-					var id = modalInteraction.Data.CustomId;
-					if (id != "add_text") continue;
-        
-					await modalInteraction.DeferAsync();
-        
-					closeAt = DateTimeOffset.UtcNow.AddMinutes(1);
-					var comps = modalInteraction.Data.Components.ToArray();
-				}
+
+				closeAt = DateTimeOffset.UtcNow.AddMinutes(1);
+				await interaction.RespondWithModalAsync<DemotivatorTextModal>(ids[2]);
 			}
-        
-			generator.Dispose();
-		}catch(Exception e){
-			await Log(new LogMessage(LogSeverity.Error, nameof(Demotivator), e.Message, e));
+			else if (interaction is IModalInteraction modalInteraction)
+			{
+				var id = modalInteraction.Data.CustomId;
+				if (id != "add_text") continue;
+
+				await modalInteraction.DeferAsync();
+
+				closeAt = DateTimeOffset.UtcNow.AddMinutes(1);
+				var comps = modalInteraction.Data.Components.ToArray();
+			}
 		}
+
+		await interaction.Respond(
+			new EmbedBuilder().WithImageUrl("attachment://demotivator.png"),
+			file,
+			new ComponentBuilder(),
+			false,
+			true);
+		
+		generator.Dispose();
 	}
 
 	[SlashCommand("nsfw", "nsfw images")]

@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using System.Text;
+﻿using System.Text;
 using SkiaSharp;
 
 namespace DemotivatorService;
@@ -80,7 +79,7 @@ public static class Extensions
 	internal static string[] WrapText(string text, SKPaint paint, float width)
 	{
 		var lines = new LinkedList<string>();
-		if (string.IsNullOrWhiteSpace(text)) return lines.ToArray();
+		if (string.IsNullOrEmpty(text)) return lines.ToArray();
 
 		var words = text.Split(' ');
 		var currentLine = new StringBuilder();
