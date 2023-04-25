@@ -1,4 +1,5 @@
-﻿using Database;
+﻿using System.Text;
+using Database;
 using Database.Models;
 using Discord;
 using Discord.Interactions;
@@ -41,14 +42,18 @@ public class Genshin : InteractionModuleBase<ShardedInteractionContext>
 
 		CreateLinks(codes, out var links);
 		var components = new ComponentBuilder();
+		var description = new StringBuilder("Кодеки:\n");
 
 		for (byte i = 0; i < links.Length; i++)
+		{
+			description.AppendFormat("[{0}]({1})\n", codes[i], links[i]);
 			components.AddRow(new ActionRowBuilder()
 				.WithButton(codes[i], style: ButtonStyle.Link, url: links[i]));
+		}
 
 		await ModifyOriginalResponseAsync(x =>
 		{
-			x.Embed = new EmbedBuilder().WithDescription("Кодеки:").Build();
+			x.Embed = new EmbedBuilder().WithDescription(description.ToString()).Build();
 			x.Components = components.Build();
 		});
 	}

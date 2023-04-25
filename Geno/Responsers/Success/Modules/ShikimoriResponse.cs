@@ -10,9 +10,9 @@ namespace Geno.Responsers.Success.Modules;
 
 public static class ShikimoriResponse
 {
+	private const string c_baseUrl = "https://shikimori.me/";
 	private static Category s_category;
 
-	private const string c_baseUrl = "https://shikimori.me/";
 	private static readonly Regex s_characterRegex =
 		new(@"\[(?:character=\w+|\/character)\]", RegexOptions.Compiled | RegexOptions.Singleline);
 
@@ -24,14 +24,16 @@ public static class ShikimoriResponse
 	public static ValueTask SearchResult(this ShardedInteractionContext context, MangaID? manga = null)
 	{
 		return manga == null
-			? context.Interaction.Respond(new EmbedBuilder().WithTitle("Nothing found"), ephemeral: true, isDefered: true)
+			? context.Interaction.Respond(new EmbedBuilder().WithTitle("Nothing found"), ephemeral: true,
+				isDefered: true)
 			: context.Interaction.Respond(manga.GetMangaEmbed(), ephemeral: false, isDefered: true);
 	}
 
 	public static ValueTask SearchResult(this ShardedInteractionContext context, AnimeID? anime = null)
 	{
 		return anime == null
-			? context.Interaction.Respond(new EmbedBuilder().WithTitle("Nothing found"), ephemeral: true, isDefered: true)
+			? context.Interaction.Respond(new EmbedBuilder().WithTitle("Nothing found"), ephemeral: true,
+				isDefered: true)
 			: context.Interaction.Respond(anime.GetAnimeEmbed(), ephemeral: false, isDefered: true);
 	}
 

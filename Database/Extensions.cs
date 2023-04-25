@@ -25,7 +25,7 @@ public static class Extensions
 		cacheManager.Put(itemId, item[0]);
 		return await collection.HasDocument(cacheManager, filterDefinition, itemId).ConfigureAwait(false);
 	}*/
-	
+
 	public static async ValueTask<bool> HasDocument<TDocument>(this IMongoCollection<TDocument> collection,
 		ICacheManager<TDocument> cacheManager,
 		FilterDefinition<TDocument> filterDefinition,

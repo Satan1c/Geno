@@ -7,12 +7,12 @@ namespace DemotivatorService;
 public class DemotivatorGenerator : IDisposable
 {
 	private SKCanvas? m_canvas;
-	private SKSurface? m_surface;
-	
+
 	private SKSize m_canvasSize;
 	private SKRect m_imageRect;
-	
+
 	private TextData m_lowerTextData;
+	private SKSurface? m_surface;
 	private TextData m_upperTextData;
 
 	public DemotivatorGenerator(string url, string? upperText = null, string? lowerText = null)
@@ -21,7 +21,7 @@ public class DemotivatorGenerator : IDisposable
 
 		var sourceBitmap = SKBitmap.Decode(stream);
 		Draw(sourceBitmap, upperText, lowerText);
-		
+
 		stream.Close();
 		stream.Dispose();
 	}
@@ -56,7 +56,7 @@ public class DemotivatorGenerator : IDisposable
 
 		string[]? upper = null;
 		string[]? lower = null;
-    
+
 		if (upperText != null)
 		{
 			upper = WrapText(upperText, UpperPaint, width * .87f);
@@ -80,7 +80,7 @@ public class DemotivatorGenerator : IDisposable
 		var heightPosition = sourceBitmap.Height * 1.105f;
 		var upperPosition = heightPosition / height;
 		var lowerPosition = (heightPosition + UpperSize * (upper?.Length ?? 1) * 1.105f) / height;
-		
+
 		m_upperTextData = new TextData(UpperPaint, upperPosition, m_canvasSize);
 		m_lowerTextData = new TextData(LowerPaint, lowerPosition, m_canvasSize);
 

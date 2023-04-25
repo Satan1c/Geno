@@ -1,9 +1,7 @@
-using DemotivatorService;
 using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
 using Geno.Handlers;
-using Geno.Responsers.Success;
 using Geno.Utils.Types;
 using WaifuPicsApi;
 using WaifuPicsApi.Enums;
@@ -24,14 +22,14 @@ public class Images : ModuleBase
 		m_waifuClient = waifuClient;
 	}
 
-	[SlashCommand("demotivator", "generate demotivator")]
+	/*[SlashCommand("demotivator", "generate demotivator")]
 	public async Task Demotivator(IAttachment? attachment = null,
 		string? upperText = null,
 		string? lowerText = null)
 	{
 		var closeAt = DateTimeOffset.UtcNow.AddMinutes(1);
 		var timeout = TimeSpan.FromMinutes(1);
-		var ids = new[] {"finish", "add", "add_text"};
+		var ids = new[] { "finish", "add", "add_text" };
 		IDiscordInteraction interaction = Context.Interaction;
 
 		var url = attachment?.Url ??
@@ -87,9 +85,9 @@ public class Images : ModuleBase
 			new ComponentBuilder(),
 			false,
 			true);
-		
+
 		generator.Dispose();
-	}
+	}*/
 
 	[SlashCommand("nsfw", "nsfw images")]
 	[RequireNsfw]
@@ -98,7 +96,7 @@ public class Images : ModuleBase
 		var img = await m_waifuClient.GetImageAsync(tag);
 		Console.WriteLine(img);
 
-		await Respond(embed: new EmbedBuilder().WithImageUrl(img));
+		await Respond(new EmbedBuilder().WithImageUrl(img));
 	}
 
 	[SlashCommand("sfw", "sfw images")]
@@ -110,9 +108,7 @@ public class Images : ModuleBase
 
 			var ctf = GetCategoryFormat(category);
 			if (ctf == CategoryFormat.User && user == null)
-			{
 				throw new ArgumentException($"You must provide {nameof(user)} for this category");
-			}
 
 			var embed = new EmbedBuilder();
 			var title = ctf switch
@@ -127,7 +123,7 @@ public class Images : ModuleBase
 
 			var img = await m_waifuClient.GetImageAsync(category);
 
-			await Respond(embed: embed.WithDescription(title).WithImageUrl(img));
+			await Respond(embed.WithDescription(title).WithImageUrl(img));
 		}
 		catch (Exception e)
 		{

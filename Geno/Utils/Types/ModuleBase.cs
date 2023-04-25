@@ -11,7 +11,7 @@ public class ModuleBase : InteractionModuleBase<ShardedInteractionContext>
 	{
 		await ClientEvents.OnLog(message).ConfigureAwait(false);
 	}
-	
+
 	public async ValueTask Respond(
 		EmbedBuilder embed,
 		FileAttachment? attachment = null,
@@ -20,8 +20,10 @@ public class ModuleBase : InteractionModuleBase<ShardedInteractionContext>
 		bool isDefered = false,
 		bool isFolluwup = false)
 	{
-		await Context.Interaction.Respond(embed, attachment, components, ephemeral, isDefered, isFolluwup).ConfigureAwait(false);
+		await Context.Interaction.Respond(embed, attachment, components, ephemeral, isDefered, isFolluwup)
+			.ConfigureAwait(false);
 	}
+
 	public async ValueTask Respond(
 		EmbedBuilder[] embeds,
 		FileAttachment[]? attachments = null,
@@ -30,6 +32,7 @@ public class ModuleBase : InteractionModuleBase<ShardedInteractionContext>
 		bool isDefered = false,
 		bool isFolluwup = false)
 	{
-		await Context.Interaction.Respond(embeds, attachments, components, ephemeral, isDefered, isFolluwup).ConfigureAwait(false);
+		await Context.Interaction.Respond(embeds, attachments, components, ephemeral, isDefered, isFolluwup)
+			.ConfigureAwait(false);
 	}
 }

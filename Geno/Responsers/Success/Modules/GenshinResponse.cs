@@ -31,7 +31,8 @@ public static class GenshinResponse
 			.WithAuthor(player.Nickname)
 			.WithDescription(player.Description)
 			.AddField(abyssTitle, abyssValue, true)
-			.AddField(arTitle, arValue, true);
+			.AddField(arTitle, arValue, true)
+			.AddEmpty();
 
 		foreach (var avatar in avatars)
 			embed.AddField(avatar.AvatarId.ToString(),

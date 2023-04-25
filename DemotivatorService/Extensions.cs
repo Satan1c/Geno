@@ -21,6 +21,7 @@ public static class Extensions
 		TextAlign = SKTextAlign.Center,
 		IsAntialias = true
 	};
+
 	internal static readonly SKPaint LowerPaint = new()
 	{
 		Color = SKColors.White,
@@ -28,12 +29,18 @@ public static class Extensions
 		TextAlign = SKTextAlign.Center,
 		IsAntialias = true
 	};
+
 	internal static readonly SKPaint BorderPaint = new()
 	{
 		Color = SKColors.White, StrokeWidth = BorderThickness, IsAntialias = true, Style = SKPaintStyle.Stroke
 	};
-	
-	internal static void AddText(this SKCanvas canvas, ref SKSize canvasSize, ref TextData upperTextData, ref TextData lowerTextData, string[]? upperText = null, string[]? lowerText = null)
+
+	internal static void AddText(this SKCanvas canvas,
+		ref SKSize canvasSize,
+		ref TextData upperTextData,
+		ref TextData lowerTextData,
+		string[]? upperText = null,
+		string[]? lowerText = null)
 	{
 		if (upperText != null) canvas.DrawText(Times, ref canvasSize, ref upperTextData, upperText);
 		if (lowerText != null) canvas.DrawText(Arial, ref canvasSize, ref lowerTextData, lowerText);
@@ -45,7 +52,11 @@ public static class Extensions
 		canvas.DrawRect(borderRect, BorderPaint);
 	}
 
-	internal static void DrawText(this SKCanvas canvas, SKFont font, ref SKSize canvasSize, ref TextData data, string[] text)
+	internal static void DrawText(this SKCanvas canvas,
+		SKFont font,
+		ref SKSize canvasSize,
+		ref TextData data,
+		string[] text)
 	{
 		var y = data.TextY;
 		var x = data.TextX;
@@ -75,7 +86,7 @@ public static class Extensions
 			y += lineHeight;
 		}
 	}
-	
+
 	internal static string[] WrapText(string text, SKPaint paint, float width)
 	{
 		var lines = new LinkedList<string>();
@@ -98,7 +109,7 @@ public static class Extensions
 		lines.AddLast(currentLine.ToString());
 		return lines.ToArray();
 	}
-	
+
 	public static SKBitmap ResizeImage(this SKBitmap sourceBitmap, int maxSize, int minSize)
 	{
 		var (width, height) = (sourceBitmap.Width, sourceBitmap.Height);
@@ -146,7 +157,7 @@ public static class Extensions
 		var surface = SKSurface.Create(new SKImageInfo((int)canvasSize.Width, (int)canvasSize.Height));
 		var canvas = surface.Canvas;
 		canvas.Clear(SKColors.Black);
-		
+
 		return surface;
 	}
 }
