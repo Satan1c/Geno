@@ -25,7 +25,7 @@ public class UserDocument
 		document.Id = id;
 		return document;
 	}
-	
+
 	public uint GetGenshinId(GenshinRegion region)
 	{
 		return region switch

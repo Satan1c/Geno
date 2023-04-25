@@ -27,7 +27,7 @@ public class ClientEvents
 		var trace = message.Exception?.StackTrace?.Replace("\n", "\n\t\t\t");
 		trace = trace is null ? "" : trace + '\n';
 		var inner = message.Exception?.InnerException?.StackTrace?.Replace("\n", "\n\t\t\t");
-		
+
 		var text = $"{trace}{inner ?? ""}";
 
 		s_logger?.Write(

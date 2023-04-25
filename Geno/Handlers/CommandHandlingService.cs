@@ -111,7 +111,8 @@ public class CommandHandlingService
 	{
 		if (resultRaw is Result result)
 		{
-			await context.Interaction.Respond(result.Builder, ephemeral: result.IsEphemeral, isDefered: result.IsDefered)
+			await context.Interaction
+				.Respond(result.Builder, ephemeral: result.IsEphemeral, isDefered: result.IsDefered)
 				.ConfigureAwait(false);
 			return;
 		}
