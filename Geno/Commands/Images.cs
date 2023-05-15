@@ -89,16 +89,6 @@ public class Images : ModuleBase
 		generator.Dispose();
 	}*/
 
-	[SlashCommand("nsfw", "nsfw images")]
-	[RequireNsfw]
-	public async Task NsfwCommands(NsfwCategory tag)
-	{
-		var img = await m_waifuClient.GetImageAsync(tag);
-		Console.WriteLine(img);
-
-		await Respond(new EmbedBuilder().WithImageUrl(img));
-	}
-
 	[SlashCommand("sfw", "sfw images")]
 	public async Task SfwCommands([Autocomplete(typeof(SfwAutocompleteHandler))] string tag, IUser? user = null)
 	{
