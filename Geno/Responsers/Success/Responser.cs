@@ -100,13 +100,19 @@ public static class Responser
 		{
 			await interaction.ModifyOriginalResponseAsync(x =>
 				{
-					var flags = x.Flags.GetValueOrDefault() ?? MessageFlags.None;
-					x.Embed = embed;
-					x.Embeds = embeds;
+					if (embed is not null)
+						x.Embed = embed;
+					
+					if (embeds is not null)
+						x.Embeds = embeds;
+					
 					x.AllowedMentions = AllowedMentions.None;
-					x.Flags = ephemeral ? flags ^ MessageFlags.Ephemeral : flags | MessageFlags.Ephemeral;
-					x.Attachments = attachment.HasValue ? new[] { attachment.Value } : attachments;
-					x.Components = components;
+					
+					if (attachment is not null || attachments is not null)
+						x.Attachments = attachment.HasValue ? new[] { attachment.Value } : attachments;
+					
+					if (components is not null)
+						x.Components = components;
 				}
 			).ConfigureAwait(false);
 
