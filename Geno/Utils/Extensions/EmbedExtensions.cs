@@ -29,7 +29,7 @@ public static class EmbedExtensions
 			builder.AddField("Invite created At", $"<t:{invite.CreatedAt?.ToUnixTimeSeconds().ToString()}:R>", true);
 		if (invite.IsTemporary)
 			builder.AddField("Expire At", $"{invite.MaxAge.ToString()}: <t:{invite.MaxAge.ToString()}:R>", true);
-		if (invite is { CreatedAt: { }, IsTemporary: true })
+		if (invite is { CreatedAt: not null, IsTemporary: true })
 			builder.AddEmpty();
 
 		if (!extra) return builder;

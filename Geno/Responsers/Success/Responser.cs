@@ -82,7 +82,7 @@ public static class Responser
 				return;
 			}
 
-			if (attachment is { })
+			if (attachment is not null)
 			{
 				await interaction.FollowupWithFileAsync(
 						attachment.Value,
@@ -128,7 +128,7 @@ public static class Responser
 				return;
 			}
 
-			if (attachment is { })
+			if (attachment is not null)
 			{
 				await interaction.RespondWithFileAsync(
 						attachment.Value,
