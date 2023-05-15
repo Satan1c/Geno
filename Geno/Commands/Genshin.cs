@@ -13,6 +13,10 @@ namespace Geno.Commands;
 public class Genshin : InteractionModuleBase<ShardedInteractionContext>
 {
 	private const string m_baseLink = "https://genshin.hoyoverse.com/en/gift?code=";
+
+	private static readonly Regex s_codeRegex =
+		new(@"([A-Z0-9]{10,12})", RegexOptions.Compiled | RegexOptions.Singleline);
+
 	private readonly DatabaseProvider m_databaseProvider;
 	private readonly EnkaApiClient m_enkaApiClient;
 
@@ -38,7 +42,7 @@ public class Genshin : InteractionModuleBase<ShardedInteractionContext>
 		await DeferAsync();
 
 		var content = message.Content!;
-		var codes = content.Split('\n');
+		var codes = s_codeRegex.Matches(content).Select(x => x.Value).ToArray();
 
 		CreateLinks(codes, out var links);
 		var components = new ComponentBuilder();
