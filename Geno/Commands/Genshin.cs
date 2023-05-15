@@ -57,7 +57,7 @@ public class Genshin : ModuleBase
 				.WithButton(codes[i], style: ButtonStyle.Link, url: links[i]));
 		}
 
-		await Respond(new EmbedBuilder().WithDescription(description.ToString()), components: components);
+		await Respond(new EmbedBuilder().WithDescription(description.ToString()), components: components, isDefered: true);
 	}
 
 	[MessageCommand("Rank info")]
