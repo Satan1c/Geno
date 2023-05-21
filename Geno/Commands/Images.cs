@@ -1,6 +1,5 @@
 using Discord;
 using Discord.Interactions;
-using Discord.WebSocket;
 using Geno.Handlers;
 using Geno.Utils.Types;
 using WaifuPicsApi;
@@ -11,14 +10,11 @@ namespace Geno.Commands;
 [Group("img", "images group")]
 public class Images : ModuleBase
 {
-	private readonly DiscordShardedClient m_client;
-
 	private readonly WaifuClient m_waifuClient;
 	//private IEnumerable<AutocompleteResult> m_sfwCategories = Array.Empty<AutocompleteResult>();
 
-	public Images(DiscordShardedClient client, WaifuClient waifuClient)
+	public Images(WaifuClient waifuClient)
 	{
-		m_client = client;
 		m_waifuClient = waifuClient;
 	}
 
@@ -88,16 +84,6 @@ public class Images : ModuleBase
 
 		generator.Dispose();
 	}*/
-
-	[SlashCommand("nsfw", "nsfw images")]
-	[RequireNsfw]
-	public async Task NsfwCommands(NsfwCategory tag)
-	{
-		var img = await m_waifuClient.GetImageAsync(tag);
-		Console.WriteLine(img);
-
-		await Respond(new EmbedBuilder().WithImageUrl(img));
-	}
 
 	[SlashCommand("sfw", "sfw images")]
 	public async Task SfwCommands([Autocomplete(typeof(SfwAutocompleteHandler))] string tag, IUser? user = null)

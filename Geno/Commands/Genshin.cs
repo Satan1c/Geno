@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using System.Text.RegularExpressions;
 using Database;
 using Database.Models;
 using Discord;
@@ -6,13 +7,18 @@ using Discord.Interactions;
 using EnkaAPI;
 using Geno.Responsers.Success.Modules;
 using Geno.Utils.Extensions;
+using Geno.Utils.Types;
 
 namespace Geno.Commands;
 
 //[Group("genshin", "Genshin Impact commands")]
-public class Genshin : InteractionModuleBase<ShardedInteractionContext>
+public class Genshin : ModuleBase
 {
 	private const string m_baseLink = "https://genshin.hoyoverse.com/en/gift?code=";
+
+	private static readonly Regex s_codeRegex =
+		new(@"([A-Z0-9]{10,12})", RegexOptions.Compiled | RegexOptions.Singleline);
+
 	private readonly DatabaseProvider m_databaseProvider;
 	private readonly EnkaApiClient m_enkaApiClient;
 
@@ -38,7 +44,7 @@ public class Genshin : InteractionModuleBase<ShardedInteractionContext>
 		await DeferAsync();
 
 		var content = message.Content!;
-		var codes = content.Split('\n');
+		var codes = s_codeRegex.Matches(content).Select(x => x.Value).ToArray();
 
 		CreateLinks(codes, out var links);
 		var components = new ComponentBuilder();
@@ -51,11 +57,7 @@ public class Genshin : InteractionModuleBase<ShardedInteractionContext>
 				.WithButton(codes[i], style: ButtonStyle.Link, url: links[i]));
 		}
 
-		await ModifyOriginalResponseAsync(x =>
-		{
-			x.Embed = new EmbedBuilder().WithDescription(description.ToString()).Build();
-			x.Components = components.Build();
-		});
+		await Respond(new EmbedBuilder().WithDescription(description.ToString()), components: components, isDefered: true);
 	}
 
 	[MessageCommand("Rank info")]
@@ -73,7 +75,7 @@ public class Genshin : InteractionModuleBase<ShardedInteractionContext>
 		var doc = await UpdateDoc(message, Context.User.Id.ToString());
 
 		await Context.Guild.GetUser(message.Author.Id).UpdateRoles(data.AdventureRank, doc);
-		await RespondAsync("Done", ephemeral: true);
+		await Respond(new EmbedBuilder().WithDescription("Done"), ephemeral: true);
 	}
 
 	private async ValueTask<GuildDocument> UpdateDoc(IMessage message, string userId)
