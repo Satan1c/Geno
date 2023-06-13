@@ -25,6 +25,9 @@ public static class Extensions
 	private static readonly Regex s_formatRegex =
 		new(@"(?<start>\{)+(?<property>[\w\.\[\]]+)(?<format>:[^}]+)?(?<end>\})+",
 			RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
+	
+	public static readonly Regex CodeRegex =
+		new(@"([A-Z0-9]{10,12})", RegexOptions.Compiled | RegexOptions.Singleline);
 
 	/*private static readonly Regex s_noAsciiRegex = new(
 		"[^А-Яа-я -~]+",

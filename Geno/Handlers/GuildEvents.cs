@@ -26,7 +26,12 @@ public class GuildEvents
 		    || !await m_databaseProvider.HasGuild(guildUser.Guild.Id).ConfigureAwait(false))
 			return;
 
-		var config = await m_databaseProvider.GetConfig(guildUser.Guild.Id).ConfigureAwait(false);
+		var data = await m_databaseProvider.GetConfig(guildUser.Guild.Id).ConfigureAwait(false);
+		var config = new GuildDocument();
+		config.Voices = new Dictionary<string, ulong>(data.Voices);
+		config.VoicesNames = new Dictionary<string, string>(data.VoicesNames);
+		config.Channels = new Dictionary<string, ulong>(data.Channels);
+		
 		var guildUserId = guildUser.Id.ToString();
 		var afterChannelId = after.VoiceChannel?.Id.ToString() ?? "";
 

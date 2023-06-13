@@ -3,9 +3,14 @@ using Database;
 using Database.Models;
 using Discord;
 using Discord.Interactions;
+using Geno.Handlers;
+using Geno.Responsers;
 using Geno.Utils.Extensions;
 using Geno.Utils.StaticData;
 using Geno.Utils.Types;
+using HoYoLabApi;
+using HoYoLabApi.Classes;
+using HoYoLabApi.Static;
 
 namespace Geno.Commands;
 
@@ -14,10 +19,75 @@ namespace Geno.Commands;
 public class Settings : ModuleBase
 {
 	private static DatabaseProvider s_databaseProvider = null!;
+	private static IHoYoLabClient m_hoYoLabClient;
+	private static AccountSearcher s_accountSearcher = null!;
 
-	public Settings(DatabaseProvider databaseProvider)
+	public Settings(DatabaseProvider databaseProvider, IHoYoLabClient hoYoLabClient)
 	{
+		m_hoYoLabClient = hoYoLabClient;
+		s_accountSearcher = new AccountSearcher(hoYoLabClient);
 		s_databaseProvider = databaseProvider;
+		m_hoYoLabClient = hoYoLabClient;
+	}
+
+	[ComponentInteraction("hoyo_registration_button", true)]
+	public async Task R()
+	{
+		await RespondWithModalAsync<RegisterModal>("hoyo_registration_modal");
+	}
+	
+	[ModalInteraction("hoyo_registration_modal", true)]
+	public async Task M(RegisterModal modal)
+	{
+		await Respond(new EmbedBuilder().WithDescription("Registering..."), ephemeral: true);
+		try
+		{
+			var cookies = modal.Cookies.ParseCookies();
+			//var data = await s_accountSearcher.GetGameAccountAsync(modal.Cookies);
+			var data = await m_hoYoLabClient
+				.GetGamesArrayAsync(new Request(
+					"api-account-os",
+					"account/binding/api/getUserGameRolesByCookieToken",
+					cookies,
+					new Dictionary<string, string>()
+					{
+						{
+							"uid",
+							cookies.AccountId.ToString()
+						},
+						{
+							"sLangKey",
+							cookies.Language.GetLanguageString()
+						}
+					}));
+			if (data.Code == -100)
+			{
+				await Respond(new EmbedBuilder().WithColor(Color.Red).WithDescription("Invalid cookies"),
+					ephemeral: true);
+				return;
+			}
+			else if (data.Code != 0 || data.Data.GameAccounts.Length < 1)
+			{
+				await ClientEvents.OnLog(new LogMessage(LogSeverity.Error, nameof(M), $"Invalid cookies, if check, code: {data.Code.ToString()} message: {data.Message}"));
+				
+				await Respond(new EmbedBuilder().WithColor(Color.Red).WithDescription("Invalid cookies"),
+					ephemeral: true);
+				return;
+			}
+		}
+		catch
+		{
+			await ClientEvents.OnLog(new LogMessage(LogSeverity.Error, nameof(M), "Invalid cookies, catch block"));
+			await Respond(new EmbedBuilder().WithColor(Color.Red).WithDescription("Invalid cookies"), ephemeral: true);
+			return;
+		}
+		
+		await ClientEvents.OnLog(new LogMessage(LogSeverity.Verbose, nameof(M), "Valid cookies"));
+		
+		var profile = await s_databaseProvider.GetUser(Context.User.Id);
+		profile.HoYoLabCookies = modal.Cookies;
+		await s_databaseProvider.SetUser(profile);
+		await Respond(new EmbedBuilder().WithDescription("Cookies registered"), isDefered: true, ephemeral: true);
 	}
 
 	private static string GetMessage(ref GuildDocument config)

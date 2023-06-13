@@ -94,6 +94,15 @@ public static class Responser
 					.ConfigureAwait(false);
 				return;
 			}
+			
+			await interaction.FollowupAsync(
+					embed: embed,
+					embeds: embeds,
+					components: components,
+					allowedMentions: AllowedMentions.None,
+					ephemeral: ephemeral)
+				.ConfigureAwait(false);
+			return;
 		}
 
 		if (isDefered)

@@ -1,5 +1,6 @@
 ﻿using Discord;
 using EnkaAPI.Types;
+using EnkaAPI.Types.PlayerInfo;
 using Geno.Utils.Extensions;
 using Localization;
 using Localization.Models;
@@ -15,10 +16,10 @@ public static class GenshinResponse
 		s_category = localizationManager.GetCategory("genshin");
 	}
 
-	public static ValueTask Profile(this IInteractionContext context, Info info)
+	public static EmbedBuilder Profile(this IInteractionContext context, Info info)
 	{
 		var player = info.PlayerInfo;
-		var avatars = info.PlayerInfo.AvatarInfoList.ToArray();
+		var avatars = info.PlayerInfo.AvatarInfoList?.ToArray() ?? Array.Empty<ShortAvatarInfo>();
 		var locals = s_category.GetDataFor("profile").GetForLocale(context);
 
 		var abyssTitle = locals["abyss_title"];
@@ -38,6 +39,6 @@ public static class GenshinResponse
 			embed.AddField(avatar.AvatarId.ToString(),
 				$"`{avatar.Level.ToString()}`/`90`", true);
 
-		return context.Interaction.Respond(embed, ephemeral: true);
+		return embed;
 	}
 }
