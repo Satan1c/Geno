@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.Interactions;
 using Geno.Responsers.Success.Modules;
+using SDC_Sharp.DiscordNet.Models;
 using SDC_Sharp.DiscordNet.Services;
 using SDC_Sharp.DiscordNet.Types;
 
@@ -60,13 +61,7 @@ public class Sdc : InteractionModuleBase<ShardedInteractionContext>
 			}
 			catch
 			{
-				warns = new UserWarns
-				{
-					Id = user.Id,
-					User = user,
-					Type = "user",
-					Warns = 0
-				};
+				warns = new UserWarns(user.Id, 0, "user", user);
 			}
 
 			await Context.WarnsInfo(warns);

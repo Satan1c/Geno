@@ -35,7 +35,17 @@ public static class Extensions
 		if (cacheManager.Exists(itemId))
 			return true;
 
-		var item = await collection.Find(filterDefinition).ToListAsync().ConfigureAwait(false);
+		List<TDocument> item;
+
+		try
+		{
+			item = await collection.Find(filterDefinition).ToListAsync().ConfigureAwait(false);
+		}
+		catch
+		{
+			return false;
+		}
+
 		if (item.Count < 1) return false;
 
 		cacheManager.Put(itemId, item[0]);
@@ -48,7 +58,7 @@ public static class Extensions
 	{
 		var item = await collection.FindOneAndReplaceAsync(filterDefinition, document).ConfigureAwait(false);
 
-		if (item == null)
+		if (item.AreSame(default))
 			await collection.InsertOneAsync(document).ConfigureAwait(false);
 	}
 }

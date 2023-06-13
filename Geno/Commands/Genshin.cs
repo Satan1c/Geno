@@ -8,6 +8,10 @@ using EnkaAPI;
 using Geno.Responsers.Success.Modules;
 using Geno.Utils.Extensions;
 using Geno.Utils.Types;
+using HoYoLabApi.Enums;
+using HoYoLabApi.GenshinImpact;
+using HoYoLabApi.Static;
+using Extensions = Geno.Utils.Extensions.Extensions;
 
 namespace Geno.Commands;
 
@@ -15,41 +19,105 @@ namespace Geno.Commands;
 public class Genshin : ModuleBase
 {
 	private const string m_baseLink = "https://genshin.hoyoverse.com/en/gift?code=";
-
-	private static readonly Regex s_codeRegex =
-		new(@"([A-Z0-9]{10,12})", RegexOptions.Compiled | RegexOptions.Singleline);
-
 	private readonly DatabaseProvider m_databaseProvider;
 	private readonly EnkaApiClient m_enkaApiClient;
+	private readonly GenshinImpactService m_genshinImpactService;
 
 	public Genshin(DatabaseProvider databaseProvider,
-		EnkaApiClient enkaApiClient)
+		EnkaApiClient enkaApiClient,
+		GenshinImpactService genshinImpactService)
 	{
 		m_databaseProvider = databaseProvider;
 		m_enkaApiClient = enkaApiClient;
+		m_genshinImpactService = genshinImpactService;
+	}
+
+	[SlashCommand("dailies", "enable/disable dailies")]
+	public async Task AutoDailiesSwitch(bool isEnable)
+	{
+		await DeferAsync(true);
+		var profile = await m_databaseProvider.GetUser(Context.User.Id);
+		if (profile.HoYoLabCookies == string.Empty)
+		{
+			var (embed, components) = EmbedExtensions.GetRegistrationForm(Context.User.Id);
+			await Respond(embed, components: components, ephemeral: true, isDefered: true, isFolluwup: true);
+			return;
+		}
+
+		var dailies = profile.EnabledAutoDailies;
+		dailies.Genshin = isEnable;
+		
+		profile.EnabledAutoDailies = dailies;
+		await m_databaseProvider.SetUser(profile);
+		await Respond(new EmbedBuilder().WithDescription($"Genshin auto-claim set to {isEnable.ToString()}"), isDefered: true);
+	}
+
+	[ComponentInteraction("genshin_auto_claim_codes_*", true)]
+	public async Task ClaimCodes(string codesString)
+	{
+		await DeferAsync(true);
+		var profile = await m_databaseProvider.GetUser(Context.User.Id);
+		if (profile.HoYoLabCookies == string.Empty)
+		{
+			var (embed, components) = EmbedExtensions.GetRegistrationForm(Context.User.Id);
+			await Respond(embed, components: components, ephemeral: true, isDefered: true, isFolluwup: true);
+			return;
+		}
+
+		var codes = codesString.Split(',');
+		var max = codes.Length;
+		var counter = 1;
+		await foreach (var res in m_genshinImpactService.CodesClaimAsync(codes, profile.HoYoLabCookies, Region.Europe, null))
+		{
+			await Respond(new EmbedBuilder().WithDescription($"`{counter.ToString()}`/`{max.ToString()}`*({((int)((float)counter / max * 100)).ToString()})*\n[`{codes[counter - 1]}`]: {res.Message}"), ephemeral: true, isFolluwup: true);
+			counter++;
+		}
 	}
 
 	[UserCommand("Genshin profile")]
 	public async Task GenshinProfile(IUser user)
 	{
-		const uint uid = 700289769;
+		await DeferAsync();
+		var profile = await m_databaseProvider.GetUser(user.Id);
+		if (profile.HoYoLabCookies == string.Empty)
+		{
+			var (embed, components) = EmbedExtensions.GetRegistrationForm(user.Id);
+			await Respond(embed, components: components, ephemeral: false, isDefered: true);
+			return;
+		}
 
-		var data = await m_enkaApiClient.GetInfo(uid);
-		await Context.Profile(data);
+		var cookies = profile.HoYoLabCookies.ParseCookies();
+		var acc = await m_genshinImpactService.GetGameAccountAsync(cookies);
+
+		await Respond(new EmbedBuilder().WithDescription("Found:"), ephemeral: true, isDefered: true);
+		foreach (var data in acc)
+		{
+			var info = await m_enkaApiClient.GetInfo(data.Uid);
+			await Respond(Context.Profile(info), isDefered: true, isFolluwup: true);
+		}
 	}
 
-	[MessageCommand("Make code links")]
+	[MessageCommand("Make Genshin codes link")]
 	public async Task MakeCodeLinks(IMessage message)
 	{
 		await DeferAsync();
 
 		var content = message.Content!;
-		var codes = s_codeRegex.Matches(content).Select(x => x.Value).ToArray();
+		var codes = Extensions.CodeRegex.Matches(content).Select(x => x.Value).ToArray();
 
 		CreateLinks(codes, out var links);
 		var components = new ComponentBuilder();
 		var description = new StringBuilder("Кодеки:\n");
 
+		components
+			.AddRow(new ActionRowBuilder()
+				.WithButton(new ButtonBuilder()
+					.WithCustomId("genshin_auto_claim_codes_" + string.Join(',', codes))
+					.WithLabel("Auto-claim")
+					.WithStyle(ButtonStyle.Primary)
+				)
+			);
+		
 		for (byte i = 0; i < links.Length; i++)
 		{
 			description.AppendFormat("[{0}]({1})\n", codes[i], links[i]);
@@ -59,7 +127,7 @@ public class Genshin : ModuleBase
 
 		await Respond(new EmbedBuilder().WithDescription(description.ToString()), components: components, isDefered: true);
 	}
-
+	
 	[MessageCommand("Rank info")]
 	[RequireBotPermission(GuildPermission.ManageRoles)]
 	[EnabledInDm(false)]

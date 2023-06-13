@@ -9,6 +9,19 @@ public static class EmbedExtensions
 {
 	public const string Empty = "\u200b";
 
+	public static (EmbedBuilder builder, ComponentBuilder components) GetRegistrationForm(ulong id)
+	{
+		var builder = new EmbedBuilder()
+			.WithDescription(
+				$"<@{id.ToString()}> doesn't link HoYoLab account\n How to link them: [guide](https://geno.satan1c.com/guides?id=LinkHoYoLab)");
+		var components = new ComponentBuilder()
+			.AddRow(new ActionRowBuilder()
+				.WithButton(new ButtonBuilder()
+					.WithLabel("Register").WithStyle(ButtonStyle.Primary)
+					.WithCustomId("hoyo_registration_button")));
+		return (builder, components);
+	}
+	
 	public static EmbedBuilder ApplyData(this EmbedBuilder builder, RestInviteMetadata invite, bool extra = false)
 	{
 		var guild = invite.InviteGuild;

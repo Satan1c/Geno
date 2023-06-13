@@ -6,6 +6,9 @@ using Discord.WebSocket;
 using EnkaAPI;
 using Geno.Handlers;
 using Geno.Utils;
+using HoYoLabApi;
+using HoYoLabApi.GenshinImpact;
+using HoYoLabApi.HonkaiStarRail;
 using Localization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -65,7 +68,6 @@ await using var service = new ServiceCollection()
 	.AddSingleton<CommandHandlingService>()
 	.AddSingleton<ClientEvents>()
 	.AddSingleton<GuildEvents>()
-	.AddSingleton(new SdcSharpClient(new SdcConfig { Token = env["Sdc"] }))
 	.AddSingleton<SdcServices>()
 	.AddSingleton<EnkaApiClient>()
 	.AddSingleton<WaifuClient>()
@@ -76,6 +78,11 @@ await using var service = new ServiceCollection()
 	))
 	.AddSingleton<ShikimoriSharp.ShikimoriClient>()
 	.AddSingleton<ShikimoriClient>()
+	.AddSingleton<IHoYoLabClient, HoYoLabClient>()
+	.AddSingleton<HonkaiStarRailService>()
+	.AddSingleton<GenshinImpactService>()
+	.AddSingleton<ISdcSharpClient>(new SdcSharpClient(new SdcConfig { Token = env["Sdc"] }))
+	.AddSingleton<ISdcServices, SdcServices>()
 	.InitializeSdcServices()
 	.BuildServiceProvider();
 
