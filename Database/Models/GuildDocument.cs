@@ -2,6 +2,7 @@
 
 namespace Database.Models;
 
+[BsonIgnoreExtraElements]
 public struct GuildDocument
 {
 	[BsonConstructor]
