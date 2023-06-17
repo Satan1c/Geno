@@ -10,6 +10,7 @@ using Geno.Utils.Extensions;
 using Geno.Utils.Types;
 using HoYoLabApi.Enums;
 using HoYoLabApi.GenshinImpact;
+using HoYoLabApi.Models;
 using HoYoLabApi.Static;
 using Extensions = Geno.Utils.Extensions.Extensions;
 
@@ -90,7 +91,7 @@ public class Genshin : ModuleBase
 		var acc = await m_genshinImpactService.GetGameAccountAsync(cookies);
 
 		await Respond(new EmbedBuilder().WithDescription("Found:"), ephemeral: true, isDefered: true);
-		foreach (var data in acc)
+		foreach (var data in acc?.Data?.GameAccounts ?? Array.Empty<GameData>())
 		{
 			var info = await m_enkaApiClient.GetInfo(data.Uid);
 			await Respond(Context.Profile(info), isDefered: true, isFolluwup: true);
