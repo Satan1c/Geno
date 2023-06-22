@@ -104,10 +104,14 @@ public class Other : ModuleBase
 		}
 
 		[SlashCommand("user", "fetch user information by id")]
-		public Task<RuntimeResult> FetchUser(IUser? rawUser = null)
+		public async Task FetchUser(IUser? rawUser = null)
 		{
 			if (!Context.Client.Rest.TryGetUser(rawUser?.Id ?? Context.User.Id, out var user))
-				return Result.GetTaskFor(new EmbedBuilder().WithDescription("Can't get info about this user"));
+			{
+				await Respond(new EmbedBuilder().WithColor(Color.Red)
+					.WithDescription("Can't get info about this user"));
+				return;
+			}
 
 			var embed = new EmbedBuilder().ApplyData(user);
 
@@ -115,7 +119,7 @@ public class Other : ModuleBase
 			    && Context.Client.Rest.TryGetGuildUser(guild.Id, user.Id, out var guildUser))
 				embed = embed.ApplyData(guildUser);
 
-			return Result.GetTaskFor(embed, true, false);
+			await Respond(embed);
 		}
 	}
 }
