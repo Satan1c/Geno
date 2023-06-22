@@ -125,7 +125,7 @@ public static class Extensions
 
 		try
 		{
-			if (client.GetInviteAsync(code).Result is not { } res)
+			if (client.GetInviteAsync(code).GetAwaiter().GetResult() is not { } res)
 				return false;
 
 			invite = res;
@@ -143,7 +143,7 @@ public static class Extensions
 
 		try
 		{
-			if (client.GetGuildAsync(id).Result is not { } res)
+			if (client.GetGuildAsync(id).GetAwaiter().GetResult() is not { } res)
 				return false;
 
 			guild = res;
@@ -161,7 +161,7 @@ public static class Extensions
 
 		try
 		{
-			if (client.GetUserAsync(id).Result is not { } res)
+			if (client.GetUserAsync(id).GetAwaiter().GetResult() is not { } res)
 				return false;
 
 			user = res;
@@ -179,7 +179,7 @@ public static class Extensions
 
 		try
 		{
-			if (client.GetGuildUserAsync(guildId, userId).Result is not { } res)
+			if (client.GetGuildUserAsync(guildId, userId).GetAwaiter().GetResult() is not { } res)
 				return false;
 
 			user = res;

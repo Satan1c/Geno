@@ -82,13 +82,14 @@ public static class EmbedExtensions
 
 	public static EmbedBuilder ApplyData(this EmbedBuilder builder, RestUser user)
 	{
+		var flags = string.Join("`, `", user.PublicFlags.PublicFlagsToString().Split(", "));
 		return builder.WithTitle("User info")
-			.WithDescription($"Tag: `{user.UserTag()}`")
+			.WithDescription($"Tag: `{user.Username}{(string.IsNullOrEmpty(user.Discriminator) || user.Discriminator == "0000" ? "" : user.Discriminator)}`")
 			.WithThumbnailUrl(user.GetAvatarUrl(ImageFormat.Auto, 2048))
 			.WithImageUrl(user.GetBannerUrl(ImageFormat.Auto, 2048))
 			.AddField("Id:", $"`{user.Id.ToString()}`")
 			.AddField("Is bot:", $"`{user.IsBot.ToString()}`")
-			.AddField("Badges:", $"`{string.Join("`, `", user.PublicFlags.PublicFlagsToString().Split(", "))}`")
+			.AddField("Badges:", $"`{(string.IsNullOrEmpty(flags) ? "None" : flags)}`")
 			.AddField("Created at:", $"<t:{user.CreatedAt.ToUnixTimeSeconds().ToString()}:R>");
 	}
 

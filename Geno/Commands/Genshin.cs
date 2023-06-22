@@ -41,7 +41,7 @@ public class Genshin : ModuleBase
 		if (profile.HoYoLabCookies == string.Empty)
 		{
 			var (embed, components) = EmbedExtensions.GetRegistrationForm(Context.User.Id);
-			await Respond(embed, components: components, ephemeral: true, isDefered: true, isFolluwup: true);
+			await Respond(embed, components: components, ephemeral: true, isDefered: true, isFolluwup: false);
 			return;
 		}
 
@@ -50,7 +50,7 @@ public class Genshin : ModuleBase
 		
 		profile.EnabledAutoDailies = dailies;
 		await m_databaseProvider.SetUser(profile);
-		await Respond(new EmbedBuilder().WithDescription($"Genshin auto-claim set to {isEnable.ToString()}"), isDefered: true);
+		await Respond(new EmbedBuilder().WithDescription("Genshin auto-claim set to" + isEnable), isDefered: true);
 	}
 
 	[ComponentInteraction("genshin_auto_claim_codes_*", true)]
