@@ -1,5 +1,4 @@
 ﻿using System.Text;
-using System.Text.RegularExpressions;
 using Database;
 using Database.Models;
 using Discord;
@@ -47,7 +46,7 @@ public class Genshin : ModuleBase
 
 		var dailies = profile.EnabledAutoDailies;
 		dailies.Genshin = isEnable;
-		
+
 		profile.EnabledAutoDailies = dailies;
 		await m_databaseProvider.SetUser(profile);
 		await Respond(new EmbedBuilder().WithDescription("Genshin auto-claim set to" + isEnable), isDefered: true);
@@ -68,9 +67,12 @@ public class Genshin : ModuleBase
 		var codes = codesString.Split(',');
 		var max = codes.Length;
 		var counter = 1;
-		await foreach (var res in m_genshinImpactService.CodesClaimAsync(codes, profile.HoYoLabCookies, Region.Europe, null))
+		await foreach (var res in m_genshinImpactService.CodesClaimAsync(codes, profile.HoYoLabCookies, Region.Europe))
 		{
-			await Respond(new EmbedBuilder().WithDescription($"`{counter.ToString()}`/`{max.ToString()}`*({((int)((float)counter / max * 100)).ToString()})*\n[`{codes[counter - 1]}`]: {res.Message}"), ephemeral: true, isFolluwup: true);
+			await Respond(
+				new EmbedBuilder().WithDescription(
+					$"`{counter.ToString()}`/`{max.ToString()}`*({((int)((float)counter / max * 100)).ToString()})*\n[`{codes[counter - 1]}`]: {res.Message}"),
+				ephemeral: true, isFolluwup: true);
 			counter++;
 		}
 	}
@@ -118,7 +120,7 @@ public class Genshin : ModuleBase
 					.WithStyle(ButtonStyle.Primary)
 				)
 			);
-		
+
 		for (byte i = 0; i < links.Length; i++)
 		{
 			description.AppendFormat("[{0}]({1})\n", codes[i], links[i]);
@@ -126,9 +128,10 @@ public class Genshin : ModuleBase
 				.WithButton(codes[i], style: ButtonStyle.Link, url: links[i]));
 		}
 
-		await Respond(new EmbedBuilder().WithDescription(description.ToString()), components: components, isDefered: true);
+		await Respond(new EmbedBuilder().WithDescription(description.ToString()), components: components,
+			isDefered: true);
 	}
-	
+
 	[MessageCommand("Rank info")]
 	[RequireBotPermission(GuildPermission.ManageRoles)]
 	[EnabledInDm(false)]

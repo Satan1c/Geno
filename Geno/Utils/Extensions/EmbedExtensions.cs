@@ -21,10 +21,10 @@ public static class EmbedExtensions
 					.WithCustomId("hoyo_registration_button")));
 		return (builder, components);
 	}
-	
+
 	public static EmbedBuilder ApplyData(this EmbedBuilder builder, RestInviteMetadata invite, bool extra = false)
 	{
-		var guild = invite.InviteGuild;
+		var guild = invite.PartialGuild;
 		var id = invite.GuildId?.ToString() ?? "";
 		var description = string.IsNullOrEmpty(builder.Description?.Trim() ?? string.Empty)
 			? id
@@ -50,7 +50,7 @@ public static class EmbedExtensions
 		builder
 			.AddField("Member count:", $"`{invite.MemberCount.ToString()}`", true)
 			.AddField("Flags:",
-				$"`{string.Join("`, `", invite.InviteGuild.Features.Value.GuildFeaturesToString().Split(", "))}`");
+				$"`{string.Join("`, `", guild.Features.Value.GuildFeaturesToString().Split(", "))}`");
 
 		if (string.IsNullOrEmpty(guild.BannerUrl?.Trim() ?? string.Empty))
 			builder.WithImageUrl(guild.BannerUrl);
@@ -84,7 +84,8 @@ public static class EmbedExtensions
 	{
 		var flags = string.Join("`, `", user.PublicFlags.PublicFlagsToString().Split(", "));
 		return builder.WithTitle("User info")
-			.WithDescription($"Tag: `{user.Username}{(string.IsNullOrEmpty(user.Discriminator) || user.Discriminator == "0000" ? "" : user.Discriminator)}`")
+			.WithDescription(
+				$"Tag: `{user.Username}{(string.IsNullOrEmpty(user.Discriminator) || user.Discriminator == "0000" ? "" : user.Discriminator)}`")
 			.WithThumbnailUrl(user.GetAvatarUrl(ImageFormat.Auto, 2048))
 			.WithImageUrl(user.GetBannerUrl(ImageFormat.Auto, 2048))
 			.AddField("Id:", $"`{user.Id.ToString()}`")
