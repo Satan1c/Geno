@@ -1,5 +1,0 @@
-﻿Key,En,Ru
-abyss_title,Abyss,Бездна
-abyss_value,`{AbyssFloor}`.`{AbyssIndex}`,`{AbyssFloor}`.`{AbyssIndex}`
-ar_title,Ar,Рп
-ar_value,`{AdventureRank}`ar `{WorldLevel}`wl,`{AdventureRank}`рп `{WorldLevel}`wl
