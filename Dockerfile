@@ -1,7 +1,7 @@
 FROM ubuntu:lunar
 
 RUN apt-get update
-RUN apt-get install -y pkg-config build-essential git tar curl zip unzip cmake ninja-build zlib1g-dev libsodium-dev
+RUN apt-get install -y pkg-config build-essential git tar curl zip unzip cmake ninja-build zlib1g-dev libopus-dev libsodium-dev libssl-dev
 
 WORKDIR /vcpkg-boot
 
