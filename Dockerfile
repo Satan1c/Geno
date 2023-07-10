@@ -9,6 +9,9 @@ RUN git clone https://github.com/microsoft/vcpkg
 RUN ./vcpkg/bootstrap-vcpkg.sh
 RUN ./vcpkg/vcpkg install dpp:x64-linux
 
+ENV VCPKG_PATH=/vcpkg-boot/vcpkg
+ENV OS_NAME=x64-linux
+
 WORKDIR /app
 
 ADD . /app
