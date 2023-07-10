@@ -3,7 +3,8 @@ project(TestBot)
 
 set(CMAKE_CXX_STANDARD 17)
 
-add_executable(${PROJECT_NAME} src/main.cpp)
+file(GLOB_RECURSE SRC CONFIGURE_DEPENDS "./src/*.h" "./src/*.cpp")
+add_executable(${PROJECT_NAME} ${SRC})
 
 set(OS_NAME "x64-linux")
 if(WIN32)
@@ -11,6 +12,7 @@ if(WIN32)
 endif()
 
 find_package(dpp CONFIG REQUIRED)
-target_link_libraries(${PROJECT_NAME} PRIVATE dpp::dpp)
+target_link_libraries(${PROJECT_NAME} PRIVATE dpp)
 
+target_link_directories(${PROJECT_NAME} PRIVATE $ENV{VCPKG_PATH}/installed/${OS_NAME}/lib)
 target_include_directories(${PROJECT_NAME} PRIVATE $ENV{VCPKG_PATH}/installed/${OS_NAME}/include)
