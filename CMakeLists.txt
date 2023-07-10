@@ -17,3 +17,4 @@ find_package(dpp CONFIG REQUIRED)
 target_link_libraries(${PROJECT_NAME} PRIVATE dpp::dpp)
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${VCPKG_PATH}/installed/${OS_NAME}/include)
+target_link_directories(${PROJECT_NAME} PRIVATE ${VCPKG_PATH}/installed/${OS_NAME}/lib)
