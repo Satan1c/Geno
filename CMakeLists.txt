@@ -12,11 +12,13 @@ if(WIN32)
 endif()
 
 find_package(dpp CONFIG REQUIRED)
-
 target_link_libraries(${PROJECT_NAME} PRIVATE dpp)
+
 target_link_directories(${PROJECT_NAME} PRIVATE /vcpkg-boot/vcpkg/installed/x64-linux/lib)
 target_link_libraries(${PROJECT_NAME} PRIVATE zlib opus sodium)
 target_link_libraries(${PROJECT_NAME} PRIVATE ssl)
 
+find_package(ZLIB REQUIRED)
+target_link_libraries(${PROJECT_NAME} PRIVATE dpp ZLIB::ZLIB)
 
 target_include_directories(${PROJECT_NAME} PRIVATE /vcpkg-boot/vcpkg/installed/x64-linux/include)
