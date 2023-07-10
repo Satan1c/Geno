@@ -12,10 +12,7 @@ if(WIN32)
     set(OS_NAME "x64-windows")
 endif()
 
-target_include_directories(${PROJECT_NAME} PRIVATE $ENV{VCPKG_PATH}/installed/${OS_NAME}/include)
-target_include_directories(${PROJECT_NAME} PRIVATE $ENV{VCPKG_PATH}/installed/${OS_NAME}/lib)
-target_link_directories(${PROJECT_NAME} PRIVATE $ENV{VCPKG_PATH}/installed/${OS_NAME}/include)
-target_link_directories(${PROJECT_NAME} PRIVATE $ENV{VCPKG_PATH}/installed/${OS_NAME}/lib)
+
 
 target_link_libraries(${PROJECT_NAME} PRIVATE dpp)
 
@@ -36,15 +33,12 @@ endif()
 
 target_link_libraries(${PROJECT_NAME} PRIVATE opus)
 
-########################################################################
-# UNIX
-if (UNIX)
-    target_link_libraries(${PROJECT_NAME} PRIVATE sodium)
+target_include_directories(${PROJECT_NAME} PRIVATE $ENV{VCPKG_PATH}/installed/${OS_NAME}/include)
+target_include_directories(${PROJECT_NAME} PRIVATE $ENV{VCPKG_PATH}/installed/${OS_NAME}/lib)
+target_link_directories(${PROJECT_NAME} PRIVATE $ENV{VCPKG_PATH}/installed/${OS_NAME}/include)
+target_link_directories(${PROJECT_NAME} PRIVATE $ENV{VCPKG_PATH}/installed/${OS_NAME}/lib)
 
-
-    ########################################################################
-    # Windows
-elseif (WIN32)
+if (WIN32)
     if (CMAKE_C_COMPILER_ID STREQUAL "GNU"
             OR CMAKE_C_COMPILER_ID STREQUAL "Clang")
         set(_GCC_COMPATIBLE 1)
@@ -208,10 +202,9 @@ elseif (WIN32)
     mark_as_advanced(sodium_INCLUDE_DIR)
     mark_as_advanced(sodium_LIBRARY_DEBUG)
     mark_as_advanced(sodium_LIBRARY_RELEASE)
-    if (WIN32)
-        mark_as_advanced(sodium_DLL_DEBUG)
-        mark_as_advanced(sodium_DLL_RELEASE)
-    endif()
+
+    mark_as_advanced(sodium_DLL_DEBUG)
+    mark_as_advanced(sodium_DLL_RELEASE)
 
     # create imported target
     if(sodium_USE_STATIC_LIBS)
@@ -236,35 +229,30 @@ elseif (WIN32)
                 IMPORTED_LOCATION_DEBUG "${sodium_LIBRARY_DEBUG}"
                 )
     else()
-        if (UNIX)
+        set_target_properties(sodium PROPERTIES
+                IMPORTED_IMPLIB "${sodium_LIBRARY_RELEASE}"
+                IMPORTED_IMPLIB_DEBUG "${sodium_LIBRARY_DEBUG}"
+                )
+
+        if (NOT (sodium_DLL_DEBUG MATCHES ".*-NOTFOUND"))
             set_target_properties(sodium PROPERTIES
-                    IMPORTED_LOCATION "${sodium_LIBRARY_RELEASE}"
-                    IMPORTED_LOCATION_DEBUG "${sodium_LIBRARY_DEBUG}"
+                    IMPORTED_LOCATION_DEBUG "${sodium_DLL_DEBUG}"
                     )
-        elseif (WIN32)
+        endif()
+
+        if (NOT (sodium_DLL_RELEASE MATCHES ".*-NOTFOUND"))
             set_target_properties(sodium PROPERTIES
-                    IMPORTED_IMPLIB "${sodium_LIBRARY_RELEASE}"
-                    IMPORTED_IMPLIB_DEBUG "${sodium_LIBRARY_DEBUG}"
+                    IMPORTED_LOCATION_RELWITHDEBINFO "${sodium_DLL_RELEASE}"
+                    IMPORTED_LOCATION_MINSIZEREL "${sodium_DLL_RELEASE}"
+                    IMPORTED_LOCATION_RELEASE "${sodium_DLL_RELEASE}"
                     )
-            if (NOT (sodium_DLL_DEBUG MATCHES ".*-NOTFOUND"))
-                set_target_properties(sodium PROPERTIES
-                        IMPORTED_LOCATION_DEBUG "${sodium_DLL_DEBUG}"
-                        )
-            endif()
-            if (NOT (sodium_DLL_RELEASE MATCHES ".*-NOTFOUND"))
-                set_target_properties(sodium PROPERTIES
-                        IMPORTED_LOCATION_RELWITHDEBINFO "${sodium_DLL_RELEASE}"
-                        IMPORTED_LOCATION_MINSIZEREL "${sodium_DLL_RELEASE}"
-                        IMPORTED_LOCATION_RELEASE "${sodium_DLL_RELEASE}"
-                        )
-            endif()
         endif()
     endif()
 
     ########################################################################
     # unsupported
 else()
-    message(FATAL_ERROR "this platform is not supported by FindSodium.cmake")
+    target_link_libraries(${PROJECT_NAME} PRIVATE sodium)
 endif()
 
 
