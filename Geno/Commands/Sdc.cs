@@ -3,7 +3,6 @@ using Discord.Interactions;
 using Geno.Responsers.Success.Modules;
 using SDC_Sharp.DiscordNet.Models;
 using SDC_Sharp.DiscordNet.Services;
-using SDC_Sharp.DiscordNet.Types;
 
 namespace Geno.Commands;
 

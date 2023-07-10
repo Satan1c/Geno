@@ -5,7 +5,6 @@ using Geno.Utils.Extensions;
 using Geno.Utils.Types;
 using Localization;
 using SDC_Sharp.DiscordNet.Models;
-using SDC_Sharp.DiscordNet.Types;
 using SDC_Sharp.Types;
 using SDC_Sharp.Types.Enums;
 using Category = Localization.Models.Category;

@@ -4,7 +4,6 @@ using Database.Models;
 using Discord;
 using Discord.Interactions;
 using Geno.Handlers;
-using Geno.Responsers;
 using Geno.Utils.Extensions;
 using Geno.Utils.StaticData;
 using Geno.Utils.Types;
@@ -35,7 +34,7 @@ public class Settings : ModuleBase
 	{
 		await RespondWithModalAsync<RegisterModal>("hoyo_registration_modal");
 	}
-	
+
 	[ModalInteraction("hoyo_registration_modal", true)]
 	public async Task M(RegisterModal modal)
 	{
@@ -49,7 +48,7 @@ public class Settings : ModuleBase
 					"api-account-os",
 					"account/binding/api/getUserGameRolesByCookieToken",
 					cookies,
-					new Dictionary<string, string>()
+					new Dictionary<string, string>
 					{
 						{
 							"uid",
@@ -66,10 +65,12 @@ public class Settings : ModuleBase
 					ephemeral: true);
 				return;
 			}
-			else if (data.Code != 0 || data.Data.GameAccounts.Length < 1)
+
+			if (data.Code != 0 || data.Data.GameAccounts.Length < 1)
 			{
-				await ClientEvents.OnLog(new LogMessage(LogSeverity.Error, nameof(M), $"Invalid cookies, if check, code: {data.Code.ToString()} message: {data.Message}"));
-				
+				await ClientEvents.OnLog(new LogMessage(LogSeverity.Error, nameof(M),
+					$"Invalid cookies, if check, code: {data.Code.ToString()} message: {data.Message}"));
+
 				await Respond(new EmbedBuilder().WithColor(Color.Red).WithDescription("Invalid cookies"),
 					ephemeral: true);
 				return;
@@ -81,9 +82,9 @@ public class Settings : ModuleBase
 			await Respond(new EmbedBuilder().WithColor(Color.Red).WithDescription("Invalid cookies"), ephemeral: true);
 			return;
 		}
-		
+
 		await ClientEvents.OnLog(new LogMessage(LogSeverity.Verbose, nameof(M), "Valid cookies"));
-		
+
 		var profile = await s_databaseProvider.GetUser(Context.User.Id);
 		profile.HoYoLabCookies = modal.Cookies;
 		await s_databaseProvider.SetUser(profile);

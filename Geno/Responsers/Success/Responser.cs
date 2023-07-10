@@ -94,7 +94,7 @@ public static class Responser
 					.ConfigureAwait(false);
 				return;
 			}
-			
+
 			await interaction.FollowupAsync(
 					embed: embed,
 					embeds: embeds,
@@ -111,15 +111,15 @@ public static class Responser
 				{
 					if (embed is not null)
 						x.Embed = embed;
-					
+
 					if (embeds is not null)
 						x.Embeds = embeds;
-					
+
 					x.AllowedMentions = AllowedMentions.None;
-					
+
 					if (attachment is not null || attachments is not null)
 						x.Attachments = attachment.HasValue ? new[] { attachment.Value } : attachments;
-					
+
 					if (components is not null)
 						x.Components = components;
 				}

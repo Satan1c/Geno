@@ -31,7 +31,7 @@ public class GuildEvents
 		config.Voices = new Dictionary<string, ulong>(data.Voices);
 		config.VoicesNames = new Dictionary<string, string>(data.VoicesNames);
 		config.Channels = new Dictionary<string, ulong>(data.Channels);
-		
+
 		var guildUserId = guildUser.Id.ToString();
 		var afterChannelId = after.VoiceChannel?.Id.ToString() ?? "";
 
