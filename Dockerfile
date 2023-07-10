@@ -1,13 +1,13 @@
 FROM ubuntu:lunar
 
 RUN apt-get update
-RUN apt-get install -y pkg-config build-essential git tar curl zip unzip cmake ninja-build zlib1g-dev libopus-dev libsodium-dev libssl-dev
+RUN apt-get install -y pkg-config build-essential git tar curl zip unzip cmake ninja-build zlib1g-dev
 
 WORKDIR /vcpkg-boot
 
 RUN git clone https://github.com/microsoft/vcpkg
 RUN ./vcpkg/bootstrap-vcpkg.sh
-RUN ./vcpkg/vcpkg install dpp:x64-linux
+RUN ./vcpkg/vcpkg install dpp:x64-linux libsodium:x64-linux openssl:x64-linux opus:x64-linux zlib:x64-linux
 
 WORKDIR /app
 
