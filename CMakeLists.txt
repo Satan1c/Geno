@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 17)
 
 file(GLOB_RECURSE SRC CONFIGURE_DEPENDS "./src/*.h" "./src/*.cpp")
 add_executable(${PROJECT_NAME} ${SRC})
-include("$ENV{VCPKG_PATH}/scripts/buildsystems/vcpkg.cmake")
+include("/vcpkg-boot/vcpkg/scripts/buildsystems/vcpkg.cmake")
 
 set(OS_NAME "x64-linux")
 if (WIN32)
