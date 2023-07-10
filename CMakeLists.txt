@@ -12,8 +12,6 @@ if(WIN32)
     set(OS_NAME "x64-windows")
 endif()
 
-
-
 target_link_libraries(${PROJECT_NAME} PRIVATE dpp)
 
 find_package(ZLIB REQUIRED)
@@ -34,9 +32,9 @@ endif()
 target_link_libraries(${PROJECT_NAME} PRIVATE opus)
 
 target_include_directories(${PROJECT_NAME} PRIVATE $ENV{VCPKG_PATH}/installed/${OS_NAME}/include)
-target_include_directories(${PROJECT_NAME} PRIVATE $ENV{VCPKG_PATH}/installed/${OS_NAME}/lib)
-target_link_directories(${PROJECT_NAME} PRIVATE $ENV{VCPKG_PATH}/installed/${OS_NAME}/include)
 target_link_directories(${PROJECT_NAME} PRIVATE $ENV{VCPKG_PATH}/installed/${OS_NAME}/lib)
+
+if(WIN32)
 
 if (CMAKE_C_COMPILER_ID STREQUAL "GNU"
         OR CMAKE_C_COMPILER_ID STREQUAL "Clang")
@@ -306,4 +304,9 @@ else()
                     )
         endif()
     endif()
+endif()
+
+else()
+    target_link_libraries(${PROJECT_NAME} PRIVATE opus sodium)
+
 endif()
