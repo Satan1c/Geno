@@ -17,8 +17,26 @@ target_include_directories(${PROJECT_NAME} PRIVATE $ENV{VCPKG_PATH}/installed/${
 target_link_directories(${PROJECT_NAME} PRIVATE $ENV{VCPKG_PATH}/installed/${OS_NAME}/include)
 target_link_directories(${PROJECT_NAME} PRIVATE $ENV{VCPKG_PATH}/installed/${OS_NAME}/lib)
 
-find_package(dpp CONFIG REQUIRED)
-#target_link_libraries(${PROJECT_NAME} PRIVATE dpp)
+find_package(ZLIB REQUIRED)
+if (ZLIB_FOUND)
+    target_link_libraries(${PROJECT_NAME} PRIVATE dpp ${ZLIB_LIBRARY})
+    target_include_directories(${PROJECT_NAME} PRIVATE ${ZLIB_INCLUDE_DIRS})
+else()
+    message(FATAL_ERROR "ZLIB library not found")
+endif()
 
-target_link_libraries(${PROJECT_NAME} PRIVATE dpp zlib libssl libcrypto libsodium opus)
+find_package(OpenSSL REQUIRED)
+if (OpenSSL_FOUND)
+    target_link_libraries(${PROJECT_NAME} PRIVATE dpp OpenSSL::SSL OpenSSL::Crypto)
+else()
+    message(FATAL_ERROR "OpenSSL library not found")
+endif()
+
+if (UNIX)
+    find_package(PkgConfig QUIET)
+    if (PKG_CONFIG_FOUND)
+        pkg_check_modules(sodium_PKG QUIET libsodium)
+    endif ()
+endif()
+
 
