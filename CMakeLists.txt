@@ -14,15 +14,16 @@ endif()
 find_package(dpp CONFIG REQUIRED)
 target_link_libraries(${PROJECT_NAME} PRIVATE dpp)
 
-target_link_directories(${PROJECT_NAME} PRIVATE /vcpkg-boot/vcpkg/installed/x64-linux/lib)
-target_link_libraries(${PROJECT_NAME} PRIVATE zlib opus sodium)
-target_link_libraries(${PROJECT_NAME} PRIVATE ssl)
-
 find_package(ZLIB REQUIRED)
 if (ZLIB_FOUND)
-    target_link_libraries(${PROJECT_NAME} PRIVATE dpp ZLIB::ZLIB)
+    target_link_libraries(${PROJECT_NAME} PRIVATE dpp ${ZLIB_LIBRARIES})
+    target_include_directories(${PROJECT_NAME} PRIVATE ${ZLIB_INCLUDE_DIRS})
 else()
     message(FATAL_ERROR "ZLIB library not found")
 endif()
+
+target_link_directories(${PROJECT_NAME} PRIVATE /vcpkg-boot/vcpkg/installed/x64-linux/lib)
+target_link_libraries(${PROJECT_NAME} PRIVATE zlib opus sodium)
+target_link_libraries(${PROJECT_NAME} PRIVATE ssl)
 
 target_include_directories(${PROJECT_NAME} PRIVATE /vcpkg-boot/vcpkg/installed/x64-linux/include)
