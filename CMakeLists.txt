@@ -34,23 +34,22 @@ else()
     message(FATAL_ERROR "OpenSSL library not found")
 endif()
 
-
-if (CMAKE_C_COMPILER_ID STREQUAL "GNU"
-        OR CMAKE_C_COMPILER_ID STREQUAL "Clang")
-    set(_GCC_COMPATIBLE 1)
-endif()
-
-
+target_link_libraries(${PROJECT_NAME} PRIVATE opus)
 
 ########################################################################
 # UNIX
 if (UNIX)
-    target_link_libraries(${PROJECT_NAME} PRIVATE opus sodium)
+    target_link_libraries(${PROJECT_NAME} PRIVATE sodium)
 
 
     ########################################################################
     # Windows
 elseif (WIN32)
+    if (CMAKE_C_COMPILER_ID STREQUAL "GNU"
+            OR CMAKE_C_COMPILER_ID STREQUAL "Clang")
+        set(_GCC_COMPATIBLE 1)
+    endif()
+
     # static library option
     if (NOT DEFINED sodium_USE_STATIC_LIBS)
         option(sodium_USE_STATIC_LIBS "enable to statically link against sodium" OFF)
