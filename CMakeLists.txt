@@ -19,6 +19,10 @@ target_link_libraries(${PROJECT_NAME} PRIVATE zlib opus sodium)
 target_link_libraries(${PROJECT_NAME} PRIVATE ssl)
 
 find_package(ZLIB REQUIRED)
-target_link_libraries(${PROJECT_NAME} PRIVATE dpp ZLIB::ZLIB)
+if (ZLIB_FOUND)
+    target_link_libraries(${PROJECT_NAME} PRIVATE dpp ZLIB::ZLIB)
+else()
+    message(FATAL_ERROR "ZLIB library not found")
+endif()
 
 target_include_directories(${PROJECT_NAME} PRIVATE /vcpkg-boot/vcpkg/installed/x64-linux/include)
