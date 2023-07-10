@@ -7,7 +7,7 @@ WORKDIR /vcpkg-boot
 
 RUN git clone https://github.com/microsoft/vcpkg
 RUN ./vcpkg/bootstrap-vcpkg.sh
-RUN ./vcpkg/vcpkg install dpp
+RUN ./vcpkg/vcpkg install dpp:x64-linux
 
 WORKDIR /app
 
