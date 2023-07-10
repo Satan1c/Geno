@@ -42,19 +42,6 @@ endif()
 
 
 
-# static library option
-if (NOT DEFINED sodium_USE_STATIC_LIBS)
-    option(sodium_USE_STATIC_LIBS "enable to statically link against sodium" OFF)
-endif()
-if(NOT (sodium_USE_STATIC_LIBS EQUAL sodium_USE_STATIC_LIBS_LAST))
-    unset(sodium_LIBRARY CACHE)
-    unset(sodium_LIBRARY_DEBUG CACHE)
-    unset(sodium_LIBRARY_RELEASE CACHE)
-    unset(sodium_DLL_DEBUG CACHE)
-    unset(sodium_DLL_RELEASE CACHE)
-    set(sodium_USE_STATIC_LIBS_LAST ${sodium_USE_STATIC_LIBS} CACHE INTERNAL "internal change tracking variable")
-endif()
-
 ########################################################################
 # UNIX
 if (UNIX)
@@ -64,6 +51,19 @@ if (UNIX)
     ########################################################################
     # Windows
 elseif (WIN32)
+    # static library option
+    if (NOT DEFINED sodium_USE_STATIC_LIBS)
+        option(sodium_USE_STATIC_LIBS "enable to statically link against sodium" OFF)
+    endif()
+    if(NOT (sodium_USE_STATIC_LIBS EQUAL sodium_USE_STATIC_LIBS_LAST))
+        unset(sodium_LIBRARY CACHE)
+        unset(sodium_LIBRARY_DEBUG CACHE)
+        unset(sodium_LIBRARY_RELEASE CACHE)
+        unset(sodium_DLL_DEBUG CACHE)
+        unset(sodium_DLL_RELEASE CACHE)
+        set(sodium_USE_STATIC_LIBS_LAST ${sodium_USE_STATIC_LIBS} CACHE INTERNAL "internal change tracking variable")
+    endif()
+
     set(sodium_DIR "$ENV{sodium_DIR}" CACHE FILEPATH "sodium install directory")
     mark_as_advanced(sodium_DIR)
 
@@ -175,96 +175,97 @@ elseif (WIN32)
 
 
     ########################################################################
+    # common stuff
+
+    # extract sodium version
+    if (sodium_INCLUDE_DIR)
+        set(_VERSION_HEADER "${_INCLUDE_DIR}/sodium/version.h")
+        if (EXISTS _VERSION_HEADER)
+            file(READ "${_VERSION_HEADER}" _VERSION_HEADER_CONTENT)
+            string(REGEX REPLACE ".*#[ \t]*define[ \t]*SODIUM_VERSION_STRING[ \t]*\"([^\n]*)\".*" "\\1"
+                    sodium_VERSION "${_VERSION_HEADER_CONTENT}")
+            set(sodium_VERSION "${sodium_VERSION}" PARENT_SCOPE)
+        endif()
+    endif()
+
+    # communicate results
+    include(FindPackageHandleStandardArgs)
+    find_package_handle_standard_args(
+            Sodium # The name must be either uppercase or match the filename case.
+            REQUIRED_VARS
+            sodium_LIBRARY_RELEASE
+            sodium_LIBRARY_DEBUG
+            sodium_INCLUDE_DIR
+            VERSION_VAR
+            sodium_VERSION
+    )
+
+    if(Sodium_FOUND)
+        set(sodium_LIBRARIES
+                optimized ${sodium_LIBRARY_RELEASE} debug ${sodium_LIBRARY_DEBUG})
+    endif()
+
+    # mark file paths as advanced
+    mark_as_advanced(sodium_INCLUDE_DIR)
+    mark_as_advanced(sodium_LIBRARY_DEBUG)
+    mark_as_advanced(sodium_LIBRARY_RELEASE)
+    if (WIN32)
+        mark_as_advanced(sodium_DLL_DEBUG)
+        mark_as_advanced(sodium_DLL_RELEASE)
+    endif()
+
+    # create imported target
+    if(sodium_USE_STATIC_LIBS)
+        set(_LIB_TYPE STATIC)
+    else()
+        set(_LIB_TYPE SHARED)
+    endif()
+
+    if(NOT TARGET sodium)
+        add_library(sodium ${_LIB_TYPE} IMPORTED)
+    endif()
+
+    set_target_properties(sodium PROPERTIES
+            INTERFACE_INCLUDE_DIRECTORIES "${sodium_INCLUDE_DIR}"
+            IMPORTED_LINK_INTERFACE_LANGUAGES "C"
+            )
+
+    if (sodium_USE_STATIC_LIBS)
+        set_target_properties(sodium PROPERTIES
+                INTERFACE_COMPILE_DEFINITIONS "SODIUM_STATIC"
+                IMPORTED_LOCATION "${sodium_LIBRARY_RELEASE}"
+                IMPORTED_LOCATION_DEBUG "${sodium_LIBRARY_DEBUG}"
+                )
+    else()
+        if (UNIX)
+            set_target_properties(sodium PROPERTIES
+                    IMPORTED_LOCATION "${sodium_LIBRARY_RELEASE}"
+                    IMPORTED_LOCATION_DEBUG "${sodium_LIBRARY_DEBUG}"
+                    )
+        elseif (WIN32)
+            set_target_properties(sodium PROPERTIES
+                    IMPORTED_IMPLIB "${sodium_LIBRARY_RELEASE}"
+                    IMPORTED_IMPLIB_DEBUG "${sodium_LIBRARY_DEBUG}"
+                    )
+            if (NOT (sodium_DLL_DEBUG MATCHES ".*-NOTFOUND"))
+                set_target_properties(sodium PROPERTIES
+                        IMPORTED_LOCATION_DEBUG "${sodium_DLL_DEBUG}"
+                        )
+            endif()
+            if (NOT (sodium_DLL_RELEASE MATCHES ".*-NOTFOUND"))
+                set_target_properties(sodium PROPERTIES
+                        IMPORTED_LOCATION_RELWITHDEBINFO "${sodium_DLL_RELEASE}"
+                        IMPORTED_LOCATION_MINSIZEREL "${sodium_DLL_RELEASE}"
+                        IMPORTED_LOCATION_RELEASE "${sodium_DLL_RELEASE}"
+                        )
+            endif()
+        endif()
+    endif()
+
+    ########################################################################
     # unsupported
 else()
     message(FATAL_ERROR "this platform is not supported by FindSodium.cmake")
 endif()
 
 
-########################################################################
-# common stuff
-
-# extract sodium version
-if (sodium_INCLUDE_DIR)
-    set(_VERSION_HEADER "${_INCLUDE_DIR}/sodium/version.h")
-    if (EXISTS _VERSION_HEADER)
-        file(READ "${_VERSION_HEADER}" _VERSION_HEADER_CONTENT)
-        string(REGEX REPLACE ".*#[ \t]*define[ \t]*SODIUM_VERSION_STRING[ \t]*\"([^\n]*)\".*" "\\1"
-                sodium_VERSION "${_VERSION_HEADER_CONTENT}")
-        set(sodium_VERSION "${sodium_VERSION}" PARENT_SCOPE)
-    endif()
-endif()
-
-# communicate results
-include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(
-        Sodium # The name must be either uppercase or match the filename case.
-        REQUIRED_VARS
-        sodium_LIBRARY_RELEASE
-        sodium_LIBRARY_DEBUG
-        sodium_INCLUDE_DIR
-        VERSION_VAR
-        sodium_VERSION
-)
-
-if(Sodium_FOUND)
-    set(sodium_LIBRARIES
-            optimized ${sodium_LIBRARY_RELEASE} debug ${sodium_LIBRARY_DEBUG})
-endif()
-
-# mark file paths as advanced
-mark_as_advanced(sodium_INCLUDE_DIR)
-mark_as_advanced(sodium_LIBRARY_DEBUG)
-mark_as_advanced(sodium_LIBRARY_RELEASE)
-if (WIN32)
-    mark_as_advanced(sodium_DLL_DEBUG)
-    mark_as_advanced(sodium_DLL_RELEASE)
-endif()
-
-# create imported target
-if(sodium_USE_STATIC_LIBS)
-    set(_LIB_TYPE STATIC)
-else()
-    set(_LIB_TYPE SHARED)
-endif()
-
-if(NOT TARGET sodium)
-    add_library(sodium ${_LIB_TYPE} IMPORTED)
-endif()
-
-set_target_properties(sodium PROPERTIES
-        INTERFACE_INCLUDE_DIRECTORIES "${sodium_INCLUDE_DIR}"
-        IMPORTED_LINK_INTERFACE_LANGUAGES "C"
-        )
-
-if (sodium_USE_STATIC_LIBS)
-    set_target_properties(sodium PROPERTIES
-            INTERFACE_COMPILE_DEFINITIONS "SODIUM_STATIC"
-            IMPORTED_LOCATION "${sodium_LIBRARY_RELEASE}"
-            IMPORTED_LOCATION_DEBUG "${sodium_LIBRARY_DEBUG}"
-            )
-else()
-    if (UNIX)
-        set_target_properties(sodium PROPERTIES
-                IMPORTED_LOCATION "${sodium_LIBRARY_RELEASE}"
-                IMPORTED_LOCATION_DEBUG "${sodium_LIBRARY_DEBUG}"
-                )
-    elseif (WIN32)
-        set_target_properties(sodium PROPERTIES
-                IMPORTED_IMPLIB "${sodium_LIBRARY_RELEASE}"
-                IMPORTED_IMPLIB_DEBUG "${sodium_LIBRARY_DEBUG}"
-                )
-        if (NOT (sodium_DLL_DEBUG MATCHES ".*-NOTFOUND"))
-            set_target_properties(sodium PROPERTIES
-                    IMPORTED_LOCATION_DEBUG "${sodium_DLL_DEBUG}"
-                    )
-        endif()
-        if (NOT (sodium_DLL_RELEASE MATCHES ".*-NOTFOUND"))
-            set_target_properties(sodium PROPERTIES
-                    IMPORTED_LOCATION_RELWITHDEBINFO "${sodium_DLL_RELEASE}"
-                    IMPORTED_LOCATION_MINSIZEREL "${sodium_DLL_RELEASE}"
-                    IMPORTED_LOCATION_RELEASE "${sodium_DLL_RELEASE}"
-                    )
-        endif()
-    endif()
-endif()
