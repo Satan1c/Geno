@@ -22,7 +22,14 @@ else()
     message(FATAL_ERROR "ZLIB library not found")
 endif()
 
+find_package(OpenSSL REQUIRED)
+if (OpenSSL_FOUND)
+    target_link_libraries(${PROJECT_NAME} PRIVATE dpp OpenSSL::SSL OpenSSL::Crypto)
+else()
+    message(FATAL_ERROR "OpenSSL library not found")
+endif()
+
 target_link_directories(${PROJECT_NAME} PRIVATE /vcpkg-boot/vcpkg/installed/x64-linux/lib)
-target_link_libraries(${PROJECT_NAME} PRIVATE opus sodium ssl)
+target_link_libraries(${PROJECT_NAME} PRIVATE opus sodium)
 
 target_include_directories(${PROJECT_NAME} PRIVATE /vcpkg-boot/vcpkg/installed/x64-linux/include)
