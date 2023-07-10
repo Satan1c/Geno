@@ -3,6 +3,10 @@
 RUN apt-get update
 RUN apt-get install -y pkg-config build-essential git tar curl zip unzip cmake ninja-build zlib1g-dev libopus-dev libsodium-dev libssl-dev
 
+RUN dpkg -l | grep zlib
+RUN echo $LD_LIBRARY_PATH
+
+RUN apt-get install -y zlib1g-dev
 
 WORKDIR /vcpkg-boot
 
