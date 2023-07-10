@@ -1,23 +1,19 @@
-﻿FROM mcr.microsoft.com/dotnet/runtime:7.0 AS base
-COPY ["Geno/bin/Localizations", "root/.net/Localizations"]
+﻿FROM ubuntu:lunar
+
+RUN apt-get update
+RUN apt-get install build-essential git tar curl zip unzip cmake ninja-build
+
+WORKDIR /vcpkg-boot
+
+RUN git clone https://github.com/microsoft/vcpkg
+RUN ./vcpkg/bootstrap-vcpkg.sh
+RUN ./vcpkg/vcpkg install dpp
+
 WORKDIR /app
 
-FROM mcr.microsoft.com/dotnet/sdk:7.0 AS build
-WORKDIR /src
-COPY ["Geno/Geno.csproj", "Geno/"]
-COPY ["Database/Database.csproj", "Database/"]
-COPY ["Localization/Localization.csproj", "Localization/"]
-COPY ["ShikimoriService/ShikimoriService.csproj", "ShikimoriService/"]
-COPY ["WaifuPicsApi/WaifuPicsApi.csproj", "WaifuPicsApi/"]
-RUN dotnet restore "Geno/Geno.csproj"
-COPY . .
-WORKDIR "/src/Geno"
-RUN dotnet build "Geno.csproj" -c Release -o /app/build
+ADD . /app
 
-FROM build AS publish
-RUN dotnet publish "Geno.csproj" --os linux --arch x64 --sc -c Release -o /app/publish
+RUN cmake -B /out -S . -DCMAKE_TOOLCHAIN_FILE=/vcpkg-boot/vcpkg/scripts/buildsystems/vcpkg.cmake
+RUN cmake --build /out
 
-FROM base AS final
-WORKDIR /app
-COPY --from=publish /app/publish .
-ENTRYPOINT ["./Geno"]
+ENTRYPOINT ["/out/TestBot"]
