@@ -1,7 +1,7 @@
 ﻿FROM ubuntu:lunar
 
 RUN apt-get update
-RUN apt-get install build-essential git tar curl zip unzip cmake ninja-build
+RUN apt-get install -y build-essential git tar curl zip unzip cmake ninja-build
 
 WORKDIR /vcpkg-boot
 
