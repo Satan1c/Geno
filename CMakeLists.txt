@@ -17,6 +17,8 @@ target_include_directories(${PROJECT_NAME} PRIVATE $ENV{VCPKG_PATH}/installed/${
 target_link_directories(${PROJECT_NAME} PRIVATE $ENV{VCPKG_PATH}/installed/${OS_NAME}/include)
 target_link_directories(${PROJECT_NAME} PRIVATE $ENV{VCPKG_PATH}/installed/${OS_NAME}/lib)
 
+target_link_libraries(${PROJECT_NAME} PRIVATE dpp)
+
 find_package(ZLIB REQUIRED)
 if (ZLIB_FOUND)
     target_link_libraries(${PROJECT_NAME} PRIVATE dpp ${ZLIB_LIBRARY})
@@ -32,38 +34,13 @@ else()
     message(FATAL_ERROR "OpenSSL library not found")
 endif()
 
-# Written in 2016 by Henrik Steffen Gaßmann <henrik@gassmann.onl>
-#
-# To the extent possible under law, the author(s) have dedicated all
-# copyright and related and neighboring rights to this software to the
-# public domain worldwide. This software is distributed without any warranty.
-#
-# You should have received a copy of the CC0 Public Domain Dedication
-# along with this software. If not, see
-#
-#     http://creativecommons.org/publicdomain/zero/1.0/
-#
-########################################################################
-# Tries to find the local libsodium installation.
-#
-# On Windows the sodium_DIR environment variable is used as a default
-# hint which can be overridden by setting the corresponding cmake variable.
-#
-# Once done the following variables will be defined:
-#
-#   sodium_FOUND
-#   sodium_INCLUDE_DIR
-#   sodium_LIBRARY_DEBUG
-#   sodium_LIBRARY_RELEASE
-#
-#
-# Furthermore an imported "sodium" target is created.
-#
 
 if (CMAKE_C_COMPILER_ID STREQUAL "GNU"
         OR CMAKE_C_COMPILER_ID STREQUAL "Clang")
     set(_GCC_COMPATIBLE 1)
 endif()
+
+
 
 # static library option
 if (NOT DEFINED sodium_USE_STATIC_LIBS)
@@ -78,48 +55,10 @@ if(NOT (sodium_USE_STATIC_LIBS EQUAL sodium_USE_STATIC_LIBS_LAST))
     set(sodium_USE_STATIC_LIBS_LAST ${sodium_USE_STATIC_LIBS} CACHE INTERNAL "internal change tracking variable")
 endif()
 
-
 ########################################################################
 # UNIX
 if (UNIX)
-    # import pkg-config
-    find_package(PkgConfig QUIET)
-    if (PKG_CONFIG_FOUND)
-        pkg_check_modules(sodium_PKG QUIET libsodium)
-    endif()
-
-    if(sodium_USE_STATIC_LIBS)
-        foreach(_libname ${sodium_PKG_STATIC_LIBRARIES})
-            if (NOT _libname MATCHES "^lib.*\\.a$") # ignore strings already ending with .a
-                list(INSERT sodium_PKG_STATIC_LIBRARIES 0 "lib${_libname}.a")
-            endif()
-        endforeach()
-        list(REMOVE_DUPLICATES sodium_PKG_STATIC_LIBRARIES)
-
-        # if pkgconfig for libsodium doesn't provide
-        # static lib info, then override PKG_STATIC here..
-        if (NOT sodium_PKG_STATIC_FOUND)
-            set(sodium_PKG_STATIC_LIBRARIES libsodium.a)
-        endif()
-
-        set(XPREFIX sodium_PKG_STATIC)
-    else()
-        if (NOT sodium_PKG_FOUND)
-            set(sodium_PKG_LIBRARIES sodium)
-        endif()
-
-        set(XPREFIX sodium_PKG)
-    endif()
-
-    find_path(sodium_INCLUDE_DIR sodium.h
-            HINTS ${${XPREFIX}_INCLUDE_DIRS}
-            )
-    find_library(sodium_LIBRARY_DEBUG NAMES ${${XPREFIX}_LIBRARIES}
-            HINTS ${${XPREFIX}_LIBRARY_DIRS}
-            )
-    find_library(sodium_LIBRARY_RELEASE NAMES ${${XPREFIX}_LIBRARIES}
-            HINTS ${${XPREFIX}_LIBRARY_DIRS}
-            )
+    target_link_libraries(${PROJECT_NAME} PRIVATE opus sodium)
 
 
     ########################################################################
