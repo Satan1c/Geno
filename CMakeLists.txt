@@ -3,7 +3,7 @@ project(TestBot)
 
 set(CMAKE_CXX_STANDARD 17)
 
-file(GLOB_RECURSE SRC CONFIGURE_DEPENDS "./src/*.h" "./src/*.cpp")
+file(GLOB_RECURSE SRC CONFIGURE_DEPENDS "./src/*.h" "./src/*.hpp" "./src/*.cpp")
 add_executable(${PROJECT_NAME} ${SRC})
 
 set(OS_NAME "x64-linux")
@@ -13,27 +13,24 @@ if (WIN32)
 	set(VCPKG_PATH "C:/vcpkg")
 endif ()
 
+set(CMAKE_TOOLCHAIN_FILE "${VCPKG_PATH}/scripts/buildsystems/vcpkg.cmake")
 include("${VCPKG_PATH}/scripts/buildsystems/vcpkg.cmake")
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
-find_package(dpp CONFIG REQUIRED)
-target_link_libraries(${PROJECT_NAME} PRIVATE dpp)
-
-find_package(ZLIB REQUIRED)
-if (ZLIB_FOUND)
-	target_link_libraries(${PROJECT_NAME} PRIVATE dpp ${ZLIB_LIBRARY})
-	target_include_directories(${PROJECT_NAME} PRIVATE ${ZLIB_INCLUDE_DIRS})
-else ()
-	message(FATAL_ERROR "ZLIB library not found")
-endif ()
-
-find_package(OpenSSL REQUIRED)
-if (OpenSSL_FOUND)
-	target_link_libraries(${PROJECT_NAME} PRIVATE dpp OpenSSL::SSL OpenSSL::Crypto)
-else ()
-	message(FATAL_ERROR "OpenSSL library not found")
-endif ()
-
-target_link_directories(${PROJECT_NAME} PRIVATE ${VCPKG_PATH}/installed/${OS_NAME}/lib)
+target_link_directories(${PROJECT_NAME} PRIVATE
+		${VCPKG_PATH}/installed/${OS_NAME}-static/lib
+		${VCPKG_PATH}/installed/${OS_NAME}/lib
+		${VCPKG_PATH}/installed/${OS_NAME}-static/include
+		${VCPKG_PATH}/installed/${OS_NAME}/include
+		${VCPKG_PATH}/installed/${OS_NAME}-static/lib/manual-link
+)
+target_include_directories(${PROJECT_NAME} PRIVATE
+		${VCPKG_PATH}/installed/${OS_NAME}-static/lib
+		${VCPKG_PATH}/installed/${OS_NAME}/lib
+		${VCPKG_PATH}/installed/${OS_NAME}-static/include
+		${VCPKG_PATH}/installed/${OS_NAME}/include
+		${VCPKG_PATH}/installed/${OS_NAME}-static/lib/manual-link
+)
 
 if (WIN32)
 	if (CMAKE_C_COMPILER_ID STREQUAL "GNU"
@@ -307,5 +304,7 @@ if (WIN32)
 	endif ()
 endif ()
 
-target_link_libraries(${PROJECT_NAME} PRIVATE opus sodium)
-target_include_directories(${PROJECT_NAME} PRIVATE ${VCPKG_PATH}/installed/${OS_NAME}/include)
+find_package(dpp CONFIG REQUIRED)
+find_package(ZLIB REQUIRED)
+find_package(OpenSSL REQUIRED)
+target_link_libraries(${PROJECT_NAME} PRIVATE opus sodium dpp::dpp OpenSSL::SSL OpenSSL::Crypto)

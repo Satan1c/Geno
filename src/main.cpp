@@ -5,7 +5,7 @@ int main() {
 
 	bot.on_log(dpp::utility::cout_logger());
 
-	bot.on_slashcommand([&bot](const dpp::slashcommand_t &event) {
+	bot.on_slashcommand([](const dpp::slashcommand_t &event) {
 		if (event.command.get_command_name() == "blep") {
 			std::string animal = std::get<std::string>(event.get_parameter("animal"));
 			event.reply(std::string("Blep! You chose") + animal);
