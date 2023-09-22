@@ -26,8 +26,8 @@
     <ItemGroup>
         <PackageReference Include="CacheManager.Microsoft.Extensions.Caching.Memory" Version="1.2.0"/>
         <PackageReference Include="ClrHeapAllocationAnalyzer" Version="3.0.0"/>
-        <PackageReference Include="MongoDB.Bson" Version="2.20.0"/>
-        <PackageReference Include="MongoDB.Driver" Version="2.20.0"/>
+        <PackageReference Include="MongoDB.Bson" Version="2.21.0" />
+        <PackageReference Include="MongoDB.Driver" Version="2.21.0" />
     </ItemGroup>
 
 </Project>
