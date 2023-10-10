@@ -1,9 +1,10 @@
-cmake_minimum_required(VERSION 3.26)
+cmake_minimum_required(VERSION 3.22)
 project(Geno)
 
 set(CMAKE_CXX_STANDARD 20)
 
-file(GLOB_RECURSE SRC CONFIGURE_DEPENDS "./src/*.h" "./src/*.hpp" "./src/*.cpp")
+#file(GLOB_RECURSE SRC CONFIGURE_DEPENDS "./src/*.h" "./src/*.hpp" "./src/*.cpp")
+file(GLOB_RECURSE SRC CONFIGURE_DEPENDS "./src/main.cpp")
 add_executable(${PROJECT_NAME} ${SRC})
 
 set(OS_NAME "x64-linux")
@@ -14,9 +15,9 @@ if (WIN32)
 endif ()
 
 set(CMAKE_TOOLCHAIN_FILE "${VCPKG_PATH}/scripts/buildsystems/vcpkg.cmake")
-include("${VCPKG_PATH}/scripts/buildsystems/vcpkg.cmake")
-
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+
+include("${VCPKG_PATH}/scripts/buildsystems/vcpkg.cmake")
 
 target_link_directories(${PROJECT_NAME} PRIVATE
         ${VCPKG_PATH}/installed/${OS_NAME}/lib
