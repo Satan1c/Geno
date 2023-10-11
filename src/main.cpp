@@ -17,7 +17,10 @@ std::vector<dpp::channel> from_channels{};
 const dpp::snowflake from_guild_id = 1154071384880853033;
 const dpp::snowflake to_guild_id = 914900019021246494;
 
-dpp::cluster bot("MTE2MDIxMTc3Nzg5Njg0OTQ1MQ.GlEeMz.6mB6yxYoEpF_J6Pqi9_SXHJ_kP6k03mD1R6eQ4");
+char * v;
+size_t sz;
+_dupenv_s(&v, &sz, "NamixTest");
+dpp::cluster bot(v);
 
 int main() {
 	bot.intents = dpp::intents::i_all_intents;
