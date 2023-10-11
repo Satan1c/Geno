@@ -8,10 +8,6 @@
 #include <dpp/dpp.h>
 
 //#include "commands/categories.hpp"
-
-std::mutex m;
-std::mutex m2;
-
 dpp::channel_map to_categories{};
 dpp::channel_map to_channels{};
 
@@ -29,118 +25,105 @@ int main() {
 	_dupenv_s(&value, &size, "Namix") ;
 	dpp::cluster bot(value);
 	bot.intents = dpp::intents::i_all_intents;
-	bot.on_log(dpp::utility::cout_logger());
+	bot.on_log([](const dpp::log_t& log){
+		printf("\n\n[%s]\n%s\n%s\n\n",
+			   (log.severity == dpp::ll_critical
+			   		? "critical"
+					: (log.severity == dpp::ll_debug
+						? "debug"
+						: ((log.severity == dpp::ll_info
+							? "info"
+							: ((log.severity == dpp::ll_error
+								? "error"
+								: ((log.severity == dpp::ll_trace
+									? "trace"
+									: "warning")))))))),
+			   log.message.c_str(), log.raw_event.c_str());
+	});
 
 	//bot.on_slashcommand(geno::categories::execute);
 	bot.on_slashcommand([&](const dpp::slashcommand_t &event) {
 		if (event.command.get_command_name() != "transfer") return;
-
 		event.reply(dpp::message("Processing").set_flags(dpp::m_ephemeral));
+		for (const auto &id : dpp::find_guild(from_guild_id)->channels) {
+			auto channel = *(dpp::find_channel(id));
+			(channel.is_category() ? from_categories : from_channels).push_back(channel);
+		}
 
-		bot.channels_get(from_guild_id, [&](const dpp::confirmation_callback_t &callback) {
-			if (callback.is_error()) {
-				printf("bot.channels_get from_guild_id error %s\n", callback.get_error().message.c_str());
-				return;
+		auto a1 = std::async(std::launch::async, [&](){
+			printf("a1\n");
+			for (const auto &id: dpp::find_guild(to_guild_id)->channels) {
+				try {
+					bot.channel_delete(id);
+				}catch(const std::exception&){}
 			}
+			printf("a1\n");
+		});
 
-			for (const auto &[id, channel] : std::get<dpp::channel_map>(callback.value)) {
-				std::lock_guard lock(m);
-				(channel.is_category() ? from_categories : from_channels).push_back(channel);
+		auto a2 = std::async(std::launch::async, [&](){
+			printf("a2\n");
+			for (const auto &fromCategory: from_categories) {
+				dpp::channel category{};
+				category.set_guild_id	(to_guild_id)
+						.set_name		(fromCategory.name)
+						.set_type		(fromCategory.get_type());
+
+				bot.channel_create(category, [&](const dpp::confirmation_callback_t &callback){
+					printf("category create\n");
+					to_categories[fromCategory.id] = callback.get<dpp::channel>();
+					const auto a = to_categories;
+				});
 			}
+			printf("a2\n");
+		});
 
-			bot.channels_get(to_guild_id, [&](const dpp::confirmation_callback_t &callback) {
-				if (callback.is_error()) {
-					printf("bot.channels_get to_guild_id error %s\n", callback.get_error().message.c_str());
-					return;
-				}
+		auto a3 = std::async(std::launch::async, [&](){
+			
+			printf("a3\n");
 
-				auto a0 = std::async(std::launch::deferred, [&](){
+			while (to_categories.size() < from_categories.size()){}
 
-					std::lock_guard lock(m);
+			for (const auto &from_channel: from_categories) {
+				to_categories[from_channel.id].set_position(from_channel.position);
+				bot.channel_edit(to_categories[from_channel.id]);
+			}
+			printf("a3\n");
+		});
 
-					for (const auto &[id, channel]: std::get<dpp::channel_map>(callback.value)) {
-						try {
-							bot.channel_delete(id);
-						}catch(const std::exception&){}
-					}
+		auto a4 = std::async(std::launch::async, [&](){
+			printf("a4\n");
+			while (to_categories.size() < from_categories.size()){}
 
+			for (const auto &from_channel: from_channels) {
+				dpp::channel channel{};
+				channel	.set_guild_id(to_guild_id)
+						.set_name				(from_channel.name)
+						.set_bitrate			(from_channel.bitrate)
+						.set_topic				(from_channel.topic)
+						.set_user_limit			(from_channel.user_limit)
+						.set_rate_limit_per_user(from_channel.user_limit)
+						.set_parent_id			(to_categories[from_channel.parent_id].id)
+						.set_nsfw				(from_channel.is_nsfw())
+						.set_type				(from_channel.get_type());
+
+				bot.channel_create(channel, [&](const dpp::confirmation_callback_t &callback){
+					printf("channel create\n");
+					to_channels[from_channel.id] = callback.get<dpp::channel>();
 				});
+			}
+			printf("a4\n");
+		});
 
-				auto a1 = std::async(std::launch::deferred, [&](){
-					m.lock();
+		auto a5 = std::async(std::launch::async, [&](){
+			printf("a5\n");
 
-					for (const auto &fromCategory: from_categories) {
-						dpp::channel category{};
-						category.set_guild_id	(to_guild_id)
-								.set_name		(fromCategory.name)
-								.set_type		(fromCategory.get_type());
+			while (to_channels.size() < from_channels.size()){}
 
-						bot.channel_create(category, [&](const dpp::confirmation_callback_t &callback){
-							to_categories[fromCategory.id] = callback.get<dpp::channel>();
-						});
-					}
-
-					while (to_categories.size() < from_categories.size()) {};
-
-					m.unlock();
-				});
-
-				a0.wait();
-				a1.wait();
-
-				const auto a3 = std::async([&](){
-					std::lock_guard lock(m);
-
-					for (const auto &from_channel: from_categories) {
-						const auto b = to_categories;
-						const auto a = to_categories[from_channel.id];
-						to_categories[from_channel.id].set_position(from_channel.position);
-						bot.channel_edit(to_categories[from_channel.id]);
-					}
-				});
-
-				a3.wait();
-				std::this_thread::sleep_for(5s);
-
-				const auto a4 = std::async([&](){
-					std::lock_guard lock(m);
-
-					for (const auto &fromChannel: from_channels) {
-						const auto c = to_categories[fromChannel.parent_id];
-						const auto c1 = to_categories[fromChannel.parent_id].id;
-
-						dpp::channel channel{};
-						channel	.set_guild_id(to_guild_id)
-								.set_name				(fromChannel.name)
-								.set_bitrate			(fromChannel.bitrate)
-								.set_topic				(fromChannel.topic)
-								.set_user_limit			(fromChannel.user_limit)
-								.set_rate_limit_per_user(fromChannel.user_limit)
-								.set_parent_id			(to_categories[fromChannel.parent_id].id)
-								.set_nsfw				(fromChannel.is_nsfw())
-								.set_type				(fromChannel.get_type());
-
-						bot.channel_create(channel, [&](const dpp::confirmation_callback_t &callback){
-							std::lock_guard lock(m);
-							to_channels[fromChannel.id] = callback.get<dpp::channel>();
-						});
-					}
-				});
-
-				a4.wait();
-				std::this_thread::sleep_for(5s);
-
-				const auto a6 = std::async([&](){
-					std::lock_guard lock(m);
-					for (const auto &from_channel: from_channels) {
-						to_channels[from_channel.id].set_position(from_channel.position);
-						bot.channel_edit(to_channels[from_channel.id]);
-					}
-				});
-
-				a6.wait();
-				std::this_thread::sleep_for(5s);
-			});
+			for (const auto &from_channel: from_channels) {
+				to_channels[from_channel.id].set_position(from_channel.position);
+				bot.channel_edit(to_channels[from_channel.id]);
+			}
+			printf("a5\n");
 		});
 	});
 
@@ -148,7 +131,7 @@ int main() {
 		if (dpp::run_once<struct register_bot_commands>()) {
 			dpp::slashcommand transfer_command("transfer", "transfer", bot.me.id);
 
-			bot.global_command_create(transfer_command, [](const dpp::confirmation_callback_t &) {
+			bot.guild_command_create(transfer_command, from_guild_id, [](const dpp::confirmation_callback_t &) {
 				printf("transfer registered\n");
 			});
 
