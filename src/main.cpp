@@ -12,6 +12,7 @@ dpp::channel_map to_categories{};
 dpp::channel_map to_channels{};
 
 std::vector<dpp::channel> from_categories{};
+std::unordered_map<dpp::snowflake, std::vector<dpp::channel>> from_categories_channels{};
 std::vector<dpp::channel> from_channels{};
 
 const dpp::snowflake from_guild_id = 1154071384880853033;
@@ -51,10 +52,6 @@ int main() {
 				to_categories[fromCategory.id] = callback.get<dpp::channel>();
 				if (to_categories.size() != from_categories.size()) return;
 
-				for (const auto &from_category: from_categories) {
-					to_categories[from_category.id].set_position(from_category.position);
-					bot.channel_edit(to_categories[from_category.id]);
-				}
 
 				for (const auto &fromChannel: from_channels) {
 					dpp::channel channel{};
@@ -70,12 +67,23 @@ int main() {
 
 					bot.channel_create(channel, [&, fromChannel](const dpp::confirmation_callback_t &callback) {
 						if (callback.is_error()) return;
-						to_channels[fromChannel.id] = callback.get<dpp::channel>();
-						if (to_channels.size() == from_channels.size()) return;
 
-						for (const auto &from_channel: from_channels) {
-							to_channels[from_channel.id].set_position(from_channel.position);
-							bot.channel_edit(to_channels[from_channel.id]);
+						to_channels[fromChannel.id] = callback.get<dpp::channel>();
+						to_channels[fromChannel.id].set_position(fromChannel.position);
+						from_categories_channels[to_channels[fromChannel.id].parent_id].push_back(to_channels[fromChannel.id]);
+
+						if (to_channels.size() != from_channels.size()) return;
+
+						for (const auto &from_category: from_categories) {
+							to_categories[from_category.id].set_position(from_category.position);
+
+							bot.channel_edit(to_categories[from_category.id], [&](const dpp::confirmation_callback_t &callback) {
+								if (callback.is_error()) return;
+
+								for (const auto &channel: from_categories_channels[callback.get<dpp::channel>().id]) {
+									bot.channel_edit(channel);
+								}
+							});
 						}
 					});
 				}
