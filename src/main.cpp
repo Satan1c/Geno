@@ -46,46 +46,38 @@ int main() {
 					.set_name		(fromCategory.name)
 					.set_type		(fromCategory.get_type());
 
-			bot.channel_create(category, [&, fromCategory](const dpp::confirmation_callback_t &callback){
-				if (callback.is_error()) {
-					return;
+			bot.channel_create(category, [&, fromCategory](const dpp::confirmation_callback_t &callback) {
+				if (callback.is_error()) return;
+				to_categories[fromCategory.id] = callback.get<dpp::channel>();
+				if (to_categories.size() != from_categories.size()) return;
+
+				for (const auto &from_category: from_categories) {
+					to_categories[from_category.id].set_position(from_category.position);
+					bot.channel_edit(to_categories[from_category.id]);
 				}
 
-				to_categories[fromCategory.id] = callback.get<dpp::channel>();
+				for (const auto &fromChannel: from_channels) {
+					dpp::channel channel{};
+					channel.set_guild_id(to_guild_id)
+							.set_name(fromChannel.name)
+							.set_bitrate(fromChannel.bitrate)
+							.set_topic(fromChannel.topic)
+							.set_user_limit(fromChannel.user_limit)
+							.set_rate_limit_per_user(fromChannel.user_limit)
+							.set_parent_id(to_categories[fromChannel.parent_id].id)
+							.set_nsfw(fromChannel.is_nsfw())
+							.set_type(fromChannel.get_type());
 
-				if (to_categories.size() == from_categories.size()) {
-					for (const auto &from_category: from_categories) {
-						to_categories[from_category.id].set_position(from_category.position);
-						bot.channel_edit(to_categories[from_category.id]);
-					}
+					bot.channel_create(channel, [&, fromChannel](const dpp::confirmation_callback_t &callback) {
+						if (callback.is_error()) return;
+						to_channels[fromChannel.id] = callback.get<dpp::channel>();
+						if (to_channels.size() == from_channels.size()) return;
 
-					for (const auto &fromChannel: from_channels) {
-						dpp::channel channel{};
-						channel	.set_guild_id(to_guild_id)
-								.set_name				(fromChannel.name)
-								.set_bitrate			(fromChannel.bitrate)
-								.set_topic				(fromChannel.topic)
-								.set_user_limit			(fromChannel.user_limit)
-								.set_rate_limit_per_user(fromChannel.user_limit)
-								.set_parent_id			(to_categories[fromChannel.parent_id].id)
-								.set_nsfw				(fromChannel.is_nsfw())
-								.set_type				(fromChannel.get_type());
-
-						bot.channel_create(channel, [&, fromChannel](const dpp::confirmation_callback_t &callback){
-							if (callback.is_error()) {
-								return;
-							}
-
-							to_channels[fromChannel.id] = callback.get<dpp::channel>();
-
-							if (to_channels.size() == from_channels.size()) {
-								for (const auto &from_channel: from_channels) {
-									to_channels[from_channel.id].set_position(from_channel.position);
-									bot.channel_edit(to_channels[from_channel.id]);
-								}
-							}
-						});
-					}
+						for (const auto &from_channel: from_channels) {
+							to_channels[from_channel.id].set_position(from_channel.position);
+							bot.channel_edit(to_channels[from_channel.id]);
+						}
+					});
 				}
 			});
 		}
