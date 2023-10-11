@@ -17,32 +17,14 @@ std::vector<dpp::channel> from_channels{};
 const dpp::snowflake from_guild_id = 1154071384880853033;
 const dpp::snowflake to_guild_id = 914900019021246494;
 
+dpp::cluster bot("");
+
 int main() {
-	using namespace std::chrono_literals;
-	//dpp::cluster bot(getenv("Namix"));
-	char * value;
-	size_t size;
-	_dupenv_s(&value, &size, "Namix") ;
-	dpp::cluster bot(value);
 	bot.intents = dpp::intents::i_all_intents;
-	bot.on_log([](const dpp::log_t& log){
-		printf("\n\n[%s]\n%s\n%s\n\n",
-			   (log.severity == dpp::ll_critical
-			   		? "critical"
-					: (log.severity == dpp::ll_debug
-						? "debug"
-						: ((log.severity == dpp::ll_info
-							? "info"
-							: ((log.severity == dpp::ll_error
-								? "error"
-								: ((log.severity == dpp::ll_trace
-									? "trace"
-									: "warning")))))))),
-			   log.message.c_str(), log.raw_event.c_str());
-	});
+	bot.on_log(dpp::utility::cout_logger());
 
 	//bot.on_slashcommand(geno::categories::execute);
-	bot.on_slashcommand([&](const dpp::slashcommand_t &event) {
+	bot.on_slashcommand([](const dpp::slashcommand_t &event) {
 		if (event.command.get_command_name() != "transfer") return;
 		event.reply(dpp::message("Processing").set_flags(dpp::m_ephemeral));
 		for (const auto &id : dpp::find_guild(from_guild_id)->channels) {
@@ -50,7 +32,7 @@ int main() {
 			(channel.is_category() ? from_categories : from_channels).push_back(channel);
 		}
 
-		auto a1 = std::async(std::launch::async, [&](){
+		auto a1 = std::async(std::launch::async, [](){
 			printf("a1\n");
 			for (const auto &id: dpp::find_guild(to_guild_id)->channels) {
 				try {
@@ -60,7 +42,7 @@ int main() {
 			printf("a1\n");
 		});
 
-		auto a2 = std::async(std::launch::async, [&](){
+		auto a2 = std::async(std::launch::async, [](){
 			printf("a2\n");
 			for (const auto &fromCategory: from_categories) {
 				dpp::channel category{};
@@ -68,7 +50,7 @@ int main() {
 						.set_name		(fromCategory.name)
 						.set_type		(fromCategory.get_type());
 
-				bot.channel_create(category, [&](const dpp::confirmation_callback_t &callback){
+				bot.channel_create(category, [fromCategory](const dpp::confirmation_callback_t &callback){
 					printf("category create\n");
 					to_categories[fromCategory.id] = callback.get<dpp::channel>();
 					const auto a = to_categories;
@@ -77,7 +59,7 @@ int main() {
 			printf("a2\n");
 		});
 
-		auto a3 = std::async(std::launch::async, [&](){
+		auto a3 = std::async(std::launch::async, [](){
 			
 			printf("a3\n");
 
@@ -90,7 +72,7 @@ int main() {
 			printf("a3\n");
 		});
 
-		auto a4 = std::async(std::launch::async, [&](){
+		auto a4 = std::async(std::launch::async, [](){
 			printf("a4\n");
 			while (to_categories.size() < from_categories.size()){}
 
@@ -106,7 +88,7 @@ int main() {
 						.set_nsfw				(from_channel.is_nsfw())
 						.set_type				(from_channel.get_type());
 
-				bot.channel_create(channel, [&](const dpp::confirmation_callback_t &callback){
+				bot.channel_create(channel, [from_channel](const dpp::confirmation_callback_t &callback){
 					printf("channel create\n");
 					to_channels[from_channel.id] = callback.get<dpp::channel>();
 				});
@@ -114,7 +96,7 @@ int main() {
 			printf("a4\n");
 		});
 
-		auto a5 = std::async(std::launch::async, [&](){
+		auto a5 = std::async(std::launch::async, [](){
 			printf("a5\n");
 
 			while (to_channels.size() < from_channels.size()){}
@@ -127,7 +109,7 @@ int main() {
 		});
 	});
 
-	bot.on_ready([&](const dpp::ready_t &event) {
+	bot.on_ready([](const dpp::ready_t &event) {
 		if (dpp::run_once<struct register_bot_commands>()) {
 			dpp::slashcommand transfer_command("transfer", "transfer", bot.me.id);
 
