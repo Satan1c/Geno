@@ -47,10 +47,13 @@ int main() {
 					.set_type		(fromCategory.get_type());
 
 			bot.channel_create(category, [&, fromCategory](const dpp::confirmation_callback_t &callback){
-				printf("category create\n");
+				if (callback.is_error()) {
+					return;
+				}
+
 				to_categories[fromCategory.id] = callback.get<dpp::channel>();
 
-				if (to_categories.size() < from_categories.size()) {
+				if (to_categories.size() == from_categories.size()) {
 					for (const auto &from_category: from_categories) {
 						to_categories[from_category.id].set_position(from_category.position);
 						bot.channel_edit(to_categories[from_category.id]);
@@ -69,10 +72,13 @@ int main() {
 								.set_type				(fromChannel.get_type());
 
 						bot.channel_create(channel, [&, fromChannel](const dpp::confirmation_callback_t &callback){
-							printf("channel create\n");
+							if (callback.is_error()) {
+								return;
+							}
+
 							to_channels[fromChannel.id] = callback.get<dpp::channel>();
 
-							if (to_channels.size() < from_channels.size()) {
+							if (to_channels.size() == from_channels.size()) {
 								for (const auto &from_channel: from_channels) {
 									to_channels[from_channel.id].set_position(from_channel.position);
 									bot.channel_edit(to_channels[from_channel.id]);
