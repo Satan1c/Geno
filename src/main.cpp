@@ -17,17 +17,17 @@ std::vector<dpp::channel> from_channels{};
 const dpp::snowflake from_guild_id = 1154071384880853033;
 const dpp::snowflake to_guild_id = 914900019021246494;
 
-char * v;
-size_t sz;
-_dupenv_s(&v, &sz, "NamixTest");
-dpp::cluster bot(v);
-
 int main() {
+	char * v;
+	size_t sz;
+	_dupenv_s(&v, &sz, "NamixTest");
+	dpp::cluster bot(v);
+
 	bot.intents = dpp::intents::i_all_intents;
 	bot.on_log(dpp::utility::cout_logger());
 
 	//bot.on_slashcommand(geno::categories::execute);
-	bot.on_slashcommand([](const dpp::slashcommand_t &event) {
+	bot.on_slashcommand([&](const dpp::slashcommand_t &event) {
 		if (event.command.get_command_name() != "transfer") return;
 		event.reply(dpp::message("Processing").set_flags(dpp::m_ephemeral));
 
@@ -46,7 +46,7 @@ int main() {
 					.set_name		(fromCategory.name)
 					.set_type		(fromCategory.get_type());
 
-			bot.channel_create(category, [fromCategory](const dpp::confirmation_callback_t &callback){
+			bot.channel_create(category, [&, fromCategory](const dpp::confirmation_callback_t &callback){
 				printf("category create\n");
 				to_categories[fromCategory.id] = callback.get<dpp::channel>();
 
@@ -68,7 +68,7 @@ int main() {
 								.set_nsfw				(fromChannel.is_nsfw())
 								.set_type				(fromChannel.get_type());
 
-						bot.channel_create(channel, [fromChannel](const dpp::confirmation_callback_t &callback){
+						bot.channel_create(channel, [&, fromChannel](const dpp::confirmation_callback_t &callback){
 							printf("channel create\n");
 							to_channels[fromChannel.id] = callback.get<dpp::channel>();
 
@@ -85,7 +85,7 @@ int main() {
 		}
 	});
 
-	bot.on_ready([](const dpp::ready_t &event) {
+	bot.on_ready([&](const dpp::ready_t &event) {
 		if (dpp::run_once<struct register_bot_commands>()) {
 			dpp::slashcommand transfer_command("transfer", "transfer", bot.me.id);
 
